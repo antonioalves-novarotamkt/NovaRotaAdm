@@ -58,7 +58,10 @@ export function UploadPostForm({ clients, defaultClientId }: { clients: ClientOp
 
     setUploading(true);
     try {
-      const blob = await upload(file.name, file, {
+      const extension = file.name.includes(".") ? file.name.split(".").pop() : "jpg";
+      const safeName = `posts/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
+
+      const blob = await upload(safeName, file, {
         access: "public",
         handleUploadUrl: "/api/upload",
       });
