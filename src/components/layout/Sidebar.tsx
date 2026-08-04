@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   Users,
@@ -9,13 +10,16 @@ import {
   DollarSign,
   BarChart2,
   Settings,
+  FileText,
+  LogOut,
   Zap,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/clientes", label: "Clientes", icon: Users },
+  { href: "/contratos", label: "Contratos", icon: FileText },
   { href: "/projetos", label: "Projetos", icon: FolderOpen },
   { href: "/financeiro", label: "Financeiro", icon: DollarSign },
   { href: "/metricas", label: "Métricas", icon: BarChart2 },
@@ -24,6 +28,9 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const userName = session?.user?.name || "Usuário";
+  const userEmail = session?.user?.email || "";
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-[#0f172a] flex flex-col z-30">
@@ -64,13 +71,20 @@ export function Sidebar() {
       {/* Bottom user section */}
       <div className="px-4 py-4 border-t border-white/10">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">
-            NR
+          <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            {getInitials(userName)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-xs font-medium truncate">Admin User</p>
-            <p className="text-[#64748b] text-xs truncate">admin@novarota.com</p>
+            <p className="text-white text-xs font-medium truncate">{userName}</p>
+            <p className="text-[#64748b] text-xs truncate">{userEmail}</p>
           </div>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="text-[#64748b] hover:text-white transition-colors shrink-0"
+            title="Sair"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </aside>

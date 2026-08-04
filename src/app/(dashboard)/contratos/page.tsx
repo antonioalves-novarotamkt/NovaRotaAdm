@@ -1,0 +1,114 @@
+import { FileText, Building2 } from "lucide-react";
+import { Header } from "@/components/layout/Header";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { NewContractDialog } from "@/components/contracts/NewContractDialog";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+const statusMap: Record<string, { label: string; variant: "success" | "warning" | "info" | "danger" | "gray" }> = {
+  ACTIVE: { label: "Ativo", variant: "success" },
+  EXPIRED: { label: "Expirado", variant: "gray" },
+  CANCELLED: { label: "Cancelado", variant: "danger" },
+  DRAFT: { label: "Rascunho", variant: "warning" },
+};
+
+export default async function ContratosPage() {
+  const [contracts, clients] = await Promise.all([
+    prisma.contract.findMany({
+      orderBy: { startDate: "desc" },
+      include: { client: true },
+    }),
+    prisma.client.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, company: true },
+    }),
+  ]);
+
+  const activeCount = contracts.filter((c) => c.status === "ACTIVE").length;
+  const totalValue = contracts
+    .filter((c) => c.status === "ACTIVE")
+    .reduce((sum, c) => sum + c.value, 0);
+
+  return (
+    <div>
+      <Header title="Contratos" subtitle="Gerencie os contratos com seus clientes" />
+      <div className="p-6 space-y-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <p className="text-xs text-gray-500 mb-1">Total de Contratos</p>
+              <p className="text-xl font-bold text-blue-600">{contracts.length}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <p className="text-xs text-gray-500 mb-1">Ativos</p>
+              <p className="text-xl font-bold text-green-600">{activeCount}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <p className="text-xs text-gray-500 mb-1">Valor Total Ativo</p>
+              <p className="text-xl font-bold text-purple-600">{formatCurrency(totalValue)}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-500">
+            {clients.length === 0
+              ? "Cadastre um cliente antes de criar um contrato."
+              : `${contracts.length} contrato(s) cadastrado(s)`}
+          </p>
+          <NewContractDialog clients={clients} />
+        </div>
+
+        {contracts.length === 0 ? (
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-10 text-center text-sm text-gray-500">
+              Nenhum contrato cadastrado ainda.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {contracts.map((contract) => {
+              const status = statusMap[contract.status];
+              return (
+                <Card key={contract.id} className="border-0 shadow-sm">
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{contract.title}</p>
+                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                          <Building2 className="h-3 w-3" />
+                          {contract.client.company || contract.client.name}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <div className="text-right">
+                        <p className="text-xs text-gray-400">Início</p>
+                        <p className="text-sm text-gray-700">{formatDate(contract.startDate)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-400">Valor</p>
+                        <p className="text-sm font-bold text-gray-900">{formatCurrency(contract.value)}</p>
+                      </div>
+                      <Badge variant={status.variant}>{status.label}</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
