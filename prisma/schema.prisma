@@ -90,11 +90,73 @@ model Client {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  projects  Project[]
-  invoices  Invoice[]
-  contracts Contract[]
+  projects        Project[]
+  invoices        Invoice[]
+  contracts       Contract[]
+  socialAccounts  SocialAccount[]
+  activities      ClientActivity[]
+  campaignMetrics CampaignMetric[]
+  posts           ClientPost[]
 
   @@map("clients")
+}
+
+model SocialAccount {
+  id        String         @id @default(cuid())
+  clientId  String
+  platform  SocialPlatform
+  handle    String
+  url       String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  client  Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  metrics SocialMetric[]
+
+  @@map("social_accounts")
+}
+
+model SocialMetric {
+  id              String   @id @default(cuid())
+  socialAccountId String
+  month           DateTime
+  followers       Int      @default(0)
+  reach           Int?
+  engagementRate  Float?
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  socialAccount SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([socialAccountId, month])
+  @@map("social_metrics")
+}
+
+model ClientPost {
+  id        String   @id @default(cuid())
+  clientId  String
+  month     DateTime
+  imageUrl  String
+  caption   String?
+  postDate  DateTime?
+  createdAt DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_posts")
+}
+
+model ClientActivity {
+  id          String   @id @default(cuid())
+  clientId    String
+  date        DateTime @default(now())
+  description String   @db.Text
+  createdAt   DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_activities")
 }
 
 model Contract {
@@ -135,6 +197,16 @@ model Project {
   metrics CampaignMetric[]
 
   @@map("projects")
+}
+
+enum SocialPlatform {
+  INSTAGRAM
+  FACEBOOK
+  TIKTOK
+  LINKEDIN
+  YOUTUBE
+  TWITTER
+  OTHER
 }
 
 model Task {
@@ -196,24 +268,34 @@ model Payment {
 }
 
 model CampaignMetric {
-  id             String   @id @default(cuid())
-  projectId      String
-  date           DateTime
-  platform       String
-  impressions    Int      @default(0)
-  clicks         Int      @default(0)
-  conversions    Int      @default(0)
-  spend          Float    @default(0)
-  revenue        Float    @default(0)
-  ctr            Float    @default(0)
-  cpc            Float    @default(0)
-  roas           Float    @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id          String         @id @default(cuid())
+  clientId    String
+  projectId   String?
+  name        String?
+  status      CampaignStatus @default(ACTIVE)
+  date        DateTime
+  platform    String
+  impressions Int            @default(0)
+  clicks      Int            @default(0)
+  conversions Int            @default(0)
+  spend       Float          @default(0)
+  revenue     Float          @default(0)
+  ctr         Float          @default(0)
+  cpc         Float          @default(0)
+  roas        Float          @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  client  Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@map("campaign_metrics")
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
 }
 
 enum Role {

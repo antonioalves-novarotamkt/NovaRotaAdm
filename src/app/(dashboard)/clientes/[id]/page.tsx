@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { ArrowLeft, Mail, Phone, Globe, MapPin, Building2, Calendar, DollarSign, FileText } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Globe, MapPin, Building2, Calendar, DollarSign, FileText, Users2, ClipboardList, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate, getInitials } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
+import { NewSocialAccountDialog } from "@/components/clients/NewSocialAccountDialog";
+import { LogSocialMetricDialog } from "@/components/clients/LogSocialMetricDialog";
+import { NewActivityDialog } from "@/components/clients/NewActivityDialog";
+
+const platformLabel: Record<string, string> = {
+  INSTAGRAM: "Instagram",
+  FACEBOOK: "Facebook",
+  TIKTOK: "TikTok",
+  LINKEDIN: "LinkedIn",
+  YOUTUBE: "YouTube",
+  TWITTER: "X / Twitter",
+  OTHER: "Outra",
+};
 
 const statusBadge: Record<string, { label: string; variant: "success" | "warning" | "info" | "danger" | "gray" }> = {
   ACTIVE: { label: "Ativo", variant: "success" },
@@ -46,6 +59,11 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
       projects: { orderBy: { createdAt: "desc" } },
       invoices: { orderBy: { issueDate: "desc" } },
       contracts: { orderBy: { startDate: "desc" } },
+      socialAccounts: {
+        orderBy: { createdAt: "asc" },
+        include: { metrics: { orderBy: { month: "desc" }, take: 1 } },
+      },
+      activities: { orderBy: { date: "desc" }, take: 20 },
     },
   });
 
@@ -147,8 +165,86 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             )}
           </div>
 
-          {/* Right - Projects, Contracts & Invoices */}
+          {/* Right - Social, Activities, Projects, Contracts & Invoices */}
           <div className="lg:col-span-2 space-y-4">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                    <Users2 className="h-4 w-4 text-gray-400" />
+                    Redes Sociais ({client.socialAccounts.length})
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    <LogSocialMetricDialog
+                      clientId={client.id}
+                      accounts={client.socialAccounts.map((a) => ({ id: a.id, handle: a.handle, platform: a.platform }))}
+                    />
+                    <NewSocialAccountDialog clientId={client.id} />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {client.socialAccounts.length === 0 && (
+                  <p className="text-sm text-gray-400">Nenhuma rede social cadastrada.</p>
+                )}
+                {client.socialAccounts.map((account) => {
+                  const latest = account.metrics[0];
+                  return (
+                    <div key={account.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {platformLabel[account.platform] || account.platform} · {account.handle}
+                        </p>
+                        {latest ? (
+                          <p className="text-xs text-gray-500">
+                            {formatDate(latest.month, { month: "long", year: "numeric", day: undefined })} · {latest.followers.toLocaleString("pt-BR")} seguidores
+                            {latest.engagementRate != null && ` · ${latest.engagementRate}% engajamento`}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-400">Nenhuma métrica registrada ainda</p>
+                        )}
+                      </div>
+                      {latest && (
+                        <span className="text-sm font-bold text-gray-900">{latest.followers.toLocaleString("pt-BR")}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                    <ClipboardList className="h-4 w-4 text-gray-400" />
+                    Atividades ({client.activities.length})
+                  </CardTitle>
+                  <NewActivityDialog clientId={client.id} />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {client.activities.length === 0 && (
+                  <p className="text-sm text-gray-400">Nenhuma atividade registrada ainda.</p>
+                )}
+                {client.activities.map((activity) => (
+                  <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-100">
+                    <span className="text-xs text-gray-400 whitespace-nowrap pt-0.5">{formatDate(activity.date)}</span>
+                    <p className="text-sm text-gray-700 flex-1">{activity.description}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Link href={`/projetos?cliente=${client.id}`} className="block">
+              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <ImageIcon className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm font-medium text-gray-700">Ver posts do mês deste cliente</span>
+                </CardContent>
+              </Card>
+            </Link>
+
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold text-gray-900">
