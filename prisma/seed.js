@@ -17,6 +17,12 @@ async function main() {
   });
   console.log("Usuário admin pronto:", admin.email);
 
+  // Dados de exemplo (demo) só são criados fora da Vercel, para não poluir produção.
+  if (process.env.VERCEL === "1") {
+    console.log("Ambiente Vercel detectado — pulando dados de exemplo.");
+    return;
+  }
+
   const clientsData = [
     { name: "Carlos Mendonça", company: "TechBrasil Ltda", email: "carlos@techbrasil.com.br", phone: "(11) 99123-4567", website: "techbrasil.com.br", status: "ACTIVE", contractValue: 15000, city: "São Paulo", state: "SP" },
     { name: "Ana Lima", company: "StartupXYZ", email: "ana@startupxyz.io", phone: "(21) 98765-3210", website: "startupxyz.io", status: "ACTIVE", contractValue: 8500, city: "Rio de Janeiro", state: "RJ" },
