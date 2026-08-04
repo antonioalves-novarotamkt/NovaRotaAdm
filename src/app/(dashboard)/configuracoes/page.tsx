@@ -1,11 +1,29 @@
+import { getServerSession } from "next-auth";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { User, Bell, Shield, Palette, Database, CreditCard } from "lucide-react";
+import { User, Bell, Shield, Palette, Users } from "lucide-react";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { NewUserDialog } from "@/components/settings/NewUserDialog";
+import { UserRow } from "@/components/settings/UserRow";
 
-export default function ConfiguracoesPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ConfiguracoesPage() {
+  const session = await getServerSession(authOptions);
+  const currentUserId = (session?.user as { id?: string } | undefined)?.id;
+  const isAdmin = (session?.user as { role?: string } | undefined)?.role === "ADMIN";
+
+  const users = isAdmin
+    ? await prisma.user.findMany({
+        orderBy: { createdAt: "asc" },
+        select: { id: true, name: true, email: true, role: true },
+      })
+    : [];
+
   return (
     <div>
       <Header title="Configurações" subtitle="Gerencie sua conta e preferências do sistema" />
@@ -86,6 +104,33 @@ export default function ConfiguracoesPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Users */}
+        {isAdmin && (
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-blue-600" />
+                  <CardTitle className="text-base font-semibold text-gray-900">Usuários do Sistema</CardTitle>
+                </div>
+                <NewUserDialog />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {users.map((u) => (
+                <UserRow
+                  key={u.id}
+                  id={u.id}
+                  name={u.name}
+                  email={u.email}
+                  role={u.role}
+                  isCurrentUser={u.id === currentUserId}
+                />
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Notifications */}
         <Card className="border-0 shadow-sm">
