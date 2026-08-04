@@ -21,12 +21,25 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  tasks    Task[]    @relation("AssignedTasks")
-  projects Project[]
+  accounts      Account[]
+  sessions      Session[]
+  tasks         Task[]              @relation("AssignedTasks")
+  projects      Project[]
+  resetTokens   PasswordResetToken[]
 
   @@map("users")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }
 
 model Account {
@@ -77,10 +90,29 @@ model Client {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  projects Project[]
-  invoices Invoice[]
+  projects  Project[]
+  invoices  Invoice[]
+  contracts Contract[]
 
   @@map("clients")
+}
+
+model Contract {
+  id          String         @id @default(cuid())
+  title       String
+  clientId    String
+  value       Float
+  startDate   DateTime
+  endDate     DateTime?
+  status      ContractStatus @default(ACTIVE)
+  fileUrl     String?
+  notes       String?        @db.Text
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("contracts")
 }
 
 model Project {
@@ -242,4 +274,11 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
+}
+
+enum ContractStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  DRAFT
 }
