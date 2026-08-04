@@ -21,12 +21,25 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  tasks    Task[]    @relation("AssignedTasks")
-  projects Project[]
+  accounts      Account[]
+  sessions      Session[]
+  tasks         Task[]              @relation("AssignedTasks")
+  projects      Project[]
+  resetTokens   PasswordResetToken[]
 
   @@map("users")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }
 
 model Account {
