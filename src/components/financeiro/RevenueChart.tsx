@@ -25,7 +25,7 @@ export function RevenueChart({ data }: { data: ChartPoint[] }) {
           formatter={(v: number) => formatCurrency(v)}
           contentStyle={{ borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "12px" }}
         />
-        <Bar dataKey="receita" name="Receita Recebida" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="receita" name="Receita Recebida" fill="#EA580C" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

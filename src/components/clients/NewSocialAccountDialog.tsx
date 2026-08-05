@@ -44,7 +44,7 @@ export function NewSocialAccountDialog({ clientId }: { clientId: string }) {
           </select>
           <Input name="handle" placeholder="@usuario" required />
           <Input name="url" placeholder="Link do perfil (opcional)" />
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+          <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
             Adicionar
           </Button>
         </form>

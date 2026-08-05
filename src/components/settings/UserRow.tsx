@@ -42,7 +42,7 @@ export function UserRow({ id, name, email, role, isCurrentUser }: UserRowProps) 
   return (
     <div className="flex items-center justify-between py-3 border-b last:border-0">
       <div className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
+        <div className="h-9 w-9 rounded-full bg-orange-600 flex items-center justify-center text-white text-xs font-bold">
           {getInitials(name || email)}
         </div>
         <div>

@@ -10,6 +10,8 @@ import { prisma } from "@/lib/prisma";
 import { NewSocialAccountDialog } from "@/components/clients/NewSocialAccountDialog";
 import { LogSocialMetricDialog } from "@/components/clients/LogSocialMetricDialog";
 import { NewActivityDialog } from "@/components/clients/NewActivityDialog";
+import { ClientLogoUpload } from "@/components/clients/ClientLogoUpload";
+import { ClientBillingForm } from "@/components/clients/ClientBillingForm";
 
 const platformLabel: Record<string, string> = {
   INSTAGRAM: "Instagram",
@@ -90,13 +92,25 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             <Card className="border-0 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="h-16 w-16 rounded-2xl bg-blue-500 flex items-center justify-center text-white text-xl font-bold">
-                    {getInitials(client.name)}
-                  </div>
+                  {client.logoUrl ? (
+                    <img
+                      src={client.logoUrl}
+                      alt={client.name}
+                      className="h-16 w-16 rounded-2xl object-contain bg-white border border-gray-100"
+                    />
+                  ) : (
+                    <div className="h-16 w-16 rounded-2xl bg-orange-500 flex items-center justify-center text-white text-xl font-bold">
+                      {getInitials(client.name)}
+                    </div>
+                  )}
                   <div>
                     <h2 className="text-lg font-bold text-gray-900">{client.name}</h2>
                     <Badge variant={status.variant}>{status.label}</Badge>
                   </div>
+                </div>
+
+                <div className="mb-4">
+                  <ClientLogoUpload clientId={client.id} logoUrl={client.logoUrl} />
                 </div>
                 <div className="space-y-3">
                   {client.company && (
@@ -105,7 +119,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                       {client.company}
                     </div>
                   )}
-                  <a href={`mailto:${client.email}`} className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
+                  <a href={`mailto:${client.email}`} className="flex items-center gap-2 text-sm text-orange-600 hover:underline">
                     <Mail className="h-4 w-4 text-gray-400" />
                     {client.email}
                   </a>
@@ -116,7 +130,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                     </div>
                   )}
                   {client.website && (
-                    <a href={client.website} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
+                    <a href={client.website} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-orange-600 hover:underline">
                       <Globe className="h-4 w-4 text-gray-400" />
                       {client.website}
                     </a>
@@ -138,20 +152,22 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
               </CardContent>
             </Card>
 
-            {client.contractValue != null && (
-              <Card className="border-0 shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold text-gray-700">Valor Contrato</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-green-500" />
-                    <span className="text-2xl font-bold text-gray-900">{formatCurrency(client.contractValue)}</span>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">por mês</p>
-                </CardContent>
-              </Card>
-            )}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-green-500" />
+                  Recebimento
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ClientBillingForm
+                  clientId={client.id}
+                  contractValue={client.contractValue}
+                  billingFrequency={client.billingFrequency}
+                  nextBillingDate={client.nextBillingDate}
+                />
+              </CardContent>
+            </Card>
 
             {client.notes && (
               <Card className="border-0 shadow-sm">

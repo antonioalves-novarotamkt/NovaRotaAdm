@@ -43,7 +43,7 @@ export function NewActivityDialog({ clientId }: { clientId: string }) {
             required
             className={inputClass + " resize-none"}
           />
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+          <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
             Salvar
           </Button>
         </form>

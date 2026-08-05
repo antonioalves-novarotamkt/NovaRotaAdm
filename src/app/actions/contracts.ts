@@ -13,6 +13,7 @@ export async function createContract(formData: FormData) {
   const endDate = String(formData.get("endDate") || "");
   const status = String(formData.get("status") || "ACTIVE") as ContractStatus;
   const notes = String(formData.get("notes") || "").trim();
+  const content = String(formData.get("content") || "").trim();
 
   if (!title || !clientId || !startDate) {
     throw new Error("Título, cliente e data de início são obrigatórios.");
@@ -27,6 +28,7 @@ export async function createContract(formData: FormData) {
       endDate: endDate ? new Date(endDate) : null,
       status,
       notes: notes || null,
+      content: content || null,
     },
   });
 

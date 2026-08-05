@@ -67,7 +67,7 @@ export function LogSocialMetricDialog({ clientId, accounts }: { clientId: string
             <Input name="reach" type="number" placeholder="Alcance (opcional)" />
             <Input name="engagementRate" type="number" step="0.01" placeholder="Engajamento % (opcional)" />
           </div>
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+          <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
             Salvar
           </Button>
         </form>

@@ -27,7 +27,7 @@ export function KPICard({ title, value, change, changeLabel, trend, icon, iconBg
             <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
             <p className="text-2xl font-bold text-gray-900">{value}</p>
           </div>
-          <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center", iconBg || "bg-blue-50")}>
+          <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center", iconBg || "bg-orange-50")}>
             {icon}
           </div>
         </div>

@@ -88,7 +88,7 @@ export function UploadPostForm({ clients, defaultClientId }: { clients: ClientOp
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="h-9 gap-1.5 bg-blue-600 hover:bg-blue-700" disabled={clients.length === 0}>
+        <Button size="sm" className="h-9 gap-1.5 bg-orange-600 hover:bg-orange-700" disabled={clients.length === 0}>
           <Upload className="h-4 w-4" />
           Enviar Post
         </Button>
@@ -113,7 +113,7 @@ export function UploadPostForm({ clients, defaultClientId }: { clients: ClientOp
           <input ref={fileInputRef} type="file" name="file" accept="image/*" required className="text-sm" />
           <Input name="caption" placeholder="Legenda / descrição (opcional)" />
           {error && <p className="text-xs text-red-500">{error}</p>}
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={uploading}>
+          <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700" disabled={uploading}>
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar"}
           </Button>
         </form>

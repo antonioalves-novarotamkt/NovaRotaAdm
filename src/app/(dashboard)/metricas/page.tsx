@@ -63,7 +63,7 @@ export default async function MetricasPage() {
         {/* KPI Row */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { label: "Impressões", value: (totalImpressions / 1000).toFixed(0) + "K", sub: "total", color: "text-blue-600", bg: "bg-blue-50" },
+            { label: "Impressões", value: (totalImpressions / 1000).toFixed(0) + "K", sub: "total", color: "text-orange-600", bg: "bg-orange-50" },
             { label: "Cliques", value: (totalClicks / 1000).toFixed(1) + "K", sub: "total", color: "text-purple-600", bg: "bg-purple-50" },
             { label: "CTR Médio", value: avgCTR + "%", sub: "todos os canais", color: "text-indigo-600", bg: "bg-indigo-50" },
             { label: "Conversões", value: totalConversions.toLocaleString("pt-BR"), sub: "total", color: "text-emerald-600", bg: "bg-emerald-50" },

@@ -18,7 +18,7 @@ const statusMap: Record<string, { label: string; variant: "success" | "warning" 
   CHURNED: { label: "Perdido", variant: "danger" },
 };
 
-const colors = ["bg-blue-500", "bg-purple-500", "bg-emerald-500", "bg-orange-500", "bg-pink-500", "bg-indigo-500", "bg-teal-500", "bg-rose-500"];
+const colors = ["bg-orange-500", "bg-purple-500", "bg-emerald-500", "bg-orange-500", "bg-pink-500", "bg-indigo-500", "bg-teal-500", "bg-rose-500"];
 
 export default async function ClientesPage() {
   const clients = await prisma.client.findMany({
@@ -38,7 +38,7 @@ export default async function ClientesPage() {
         {/* Stats Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: "Total de Clientes", value: clients.length, color: "text-blue-600", bg: "bg-blue-50" },
+            { label: "Total de Clientes", value: clients.length, color: "text-orange-600", bg: "bg-orange-50" },
             { label: "Ativos", value: activeCount, color: "text-green-600", bg: "bg-green-50" },
             { label: "Prospects", value: clients.filter((c) => c.status === "PROSPECT").length, color: "text-orange-500", bg: "bg-orange-50" },
             { label: "MRR Total", value: formatCurrency(totalMRR), color: "text-purple-600", bg: "bg-purple-50" },

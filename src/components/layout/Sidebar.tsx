@@ -12,9 +12,9 @@ import {
   Settings,
   FileText,
   LogOut,
-  Zap,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -26,7 +26,7 @@ const navItems = [
   { href: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
-export function Sidebar() {
+export function Sidebar({ logoUrl }: { logoUrl?: string | null }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const userName = session?.user?.name || "Usuário";
@@ -35,14 +35,8 @@ export function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-[#0f172a] flex flex-col z-30">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-white/10">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500">
-          <Zap className="h-5 w-5 text-white" />
-        </div>
-        <div>
-          <p className="font-bold text-white text-sm leading-tight">NovaRota</p>
-          <p className="text-[#64748b] text-xs">Agency Manager</p>
-        </div>
+      <div className="flex items-center px-6 py-5 border-b border-white/10">
+        <BrandLogo logoUrl={logoUrl} dark />
       </div>
 
       {/* Navigation */}
@@ -57,7 +51,7 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
                 isActive
-                  ? "bg-blue-600 text-white shadow-sm"
+                  ? "bg-orange-600 text-white shadow-sm"
                   : "text-[#94a3b8] hover:bg-white/10 hover:text-white"
               )}
             >
@@ -71,7 +65,7 @@ export function Sidebar() {
       {/* Bottom user section */}
       <div className="px-4 py-4 border-t border-white/10">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+          <div className="h-8 w-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
             {getInitials(userName)}
           </div>
           <div className="flex-1 min-w-0">
