@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { upload } from "@vercel/blob/client";
 import { useRouter } from "next/navigation";
 import { Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -58,18 +57,20 @@ export function UploadPostForm({ clients, defaultClientId }: { clients: ClientOp
 
     setUploading(true);
     try {
-      const extension = file.name.includes(".") ? file.name.split(".").pop() : "jpg";
-      const safeName = `posts/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
+      const uploadData = new FormData();
+      uploadData.set("file", file);
 
-      const blob = await upload(safeName, file, {
-        access: "public",
-        handleUploadUrl: "/api/upload",
-      });
+      const res = await fetch("/api/upload", { method: "POST", body: uploadData });
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || "Erro ao enviar imagem.");
+      }
 
       await createClientPost({
         clientId,
         month,
-        imageUrl: blob.url,
+        imageUrl: result.url,
         caption: caption || undefined,
         postDate: postDate || undefined,
       });
