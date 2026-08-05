@@ -178,8 +178,9 @@ model SocialMetric {
   notes           String?  @db.Text
 
   // Instagram-specific insights
-  totalViews         Int?
+  totalViews          Int?
   followerViewsPct    Float?
+  nonFollowerViewsPct Float?
   profileVisits       Int?
   linkTaps            Int?
   addressTaps         Int?

@@ -81,13 +81,11 @@ export function LogSocialMetricDialog({ clientId, accounts }: { clientId: string
           {isInstagram && (
             <div className="space-y-3 pt-2 border-t">
               <p className="text-xs font-medium text-gray-500">Métricas do Instagram</p>
+              <Input name="totalViews" type="number" placeholder="Visualizações totais" />
               <div className="grid grid-cols-2 gap-3">
-                <Input name="totalViews" type="number" placeholder="Visualizações totais" />
-                <Input name="followerViewsPct" type="number" step="0.1" min={0} max={100} placeholder="% visto por seguidores" />
+                <Input name="followerViewsPct" type="number" step="0.1" min={0} max={100} placeholder="% seguidores" />
+                <Input name="nonFollowerViewsPct" type="number" step="0.1" min={0} max={100} placeholder="% não seguidores" />
               </div>
-              <p className="text-[11px] text-gray-400 -mt-1.5">
-                O restante é calculado automaticamente como visto por não seguidores.
-              </p>
               <div className="grid grid-cols-3 gap-3">
                 <Input name="profileVisits" type="number" placeholder="Visitas ao perfil" />
                 <Input name="linkTaps" type="number" placeholder="Toques em links" />

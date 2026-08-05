@@ -170,6 +170,7 @@ export default async function ClientReportPage({
                   current &&
                   (current.totalViews != null ||
                     current.followerViewsPct != null ||
+                    current.nonFollowerViewsPct != null ||
                     current.profileVisits != null ||
                     current.linkTaps != null ||
                     current.addressTaps != null);
@@ -199,11 +200,13 @@ export default async function ClientReportPage({
                             <p className="text-sm font-semibold text-gray-900">{current.totalViews.toLocaleString("pt-BR")}</p>
                           </div>
                         )}
-                        {current.followerViewsPct != null && (
+                        {(current.followerViewsPct != null || current.nonFollowerViewsPct != null) && (
                           <div>
                             <p className="text-xs text-gray-400">Seguidores x Não seguidores</p>
                             <p className="text-sm font-semibold text-gray-900">
-                              {current.followerViewsPct.toLocaleString("pt-BR")}% / {(100 - current.followerViewsPct).toLocaleString("pt-BR")}%
+                              {current.followerViewsPct != null ? `${current.followerViewsPct.toLocaleString("pt-BR")}%` : "—"}
+                              {" / "}
+                              {current.nonFollowerViewsPct != null ? `${current.nonFollowerViewsPct.toLocaleString("pt-BR")}%` : "—"}
                             </p>
                           </div>
                         )}
