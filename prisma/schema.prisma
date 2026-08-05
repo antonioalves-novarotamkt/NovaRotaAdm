@@ -354,6 +354,27 @@ enum BillingFrequency {
   MONTHLY
 }
 
+model OperationalCost {
+  id          String       @id @default(cuid())
+  category    CostCategory
+  description String
+  amount      Float
+  month       DateTime
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("operational_costs")
+}
+
+enum CostCategory {
+  EMPLOYEE
+  SOFTWARE
+  INTERNET
+  RENT
+  MARKETING
+  OTHER
+}
+
 model AgencySettings {
   id      String  @id @default("singleton")
   name    String  @default("NovaRota Marketing")

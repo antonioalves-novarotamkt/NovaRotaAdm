@@ -7,6 +7,8 @@ import {
   Clock,
   ImageIcon,
   AlertCircle,
+  Wallet,
+  TrendingUp,
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { KPICard } from "@/components/dashboard/KPICard";
@@ -53,6 +55,8 @@ export default async function DashboardPage() {
     postsThisMonth,
     recentContracts,
     recentInvoices,
+    costsThisMonth,
+    costsPrevMonth,
   ] = await Promise.all([
     prisma.invoice.findMany({ where: { status: "PAID" }, select: { total: true, paidAt: true } }),
     prisma.client.count({ where: { status: "ACTIVE" } }),
@@ -74,6 +78,8 @@ export default async function DashboardPage() {
       take: 5,
       include: { client: true },
     }),
+    prisma.operationalCost.aggregate({ where: { month: monthStart }, _sum: { amount: true } }),
+    prisma.operationalCost.aggregate({ where: { month: prevMonthStart }, _sum: { amount: true } }),
   ]);
 
   const revenueThisMonth = invoices
@@ -90,6 +96,14 @@ export default async function DashboardPage() {
 
   const overdueTotal = overdueInvoices.reduce((s, i) => s + i.total, 0);
   const overdueCount = overdueInvoices.length;
+
+  const costsTotalThisMonth = costsThisMonth._sum.amount || 0;
+  const costsTotalPrevMonth = costsPrevMonth._sum.amount || 0;
+  const costsChange = costsTotalPrevMonth > 0 ? ((costsTotalThisMonth - costsTotalPrevMonth) / costsTotalPrevMonth) * 100 : 0;
+
+  const profitThisMonth = revenueThisMonth - costsTotalThisMonth;
+  const profitPrevMonth = revenuePrevMonth - costsTotalPrevMonth;
+  const profitChange = profitPrevMonth !== 0 ? ((profitThisMonth - profitPrevMonth) / Math.abs(profitPrevMonth)) * 100 : 0;
 
   const chartData = Array.from({ length: 6 }).map((_, idx) => {
     const d = new Date(Date.UTC(now.getFullYear(), now.getMonth() - (5 - idx), 1));
@@ -120,7 +134,7 @@ export default async function DashboardPage() {
       <Header title="Dashboard" subtitle="Bem-vindo ao NovaRota — visão geral do seu negócio" />
       <div className="p-6 space-y-6">
         {/* KPI Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <KPICard
             title="Receita Mensal"
             value={formatCurrency(revenueThisMonth)}
@@ -129,6 +143,24 @@ export default async function DashboardPage() {
             trend={revenueChange >= 0 ? "up" : "down"}
             icon={<DollarSign className="h-5 w-5 text-orange-600" />}
             iconBg="bg-orange-50"
+          />
+          <KPICard
+            title="Custos Operacionais"
+            value={formatCurrency(costsTotalThisMonth)}
+            change={Math.round(costsChange * 10) / 10}
+            changeLabel="vs mês anterior"
+            trend={costsChange <= 0 ? "up" : "down"}
+            icon={<Wallet className="h-5 w-5 text-red-500" />}
+            iconBg="bg-red-50"
+          />
+          <KPICard
+            title="Lucro do Mês"
+            value={formatCurrency(profitThisMonth)}
+            change={Math.round(profitChange * 10) / 10}
+            changeLabel="vs mês anterior"
+            trend={profitThisMonth >= 0 ? "up" : "down"}
+            icon={<TrendingUp className="h-5 w-5 text-emerald-600" />}
+            iconBg="bg-emerald-50"
           />
           <KPICard
             title="Clientes Ativos"
