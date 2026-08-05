@@ -90,6 +90,9 @@ model Client {
   logoUrl     String?
   billingFrequency BillingFrequency @default(NONE)
   nextBillingDate  DateTime?
+  billingDayOfWeek  Int?
+  billingDayOfMonth1 Int?
+  billingDayOfMonth2 Int?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -173,6 +176,16 @@ model Contract {
   fileUrl     String?
   content     String?        @db.Text
   notes       String?        @db.Text
+  paymentDay  Int?
+
+  includesSocialMedia   Boolean @default(false)
+  postsPerWeek          Int?
+  reelsPerWeek          Int?
+  socialNetworksCount   Int?
+  includesGoogleAds     Boolean @default(false)
+  includesMenuMgmt      Boolean @default(false)
+  menuPlatforms         String?
+
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 

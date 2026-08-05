@@ -165,6 +165,9 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                   contractValue={client.contractValue}
                   billingFrequency={client.billingFrequency}
                   nextBillingDate={client.nextBillingDate}
+                  billingDayOfWeek={client.billingDayOfWeek}
+                  billingDayOfMonth1={client.billingDayOfMonth1}
+                  billingDayOfMonth2={client.billingDayOfMonth2}
                 />
               </CardContent>
             </Card>
@@ -236,14 +239,19 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                     <ClipboardList className="h-4 w-4 text-gray-400" />
                     Atividades ({client.activities.length})
                   </CardTitle>
-                  <NewActivityDialog clientId={client.id} />
+                  <div className="flex items-center gap-2">
+                    <Link href={`/atividades?cliente=${client.id}`} className="text-xs text-orange-600 hover:underline">
+                      Ver todas
+                    </Link>
+                    <NewActivityDialog clientId={client.id} />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 {client.activities.length === 0 && (
                   <p className="text-sm text-gray-400">Nenhuma atividade registrada ainda.</p>
                 )}
-                {client.activities.map((activity) => (
+                {client.activities.slice(0, 5).map((activity) => (
                   <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-100">
                     <span className="text-xs text-gray-400 whitespace-nowrap pt-0.5">{formatDate(activity.date)}</span>
                     <p className="text-sm text-gray-700 flex-1">{activity.description}</p>

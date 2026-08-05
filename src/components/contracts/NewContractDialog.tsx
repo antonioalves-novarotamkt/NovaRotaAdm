@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { createContract } from "@/app/actions/contracts";
-import { fillContractTemplate } from "@/lib/contract-template";
+import { generateContractText } from "@/lib/contract-template";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const inputClass =
@@ -24,20 +24,29 @@ interface ClientOption {
   company: string | null;
 }
 
-const frequencyLabel: Record<string, string> = {
-  WEEKLY: "semanal",
-  BIWEEKLY: "quinzenal",
-  MONTHLY: "mensal",
-};
+const MENU_PLATFORMS = ["iFood", "Keeta", "99Food", "App próprio"];
 
 export function NewContractDialog({ clients, agencyName }: { clients: ClientOption[]; agencyName: string }) {
   const [open, setOpen] = useState(false);
   const [clientId, setClientId] = useState("");
   const [value, setValue] = useState("");
   const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [frequency, setFrequency] = useState("MONTHLY");
+  const [paymentDay, setPaymentDay] = useState("");
   const [content, setContent] = useState("");
+
+  const [includesSocialMedia, setIncludesSocialMedia] = useState(true);
+  const [postsPerWeek, setPostsPerWeek] = useState("");
+  const [reelsPerWeek, setReelsPerWeek] = useState("");
+  const [socialNetworksCount, setSocialNetworksCount] = useState("");
+  const [includesGoogleAds, setIncludesGoogleAds] = useState(false);
+  const [includesMenuMgmt, setIncludesMenuMgmt] = useState(false);
+  const [menuPlatforms, setMenuPlatforms] = useState<string[]>([]);
+
+  function toggleMenuPlatform(platform: string) {
+    setMenuPlatforms((prev) =>
+      prev.includes(platform) ? prev.filter((p) => p !== platform) : [...prev, platform]
+    );
+  }
 
   function handleUseTemplate() {
     const client = clients.find((c) => c.id === clientId);
@@ -46,14 +55,21 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
       return;
     }
     setContent(
-      fillContractTemplate({
+      generateContractText({
         clienteEmpresa: client.company || client.name,
         agencia: agencyName,
         valor: formatCurrency(Number(value)),
-        dataInicio: formatDate(new Date(startDate)),
-        dataFim: endDate ? formatDate(new Date(endDate)) : undefined,
-        frequencia: frequencyLabel[frequency] || frequency,
-        dataAssinatura: formatDate(new Date()),
+        paymentDay: paymentDay ? Number(paymentDay) : undefined,
+        dataAssinatura: formatDate(new Date(startDate)),
+        services: {
+          includesSocialMedia,
+          postsPerWeek: postsPerWeek ? Number(postsPerWeek) : undefined,
+          reelsPerWeek: reelsPerWeek ? Number(reelsPerWeek) : undefined,
+          socialNetworksCount: socialNetworksCount ? Number(socialNetworksCount) : undefined,
+          includesGoogleAds,
+          includesMenuMgmt,
+          menuPlatforms,
+        },
       })
     );
   }
@@ -93,7 +109,7 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
               name="value"
               type="number"
               step="0.01"
-              placeholder="Valor (R$)"
+              placeholder="Valor mensal (R$)"
               required
               value={value}
               onChange={(e) => setValue(e.target.value)}
@@ -111,19 +127,103 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
               <Input name="startDate" type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </label>
             <label className="text-xs text-gray-500 space-y-1">
-              Fim (opcional)
-              <Input name="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              Dia do pagamento (opcional)
+              <Input
+                name="paymentDay"
+                type="number"
+                min={1}
+                max={31}
+                placeholder="Ex: 10"
+                value={paymentDay}
+                onChange={(e) => setPaymentDay(e.target.value)}
+              />
             </label>
           </div>
-          <select value={frequency} onChange={(e) => setFrequency(e.target.value)} className={inputClass}>
-            <option value="WEEKLY">Pagamento semanal</option>
-            <option value="BIWEEKLY">Pagamento quinzenal</option>
-            <option value="MONTHLY">Pagamento mensal</option>
-          </select>
+
+          <div className="border rounded-lg p-3 space-y-3 bg-gray-50">
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Serviços contratados</p>
+
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  name="includesSocialMedia"
+                  checked={includesSocialMedia}
+                  onChange={(e) => setIncludesSocialMedia(e.target.checked)}
+                />
+                Social Media (posts, stories e reels)
+              </label>
+              {includesSocialMedia && (
+                <div className="grid grid-cols-3 gap-2 pl-6">
+                  <Input
+                    name="socialNetworksCount"
+                    type="number"
+                    min={0}
+                    placeholder="Nº redes"
+                    value={socialNetworksCount}
+                    onChange={(e) => setSocialNetworksCount(e.target.value)}
+                  />
+                  <Input
+                    name="postsPerWeek"
+                    type="number"
+                    min={0}
+                    placeholder="Posts/semana"
+                    value={postsPerWeek}
+                    onChange={(e) => setPostsPerWeek(e.target.value)}
+                  />
+                  <Input
+                    name="reelsPerWeek"
+                    type="number"
+                    min={0}
+                    placeholder="Reels/semana"
+                    value={reelsPerWeek}
+                    onChange={(e) => setReelsPerWeek(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                name="includesGoogleAds"
+                checked={includesGoogleAds}
+                onChange={(e) => setIncludesGoogleAds(e.target.checked)}
+              />
+              Google Ads
+            </label>
+
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  name="includesMenuMgmt"
+                  checked={includesMenuMgmt}
+                  onChange={(e) => setIncludesMenuMgmt(e.target.checked)}
+                />
+                Gerenciamento de Cardápio Digital
+              </label>
+              {includesMenuMgmt && (
+                <div className="flex flex-wrap gap-3 pl-6">
+                  {MENU_PLATFORMS.map((platform) => (
+                    <label key={platform} className="flex items-center gap-1.5 text-xs text-gray-600">
+                      <input
+                        type="checkbox"
+                        checked={menuPlatforms.includes(platform)}
+                        onChange={() => toggleMenuPlatform(platform)}
+                      />
+                      {platform}
+                    </label>
+                  ))}
+                  <input type="hidden" name="menuPlatforms" value={menuPlatforms.join(",")} />
+                </div>
+              )}
+            </div>
+          </div>
 
           <Button type="button" variant="outline" size="sm" className="w-full gap-1.5" onClick={handleUseTemplate}>
             <Sparkles className="h-3.5 w-3.5" />
-            Gerar Texto do Contrato (Modelo Padrão)
+            Gerar Texto do Contrato
           </Button>
 
           <textarea

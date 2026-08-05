@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { updateClientBilling } from "@/app/actions/billing";
+import { weekdayLabel } from "@/lib/billing";
 
 const inputClass =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
@@ -17,17 +18,41 @@ const frequencyLabel: Record<string, string> = {
   MONTHLY: "Mensal",
 };
 
+const weekdayOptions = [0, 1, 2, 3, 4, 5, 6];
+const monthDayOptions = Array.from({ length: 31 }, (_, i) => i + 1);
+
 interface Props {
   clientId: string;
   contractValue: number | null;
   billingFrequency: string;
   nextBillingDate: Date | null;
+  billingDayOfWeek: number | null;
+  billingDayOfMonth1: number | null;
+  billingDayOfMonth2: number | null;
 }
 
-export function ClientBillingForm({ clientId, contractValue, billingFrequency, nextBillingDate }: Props) {
+export function ClientBillingForm({
+  clientId,
+  contractValue,
+  billingFrequency,
+  nextBillingDate,
+  billingDayOfWeek,
+  billingDayOfMonth1,
+  billingDayOfMonth2,
+}: Props) {
   const [editing, setEditing] = useState(false);
+  const [frequency, setFrequency] = useState(billingFrequency);
 
   if (!editing) {
+    let scheduleText = "";
+    if (billingFrequency === "WEEKLY" && billingDayOfWeek != null) {
+      scheduleText = `Toda ${weekdayLabel(billingDayOfWeek)}`;
+    } else if (billingFrequency === "MONTHLY" && billingDayOfMonth1 != null) {
+      scheduleText = `Todo dia ${billingDayOfMonth1} do mês`;
+    } else if (billingFrequency === "BIWEEKLY" && billingDayOfMonth1 != null && billingDayOfMonth2 != null) {
+      scheduleText = `Dias ${billingDayOfMonth1} e ${billingDayOfMonth2} de cada mês`;
+    }
+
     return (
       <div className="space-y-2">
         <div>
@@ -39,6 +64,7 @@ export function ClientBillingForm({ clientId, contractValue, billingFrequency, n
         <div className="text-sm text-gray-600">
           Recebimento: <span className="font-medium">{frequencyLabel[billingFrequency] || billingFrequency}</span>
         </div>
+        {scheduleText && <div className="text-sm text-gray-600">{scheduleText}</div>}
         {nextBillingDate && (
           <div className="text-sm text-gray-600">
             Próximo vencimento: <span className="font-medium">{formatDate(nextBillingDate)}</span>
@@ -68,17 +94,85 @@ export function ClientBillingForm({ clientId, contractValue, billingFrequency, n
         placeholder="Valor (R$)"
         defaultValue={contractValue ?? ""}
       />
-      <select name="billingFrequency" defaultValue={billingFrequency} className={inputClass}>
+      <select
+        name="billingFrequency"
+        value={frequency}
+        onChange={(e) => setFrequency(e.target.value)}
+        className={inputClass}
+      >
         <option value="NONE">Sem recebimento programado</option>
         <option value="WEEKLY">Semanal</option>
         <option value="BIWEEKLY">Quinzenal</option>
         <option value="MONTHLY">Mensal</option>
       </select>
-      <Input
-        name="nextBillingDate"
-        type="date"
-        defaultValue={nextBillingDate ? new Date(nextBillingDate).toISOString().slice(0, 10) : ""}
-      />
+
+      {frequency === "WEEKLY" && (
+        <label className="text-xs text-gray-500 space-y-1 block">
+          Dia da semana que repete
+          <select name="billingDayOfWeek" defaultValue={billingDayOfWeek ?? ""} className={inputClass}>
+            <option value="" disabled>
+              Selecione o dia
+            </option>
+            {weekdayOptions.map((d) => (
+              <option key={d} value={d}>
+                {weekdayLabel(d)}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      {frequency === "MONTHLY" && (
+        <label className="text-xs text-gray-500 space-y-1 block">
+          Dia do mês que o cliente paga
+          <select name="billingDayOfMonth1" defaultValue={billingDayOfMonth1 ?? ""} className={inputClass}>
+            <option value="" disabled>
+              Selecione o dia
+            </option>
+            {monthDayOptions.map((d) => (
+              <option key={d} value={d}>
+                Dia {d}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      {frequency === "BIWEEKLY" && (
+        <div className="grid grid-cols-2 gap-3">
+          <label className="text-xs text-gray-500 space-y-1 block">
+            1º dia do mês
+            <select name="billingDayOfMonth1" defaultValue={billingDayOfMonth1 ?? ""} className={inputClass}>
+              <option value="" disabled>
+                Dia
+              </option>
+              {monthDayOptions.map((d) => (
+                <option key={d} value={d}>
+                  Dia {d}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs text-gray-500 space-y-1 block">
+            2º dia do mês
+            <select name="billingDayOfMonth2" defaultValue={billingDayOfMonth2 ?? ""} className={inputClass}>
+              <option value="" disabled>
+                Dia
+              </option>
+              {monthDayOptions.map((d) => (
+                <option key={d} value={d}>
+                  Dia {d}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+
+      <p className="text-[11px] text-gray-400">
+        A próxima data de vencimento é calculada automaticamente a partir dessa regra.
+      </p>
+
       <div className="flex gap-2">
         <Button type="submit" size="sm" className="bg-orange-600 hover:bg-orange-700">
           Salvar

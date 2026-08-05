@@ -3,36 +3,45 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { BillingFrequency } from "@prisma/client";
+import { computeNextBillingDate } from "@/lib/billing";
 
 export async function updateClientBilling(formData: FormData) {
   const clientId = String(formData.get("clientId") || "").trim();
   const billingFrequency = String(formData.get("billingFrequency") || "NONE") as BillingFrequency;
-  const nextBillingDateStr = String(formData.get("nextBillingDate") || "");
   const contractValueRaw = String(formData.get("contractValue") || "");
+  const dayOfWeekRaw = String(formData.get("billingDayOfWeek") || "");
+  const dayOfMonth1Raw = String(formData.get("billingDayOfMonth1") || "");
+  const dayOfMonth2Raw = String(formData.get("billingDayOfMonth2") || "");
 
   if (!clientId) {
     throw new Error("Cliente é obrigatório.");
   }
 
+  const billingDayOfWeek = dayOfWeekRaw ? Number(dayOfWeekRaw) : null;
+  const billingDayOfMonth1 = dayOfMonth1Raw ? Number(dayOfMonth1Raw) : null;
+  const billingDayOfMonth2 = dayOfMonth2Raw ? Number(dayOfMonth2Raw) : null;
+
+  const nextBillingDate = computeNextBillingDate({
+    frequency: billingFrequency,
+    dayOfWeek: billingDayOfWeek,
+    dayOfMonth1: billingDayOfMonth1,
+    dayOfMonth2: billingDayOfMonth2,
+  });
+
   await prisma.client.update({
     where: { id: clientId },
     data: {
       billingFrequency,
-      nextBillingDate: nextBillingDateStr ? new Date(nextBillingDateStr) : null,
+      billingDayOfWeek,
+      billingDayOfMonth1,
+      billingDayOfMonth2,
+      nextBillingDate,
       contractValue: contractValueRaw ? Number(contractValueRaw) : null,
     },
   });
 
   revalidatePath(`/clientes/${clientId}`);
   revalidatePath("/financeiro");
-}
-
-function advanceDate(date: Date, frequency: BillingFrequency): Date {
-  const next = new Date(date);
-  if (frequency === "WEEKLY") next.setDate(next.getDate() + 7);
-  else if (frequency === "BIWEEKLY") next.setDate(next.getDate() + 14);
-  else if (frequency === "MONTHLY") next.setMonth(next.getMonth() + 1);
-  return next;
 }
 
 export async function registerScheduledPayment(formData: FormData) {
@@ -60,9 +69,22 @@ export async function registerScheduledPayment(formData: FormData) {
     },
   });
 
+  const dayAfter = new Date(client.nextBillingDate);
+  dayAfter.setDate(dayAfter.getDate() + 1);
+
+  const nextBillingDate = computeNextBillingDate(
+    {
+      frequency: client.billingFrequency,
+      dayOfWeek: client.billingDayOfWeek,
+      dayOfMonth1: client.billingDayOfMonth1,
+      dayOfMonth2: client.billingDayOfMonth2,
+    },
+    dayAfter
+  );
+
   await prisma.client.update({
     where: { id: clientId },
-    data: { nextBillingDate: advanceDate(client.nextBillingDate, client.billingFrequency) },
+    data: { nextBillingDate },
   });
 
   revalidatePath("/financeiro");
