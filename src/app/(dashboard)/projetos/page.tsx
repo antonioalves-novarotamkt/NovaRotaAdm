@@ -1,9 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Eye, Heart, Share2 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { UploadPostForm } from "@/components/projetos/UploadPostForm";
 import { DeletePostButton } from "@/components/projetos/DeletePostButton";
+import { EditPostMetrics } from "@/components/projetos/EditPostMetrics";
 import { formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 
@@ -37,7 +39,7 @@ export default async function ProjetosPage({
 
   return (
     <div>
-      <Header title="Projetos" subtitle="Posts realizados por cliente, mês a mês, para gerar relatórios" />
+      <Header title="Posts" subtitle="Prints dos posts publicados, mês a mês — use o botão do gráfico para registrar visualizações, curtidas e compartilhamentos" />
       <div className="p-6 space-y-6">
         {/* Toolbar */}
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
@@ -86,6 +88,7 @@ export default async function ProjetosPage({
               <Card key={post.id} className="border-0 shadow-sm overflow-hidden">
                 <div className="relative aspect-square bg-gray-100">
                   <Image src={post.imageUrl} alt={post.caption || "Post"} fill className="object-cover" unoptimized />
+                  <EditPostMetrics postId={post.id} views={post.views} likes={post.likes} shares={post.shares} />
                   <DeletePostButton postId={post.id} />
                 </div>
                 <CardContent className="p-3 space-y-1">
@@ -96,6 +99,25 @@ export default async function ProjetosPage({
                   <p className="text-[11px] text-gray-400">
                     {post.postDate ? formatDate(post.postDate) : formatDate(post.createdAt)}
                   </p>
+                  {(post.views != null || post.likes != null || post.shares != null) && (
+                    <div className="flex items-center gap-3 pt-1 text-[11px] text-gray-500">
+                      {post.views != null && (
+                        <span className="flex items-center gap-1">
+                          <Eye className="h-3 w-3" /> {post.views.toLocaleString("pt-BR")}
+                        </span>
+                      )}
+                      {post.likes != null && (
+                        <span className="flex items-center gap-1">
+                          <Heart className="h-3 w-3" /> {post.likes.toLocaleString("pt-BR")}
+                        </span>
+                      )}
+                      {post.shares != null && (
+                        <span className="flex items-center gap-1">
+                          <Share2 className="h-3 w-3" /> {post.shares.toLocaleString("pt-BR")}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
