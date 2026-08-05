@@ -28,7 +28,7 @@ export function NewInvoiceDialog({ clients }: { clients: ClientOption[] }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="h-8 gap-1.5 bg-blue-600 hover:bg-blue-700" disabled={clients.length === 0}>
+        <Button size="sm" className="h-8 gap-1.5 bg-orange-600 hover:bg-orange-700" disabled={clients.length === 0}>
           <Plus className="h-3.5 w-3.5" />
           Nova Fatura
         </Button>
@@ -62,7 +62,7 @@ export function NewInvoiceDialog({ clients }: { clients: ClientOption[] }) {
             </select>
           </div>
           <Input name="description" placeholder="Descrição (opcional)" />
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+          <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
             Salvar Fatura
           </Button>
         </form>

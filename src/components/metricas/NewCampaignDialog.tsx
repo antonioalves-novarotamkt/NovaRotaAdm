@@ -30,7 +30,7 @@ export function NewCampaignDialog({ clients }: { clients: ClientOption[] }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="h-9 gap-1.5 bg-blue-600 hover:bg-blue-700" disabled={clients.length === 0}>
+        <Button size="sm" className="h-9 gap-1.5 bg-orange-600 hover:bg-orange-700" disabled={clients.length === 0}>
           <Plus className="h-4 w-4" />
           Nova Campanha
         </Button>
@@ -75,7 +75,7 @@ export function NewCampaignDialog({ clients }: { clients: ClientOption[] }) {
             <Input name="spend" type="number" step="0.01" placeholder="Investimento (R$)" required />
           </div>
           <Input name="revenue" type="number" step="0.01" placeholder="Receita gerada (R$)" />
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+          <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
             Salvar Campanha
           </Button>
         </form>

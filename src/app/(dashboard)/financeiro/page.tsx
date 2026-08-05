@@ -7,8 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RevenueChart } from "@/components/financeiro/RevenueChart";
 import { NewInvoiceDialog } from "@/components/financeiro/NewInvoiceDialog";
+import { RegisterPaymentButton } from "@/components/financeiro/RegisterPaymentButton";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
+
+const frequencyLabel: Record<string, string> = {
+  WEEKLY: "Semanal",
+  BIWEEKLY: "Quinzenal",
+  MONTHLY: "Mensal",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +30,7 @@ const statusMap: Record<string, { label: string; variant: "success" | "warning" 
 const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 export default async function FinanceiroPage() {
-  const [invoices, clients] = await Promise.all([
+  const [invoices, clients, scheduledClients] = await Promise.all([
     prisma.invoice.findMany({
       orderBy: { issueDate: "desc" },
       include: { client: true },
@@ -31,6 +38,10 @@ export default async function FinanceiroPage() {
     prisma.client.findMany({
       orderBy: { name: "asc" },
       select: { id: true, name: true, company: true },
+    }),
+    prisma.client.findMany({
+      where: { billingFrequency: { not: "NONE" }, nextBillingDate: { not: null } },
+      orderBy: { nextBillingDate: "asc" },
     }),
   ]);
 
@@ -71,8 +82,8 @@ export default async function FinanceiroPage() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-gray-500">Recebido</p>
-                <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <TrendingUp className="h-4 w-4 text-blue-600" />
+                <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-orange-600" />
                 </div>
               </div>
               <p className="text-2xl font-bold text-green-600">{formatCurrency(paid)}</p>
@@ -116,6 +127,40 @@ export default async function FinanceiroPage() {
             <RevenueChart data={chartData} />
           </CardContent>
         </Card>
+
+        {/* Scheduled Payments */}
+        {scheduledClients.length > 0 && (
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold text-gray-900">Recebimentos Programados</CardTitle>
+              <p className="text-xs text-gray-500">Previsão com base na frequência configurada em cada cliente</p>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {scheduledClients.map((client) => {
+                const overdue = client.nextBillingDate && client.nextBillingDate < new Date();
+                return (
+                  <div key={client.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100">
+                    <div>
+                      <Link href={`/clientes/${client.id}`} className="text-sm font-medium text-gray-900 hover:text-orange-600">
+                        {client.company || client.name}
+                      </Link>
+                      <p className="text-xs text-gray-500">
+                        {frequencyLabel[client.billingFrequency]} · vence {client.nextBillingDate && formatDate(client.nextBillingDate)}
+                        {overdue && <span className="text-red-500 font-medium"> · atrasado</span>}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-gray-900">
+                        {client.contractValue ? formatCurrency(client.contractValue) : "—"}
+                      </span>
+                      <RegisterPaymentButton clientId={client.id} />
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Invoices Table */}
         <Card className="border-0 shadow-sm">
@@ -167,7 +212,7 @@ export default async function FinanceiroPage() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <Link href={`/clientes/${invoice.client.id}`}>
-                              <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-700 h-7">
+                              <Button variant="ghost" size="sm" className="text-xs text-orange-600 hover:text-orange-700 h-7">
                                 Ver
                               </Button>
                             </Link>

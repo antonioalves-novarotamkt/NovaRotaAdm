@@ -55,8 +55,8 @@ export default function DashboardPage() {
             change={12.5}
             changeLabel="vs mês anterior"
             trend="up"
-            icon={<DollarSign className="h-5 w-5 text-blue-600" />}
-            iconBg="bg-blue-50"
+            icon={<DollarSign className="h-5 w-5 text-orange-600" />}
+            iconBg="bg-orange-50"
           />
           <KPICard
             title="Clientes Ativos"
@@ -125,7 +125,7 @@ export default function DashboardPage() {
                   <span className="font-semibold text-gray-900">79%</span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded-full" style={{ width: "79%" }} />
+                  <div className="h-full bg-orange-500 rounded-full" style={{ width: "79%" }} />
                 </div>
                 <p className="text-xs text-gray-400 mt-1">{formatCurrency(78500)} / {formatCurrency(100000)}</p>
               </div>
@@ -140,7 +140,7 @@ export default function DashboardPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold text-gray-900">Projetos Recentes</CardTitle>
-                <a href="/projetos" className="text-xs text-blue-600 hover:underline">Ver todos</a>
+                <a href="/projetos" className="text-xs text-orange-600 hover:underline">Ver todos</a>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -166,7 +166,7 @@ export default function DashboardPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold text-gray-900">Últimas Faturas</CardTitle>
-                <a href="/financeiro" className="text-xs text-blue-600 hover:underline">Ver todas</a>
+                <a href="/financeiro" className="text-xs text-orange-600 hover:underline">Ver todas</a>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">

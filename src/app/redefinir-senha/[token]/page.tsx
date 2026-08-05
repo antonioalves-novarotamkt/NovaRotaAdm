@@ -33,7 +33,7 @@ export default async function RedefinirSenhaPage({
       <Card className="w-full max-w-sm border-0 shadow-xl">
         <CardContent className="p-8">
           <div className="flex flex-col items-center gap-2 mb-6">
-            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-500">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-orange-500">
               <Zap className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-lg font-bold text-gray-900">Redefinir senha</h1>
@@ -45,7 +45,7 @@ export default async function RedefinirSenhaPage({
                 Esse link é inválido ou expirou. Solicite um novo link de redefinição.
               </p>
               <Link href="/esqueci-senha">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700">Solicitar novo link</Button>
+                <Button className="w-full bg-orange-600 hover:bg-orange-700">Solicitar novo link</Button>
               </Link>
             </div>
           ) : (
@@ -60,7 +60,7 @@ export default async function RedefinirSenhaPage({
                 <Input type="password" name="confirmPassword" placeholder="Confirmar nova senha" className="pl-9" required minLength={6} />
               </div>
               {errorMessage && <p className="text-xs text-red-500">{errorMessage}</p>}
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+              <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
                 Redefinir senha
               </Button>
             </form>

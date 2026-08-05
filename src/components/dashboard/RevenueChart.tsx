@@ -42,8 +42,8 @@ export function RevenueChart() {
           <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="colorReceita" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                <stop offset="5%" stopColor="#EA580C" stopOpacity={0.15} />
+                <stop offset="95%" stopColor="#EA580C" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="colorLucro" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
@@ -58,7 +58,7 @@ export function RevenueChart() {
               contentStyle={{ borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "12px" }}
             />
             <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "12px" }} />
-            <Area type="monotone" dataKey="receita" name="Receita" stroke="#3b82f6" strokeWidth={2} fill="url(#colorReceita)" />
+            <Area type="monotone" dataKey="receita" name="Receita" stroke="#EA580C" strokeWidth={2} fill="url(#colorReceita)" />
             <Area type="monotone" dataKey="lucro" name="Lucro" stroke="#10b981" strokeWidth={2} fill="url(#colorLucro)" />
           </AreaChart>
         </ResponsiveContainer>

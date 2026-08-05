@@ -28,7 +28,7 @@ export function Header({ title, subtitle }: HeaderProps) {
           <Bell className="h-4 w-4 text-gray-600" />
           <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500" />
         </Button>
-        <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold cursor-pointer">
+        <div className="h-8 w-8 rounded-full bg-orange-600 flex items-center justify-center text-white text-xs font-bold cursor-pointer">
           AD
         </div>
       </div>

@@ -28,7 +28,7 @@ export function NewProjectDialog({ clients }: { clients: ClientOption[] }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="h-9 gap-1.5 bg-blue-600 hover:bg-blue-700" disabled={clients.length === 0}>
+        <Button size="sm" className="h-9 gap-1.5 bg-orange-600 hover:bg-orange-700" disabled={clients.length === 0}>
           <Plus className="h-4 w-4" />
           Novo Projeto
         </Button>
@@ -76,7 +76,7 @@ export function NewProjectDialog({ clients }: { clients: ClientOption[] }) {
             rows={3}
             className={inputClass + " resize-none"}
           />
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+          <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
             Salvar Projeto
           </Button>
         </form>

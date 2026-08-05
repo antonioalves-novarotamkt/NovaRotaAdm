@@ -30,7 +30,7 @@ interface PlatformPoint {
   revenue: number;
 }
 
-const PIE_COLORS = ["#3b82f6", "#8b5cf6", "#06b6d4", "#ec4899", "#f59e0b", "#10b981"];
+const PIE_COLORS = ["#EA580C", "#8b5cf6", "#06b6d4", "#ec4899", "#f59e0b", "#10b981"];
 
 export function PerformanceLineChart({ data }: { data: PerformancePoint[] }) {
   return (
@@ -43,7 +43,7 @@ export function PerformanceLineChart({ data }: { data: PerformancePoint[] }) {
         <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} width={50} />
         <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid #e5e7eb", fontSize: "12px" }} />
         <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "12px" }} />
-        <Line yAxisId="left" type="monotone" dataKey="impressoes" name="Impressões" stroke="#3b82f6" strokeWidth={2} dot={false} />
+        <Line yAxisId="left" type="monotone" dataKey="impressoes" name="Impressões" stroke="#EA580C" strokeWidth={2} dot={false} />
         <Line yAxisId="left" type="monotone" dataKey="cliques" name="Cliques" stroke="#8b5cf6" strokeWidth={2} dot={false} />
         <Line yAxisId="right" type="monotone" dataKey="conversoes" name="Conversões" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: "#10b981" }} />
       </LineChart>
@@ -93,7 +93,7 @@ export function PlatformBarChart({ data }: { data: PlatformPoint[] }) {
         <Tooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ borderRadius: "8px", fontSize: "12px" }} />
         <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "12px" }} />
         <Bar dataKey="spend" name="Investimento" fill="#e0e7ff" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="revenue" name="Receita" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="revenue" name="Receita" fill="#EA580C" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

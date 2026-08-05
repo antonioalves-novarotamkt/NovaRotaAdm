@@ -1,10 +1,13 @@
+import Link from "next/link";
 import { FileText, Building2 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { NewContractDialog } from "@/components/contracts/NewContractDialog";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
+import { getAgencySettings } from "@/app/actions/agency";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +19,7 @@ const statusMap: Record<string, { label: string; variant: "success" | "warning" 
 };
 
 export default async function ContratosPage() {
-  const [contracts, clients] = await Promise.all([
+  const [contracts, clients, agency] = await Promise.all([
     prisma.contract.findMany({
       orderBy: { startDate: "desc" },
       include: { client: true },
@@ -25,6 +28,7 @@ export default async function ContratosPage() {
       orderBy: { name: "asc" },
       select: { id: true, name: true, company: true },
     }),
+    getAgencySettings(),
   ]);
 
   const activeCount = contracts.filter((c) => c.status === "ACTIVE").length;
@@ -40,7 +44,7 @@ export default async function ContratosPage() {
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
               <p className="text-xs text-gray-500 mb-1">Total de Contratos</p>
-              <p className="text-xl font-bold text-blue-600">{contracts.length}</p>
+              <p className="text-xl font-bold text-orange-600">{contracts.length}</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-sm">
@@ -63,7 +67,7 @@ export default async function ContratosPage() {
               ? "Cadastre um cliente antes de criar um contrato."
               : `${contracts.length} contrato(s) cadastrado(s)`}
           </p>
-          <NewContractDialog clients={clients} />
+          <NewContractDialog clients={clients} agencyName={agency.name} />
         </div>
 
         {contracts.length === 0 ? (
@@ -80,8 +84,8 @@ export default async function ContratosPage() {
                 <Card key={contract.id} className="border-0 shadow-sm">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                        <FileText className="h-5 w-5 text-blue-600" />
+                      <div className="h-10 w-10 rounded-lg bg-orange-50 flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-orange-600" />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-gray-900">{contract.title}</p>
@@ -101,6 +105,13 @@ export default async function ContratosPage() {
                         <p className="text-sm font-bold text-gray-900">{formatCurrency(contract.value)}</p>
                       </div>
                       <Badge variant={status.variant}>{status.label}</Badge>
+                      {contract.content && (
+                        <Link href={`/contratos/${contract.id}`}>
+                          <Button variant="ghost" size="sm" className="text-xs text-orange-600 hover:text-orange-700 h-7">
+                            Ver
+                          </Button>
+                        </Link>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

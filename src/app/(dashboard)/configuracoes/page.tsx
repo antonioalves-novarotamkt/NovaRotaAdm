@@ -9,6 +9,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NewUserDialog } from "@/components/settings/NewUserDialog";
 import { UserRow } from "@/components/settings/UserRow";
+import { LogoUpload } from "@/components/settings/LogoUpload";
+import { getAgencySettings, updateAgencyLogo, updateAgencyName } from "@/app/actions/agency";
 
 export const dynamic = "force-dynamic";
 
@@ -17,12 +19,15 @@ export default async function ConfiguracoesPage() {
   const currentUserId = (session?.user as { id?: string } | undefined)?.id;
   const isAdmin = (session?.user as { role?: string } | undefined)?.role === "ADMIN";
 
-  const users = isAdmin
-    ? await prisma.user.findMany({
-        orderBy: { createdAt: "asc" },
-        select: { id: true, name: true, email: true, role: true },
-      })
-    : [];
+  const [users, agency] = await Promise.all([
+    isAdmin
+      ? prisma.user.findMany({
+          orderBy: { createdAt: "asc" },
+          select: { id: true, name: true, email: true, role: true },
+        })
+      : Promise.resolve([]),
+    getAgencySettings(),
+  ]);
 
   return (
     <div>
@@ -32,13 +37,13 @@ export default async function ConfiguracoesPage() {
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-blue-600" />
+              <User className="h-4 w-4 text-orange-600" />
               <CardTitle className="text-base font-semibold text-gray-900">Perfil do Usuário</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-blue-600 flex items-center justify-center text-white text-xl font-bold">
+              <div className="h-16 w-16 rounded-full bg-orange-600 flex items-center justify-center text-white text-xl font-bold">
                 AD
               </div>
               <div>
@@ -67,7 +72,7 @@ export default async function ConfiguracoesPage() {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700">Salvar Alterações</Button>
+              <Button size="sm" className="bg-orange-600 hover:bg-orange-700">Salvar Alterações</Button>
             </div>
           </CardContent>
         </Card>
@@ -81,27 +86,32 @@ export default async function ConfiguracoesPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">Logo da Agência</label>
+              <LogoUpload currentUrl={agency.logoUrl} onUploaded={updateAgencyLogo} label="Enviar Logo" />
+              <p className="text-xs text-gray-400 mt-1.5">Usada no menu lateral, tela de login e relatórios.</p>
+            </div>
+            <form action={updateAgencyName} className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">Nome da Agência</label>
-                <Input defaultValue="NovaRota Marketing" className="border-gray-200" />
+                <Input name="name" defaultValue={agency.name} className="border-gray-200" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">CNPJ</label>
-                <Input placeholder="00.000.000/0001-00" className="border-gray-200" />
+                <Input placeholder="00.000.000/0001-00" className="border-gray-200" disabled />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">Website</label>
-                <Input placeholder="https://novarota.com.br" className="border-gray-200" />
+                <Input placeholder="https://novarota.com.br" className="border-gray-200" disabled />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">Telefone</label>
-                <Input placeholder="(11) 3333-4444" className="border-gray-200" />
+                <Input placeholder="(11) 3333-4444" className="border-gray-200" disabled />
               </div>
-            </div>
-            <div className="flex justify-end">
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700">Salvar</Button>
-            </div>
+              <div className="col-span-2 flex justify-end">
+                <Button type="submit" size="sm" className="bg-orange-600 hover:bg-orange-700">Salvar Nome</Button>
+              </div>
+            </form>
           </CardContent>
         </Card>
 
@@ -111,7 +121,7 @@ export default async function ConfiguracoesPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-blue-600" />
+                  <Users className="h-4 w-4 text-orange-600" />
                   <CardTitle className="text-base font-semibold text-gray-900">Usuários do Sistema</CardTitle>
                 </div>
                 <NewUserDialog />
@@ -152,7 +162,7 @@ export default async function ConfiguracoesPage() {
                   <p className="text-sm font-medium text-gray-900">{item.label}</p>
                   <p className="text-xs text-gray-500">{item.desc}</p>
                 </div>
-                <div className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${item.enabled ? "bg-blue-600" : "bg-gray-200"} cursor-pointer`}>
+                <div className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${item.enabled ? "bg-orange-600" : "bg-gray-200"} cursor-pointer`}>
                   <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform mt-0.5 ${item.enabled ? "translate-x-4" : "translate-x-0.5"}`} />
                 </div>
               </div>

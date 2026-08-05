@@ -89,7 +89,7 @@ export default async function ProjetosPage({
                   <DeletePostButton postId={post.id} />
                 </div>
                 <CardContent className="p-3 space-y-1">
-                  <Link href={`/clientes/${post.client.id}`} className="text-xs font-semibold text-blue-600 hover:underline">
+                  <Link href={`/clientes/${post.client.id}`} className="text-xs font-semibold text-orange-600 hover:underline">
                     {post.client.company || post.client.name}
                   </Link>
                   {post.caption && <p className="text-xs text-gray-600 line-clamp-2">{post.caption}</p>}
