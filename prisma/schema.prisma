@@ -104,8 +104,38 @@ model Client {
   campaignMetrics CampaignMetric[]
   posts           ClientPost[]
   sales           ClientSale[]
+  leadOrigin      Lead?
 
   @@map("clients")
+}
+
+model Lead {
+  id          String    @id @default(cuid())
+  name        String
+  company     String?
+  email       String?
+  phone       String?
+  source      String?
+  value       Float?
+  stage       LeadStage @default(NEW)
+  notes       String?   @db.Text
+  lostReason  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  convertedClientId String? @unique
+  convertedClient   Client? @relation(fields: [convertedClientId], references: [id])
+
+  @@map("leads")
+}
+
+enum LeadStage {
+  NEW
+  CONTACTED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
 }
 
 model ClientSale {
@@ -146,6 +176,14 @@ model SocialMetric {
   reach           Int?
   engagementRate  Float?
   notes           String?  @db.Text
+
+  // Instagram-specific insights
+  totalViews         Int?
+  followerViewsPct    Float?
+  profileVisits       Int?
+  linkTaps            Int?
+  addressTaps         Int?
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

@@ -14,6 +14,7 @@ import {
   ClipboardList,
   ShoppingCart,
   Wallet,
+  Target,
   LogOut,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
@@ -21,6 +22,7 @@ import { BrandLogo } from "@/components/layout/BrandLogo";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/funil", label: "Funil de Vendas", icon: Target },
   { href: "/clientes", label: "Clientes", icon: Users },
   { href: "/contratos", label: "Contratos", icon: FileText },
   { href: "/atividades", label: "Atividades", icon: ClipboardList },
