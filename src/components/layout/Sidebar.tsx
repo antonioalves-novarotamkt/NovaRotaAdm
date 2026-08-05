@@ -12,6 +12,7 @@ import {
   Settings,
   FileText,
   ClipboardList,
+  ShoppingCart,
   LogOut,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/contratos", label: "Contratos", icon: FileText },
   { href: "/atividades", label: "Atividades", icon: ClipboardList },
   { href: "/projetos", label: "Posts", icon: FolderOpen },
+  { href: "/vendas", label: "Vendas", icon: ShoppingCart },
   { href: "/financeiro", label: "Financeiro", icon: DollarSign },
   { href: "/metricas", label: "Métricas", icon: BarChart2 },
   { href: "/configuracoes", label: "Configurações", icon: Settings },

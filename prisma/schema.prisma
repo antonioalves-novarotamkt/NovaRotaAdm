@@ -103,8 +103,24 @@ model Client {
   activities      ClientActivity[]
   campaignMetrics CampaignMetric[]
   posts           ClientPost[]
+  sales           ClientSale[]
 
   @@map("clients")
+}
+
+model ClientSale {
+  id         String   @id @default(cuid())
+  clientId   String
+  month      DateTime
+  platform   String?
+  totalValue Float
+  salesCount Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_sales")
 }
 
 model SocialAccount {

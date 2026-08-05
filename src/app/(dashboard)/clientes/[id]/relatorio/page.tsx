@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Eye, Heart, Share2, TrendingUp } from "lucide-react";
+import { ArrowLeft, Eye, Heart, Share2, TrendingUp, ShoppingCart } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,7 @@ export default async function ClientReportPage({
 
   if (!client) notFound();
 
-  const [activities, posts, campaigns] = await Promise.all([
+  const [activities, posts, campaigns, sales] = await Promise.all([
     prisma.clientActivity.findMany({
       where: {
         clientId: client.id,
@@ -78,7 +78,13 @@ export default async function ClientReportPage({
         date: { gte: monthDate, lt: nextMonthDate },
       },
     }),
+    prisma.clientSale.findMany({
+      where: { clientId: client.id, month: monthDate },
+    }),
   ]);
+
+  const totalSalesValue = sales.reduce((s, sale) => s + sale.totalValue, 0);
+  const totalSalesCount = sales.reduce((s, sale) => s + sale.salesCount, 0);
 
   const totalViews = posts.reduce((s, p) => s + (p.views || 0), 0);
   const totalLikes = posts.reduce((s, p) => s + (p.likes || 0), 0);
@@ -244,6 +250,48 @@ export default async function ClientReportPage({
                 <p className="text-xs text-gray-400">Conversões</p>
                 <p className="text-sm font-bold text-gray-900">{totalConversions.toLocaleString("pt-BR")}</p>
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Sales */}
+        {sales.length > 0 && (
+          <Card className="border-0 shadow-sm print:shadow-none">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4 text-gray-400" />
+                Vendas do Mês
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-3">
+                <div>
+                  <p className="text-xs text-gray-400">Valor Total</p>
+                  <p className="text-sm font-bold text-gray-900">{formatCurrency(totalSalesValue)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Nº de Vendas</p>
+                  <p className="text-sm font-bold text-gray-900">{totalSalesCount.toLocaleString("pt-BR")}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Ticket Médio</p>
+                  <p className="text-sm font-bold text-gray-900">
+                    {formatCurrency(totalSalesCount > 0 ? totalSalesValue / totalSalesCount : 0)}
+                  </p>
+                </div>
+              </div>
+              {sales.length > 1 && (
+                <div className="space-y-1.5 border-t pt-3">
+                  {sales.map((sale) => (
+                    <div key={sale.id} className="flex items-center justify-between text-xs text-gray-600">
+                      <span>{sale.platform || "Geral"}</span>
+                      <span>
+                        {formatCurrency(sale.totalValue)} · {sale.salesCount} vendas
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
