@@ -44,6 +44,7 @@ export async function logSocialMetric(formData: FormData) {
     engagementRate: optionalNumber(formData, "engagementRate"),
     totalViews: optionalNumber(formData, "totalViews"),
     followerViewsPct: optionalNumber(formData, "followerViewsPct"),
+    nonFollowerViewsPct: optionalNumber(formData, "nonFollowerViewsPct"),
     profileVisits: optionalNumber(formData, "profileVisits"),
     linkTaps: optionalNumber(formData, "linkTaps"),
     addressTaps: optionalNumber(formData, "addressTaps"),
