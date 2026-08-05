@@ -11,6 +11,7 @@ import {
   BarChart2,
   Settings,
   FileText,
+  ClipboardList,
   LogOut,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/clientes", label: "Clientes", icon: Users },
   { href: "/contratos", label: "Contratos", icon: FileText },
+  { href: "/atividades", label: "Atividades", icon: ClipboardList },
   { href: "/projetos", label: "Projetos", icon: FolderOpen },
   { href: "/financeiro", label: "Financeiro", icon: DollarSign },
   { href: "/metricas", label: "Métricas", icon: BarChart2 },

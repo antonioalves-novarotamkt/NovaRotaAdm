@@ -14,6 +14,15 @@ export async function createContract(formData: FormData) {
   const status = String(formData.get("status") || "ACTIVE") as ContractStatus;
   const notes = String(formData.get("notes") || "").trim();
   const content = String(formData.get("content") || "").trim();
+  const paymentDayRaw = String(formData.get("paymentDay") || "");
+
+  const includesSocialMedia = formData.get("includesSocialMedia") === "on";
+  const postsPerWeekRaw = String(formData.get("postsPerWeek") || "");
+  const reelsPerWeekRaw = String(formData.get("reelsPerWeek") || "");
+  const socialNetworksCountRaw = String(formData.get("socialNetworksCount") || "");
+  const includesGoogleAds = formData.get("includesGoogleAds") === "on";
+  const includesMenuMgmt = formData.get("includesMenuMgmt") === "on";
+  const menuPlatformsRaw = String(formData.get("menuPlatforms") || "");
 
   if (!title || !clientId || !startDate) {
     throw new Error("Título, cliente e data de início são obrigatórios.");
@@ -29,6 +38,14 @@ export async function createContract(formData: FormData) {
       status,
       notes: notes || null,
       content: content || null,
+      paymentDay: paymentDayRaw ? Number(paymentDayRaw) : null,
+      includesSocialMedia,
+      postsPerWeek: postsPerWeekRaw ? Number(postsPerWeekRaw) : null,
+      reelsPerWeek: reelsPerWeekRaw ? Number(reelsPerWeekRaw) : null,
+      socialNetworksCount: socialNetworksCountRaw ? Number(socialNetworksCountRaw) : null,
+      includesGoogleAds,
+      includesMenuMgmt,
+      menuPlatforms: menuPlatformsRaw || null,
     },
   });
 

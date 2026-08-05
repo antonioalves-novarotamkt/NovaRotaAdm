@@ -21,4 +21,5 @@ export async function createActivity(formData: FormData) {
   });
 
   revalidatePath(`/clientes/${clientId}`);
+  revalidatePath("/atividades");
 }

@@ -1,59 +1,105 @@
-export const DEFAULT_CONTRACT_TEMPLATE = `CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE MARKETING
+export interface ContractServiceConfig {
+  includesSocialMedia: boolean;
+  postsPerWeek?: number;
+  reelsPerWeek?: number;
+  socialNetworksCount?: number;
+  includesGoogleAds: boolean;
+  includesMenuMgmt: boolean;
+  menuPlatforms?: string[];
+}
 
-CONTRATANTE: {{cliente_empresa}}, doravante denominado(a) CONTRATANTE.
-
-CONTRATADA: {{agencia}}, doravante denominada CONTRATADA.
-
-As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Prestação de Serviços de Marketing, que se regerá pelas cláusulas seguintes:
-
-CLÁUSULA 1ª — DO OBJETO
-O presente contrato tem como objeto a prestação de serviços de marketing digital pela CONTRATADA à CONTRATANTE, incluindo, mas não se limitando a: gestão de redes sociais, campanhas de mídia paga, produção de conteúdo e relatórios de performance.
-
-CLÁUSULA 2ª — DO PRAZO
-O presente contrato tem início em {{data_inicio}}{{data_fim_clausula}}, podendo ser renovado mediante acordo entre as partes.
-
-CLÁUSULA 3ª — DO VALOR E FORMA DE PAGAMENTO
-Pelos serviços prestados, a CONTRATANTE pagará à CONTRATADA o valor de {{valor}}, com pagamento na frequência {{frequencia}}.
-
-CLÁUSULA 4ª — DAS OBRIGAÇÕES DA CONTRATADA
-A CONTRATADA se compromete a executar os serviços contratados com zelo, dedicação e dentro dos prazos acordados, mantendo a CONTRATANTE informada sobre o andamento das atividades.
-
-CLÁUSULA 5ª — DAS OBRIGAÇÕES DA CONTRATANTE
-A CONTRATANTE se compromete a fornecer as informações, materiais e acessos necessários para a boa execução dos serviços, bem como efetuar os pagamentos nas datas acordadas.
-
-CLÁUSULA 6ª — DA RESCISÃO
-O presente contrato poderá ser rescindido por qualquer das partes, mediante aviso prévio de 30 (trinta) dias, sem prejuízo dos valores já devidos até a data da rescisão.
-
-CLÁUSULA 7ª — DA CONFIDENCIALIDADE
-As partes se comprometem a manter sigilo sobre todas as informações confidenciais trocadas durante a vigência deste contrato.
-
-E, por estarem assim justas e contratadas, as partes assinam o presente instrumento.
-
-{{data_assinatura}}
-
-_______________________________
-{{cliente_empresa}} (CONTRATANTE)
-
-_______________________________
-{{agencia}} (CONTRATADA)
-`;
-
-interface TemplateVars {
+export interface ContractVars {
   clienteEmpresa: string;
   agencia: string;
   valor: string;
-  dataInicio: string;
-  dataFim?: string;
-  frequencia: string;
+  paymentDay?: number;
   dataAssinatura: string;
+  services: ContractServiceConfig;
 }
 
-export function fillContractTemplate(vars: TemplateVars): string {
-  return DEFAULT_CONTRACT_TEMPLATE.replace(/\{\{cliente_empresa\}\}/g, vars.clienteEmpresa)
-    .replace(/\{\{agencia\}\}/g, vars.agencia)
-    .replace(/\{\{valor\}\}/g, vars.valor)
-    .replace(/\{\{data_inicio\}\}/g, vars.dataInicio)
-    .replace(/\{\{data_fim_clausula\}\}/g, vars.dataFim ? `, com término previsto em ${vars.dataFim}` : ", por prazo indeterminado")
-    .replace(/\{\{frequencia\}\}/g, vars.frequencia)
-    .replace(/\{\{data_assinatura\}\}/g, vars.dataAssinatura);
+export function generateContractText(vars: ContractVars): string {
+  const lines: string[] = [];
+  const { services } = vars;
+
+  lines.push("CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE MARKETING DIGITAL");
+  lines.push(vars.agencia);
+  lines.push("");
+  lines.push("Objeto do Contrato:");
+  lines.push(
+    `O prestador de serviços se compromete a realizar os seguintes serviços de marketing digital para ${vars.clienteEmpresa}:`
+  );
+  lines.push("");
+
+  if (services.includesSocialMedia) {
+    lines.push("Gerenciamento de Redes Sociais:");
+    if (services.socialNetworksCount) {
+      lines.push(`Gestão de ${services.socialNetworksCount} rede(s) social(is).`);
+    }
+    if (services.postsPerWeek) {
+      lines.push(`Criação e publicação de ${services.postsPerWeek} post(s) por semana.`);
+    }
+    if (services.reelsPerWeek) {
+      lines.push(`Criação e publicação de ${services.reelsPerWeek} Reels/Stories por semana.`);
+    }
+    lines.push("Desenvolvimento de calendário de conteúdo estratégico.");
+    lines.push("Monitoramento e interação com os seguidores do cliente.");
+    lines.push("Elaboração de legendas persuasivas e uso de hashtags relevantes.");
+    lines.push("");
+  }
+
+  if (services.includesGoogleAds) {
+    lines.push("Campanhas de Google Ads:");
+    lines.push("Criação e gerenciamento de campanhas de pesquisa no Google Ads para aumentar a visibilidade online do cliente.");
+    lines.push("Otimização de palavras-chave e segmentação de público-alvo para maximizar o retorno do investimento.");
+    lines.push("Monitoramento contínuo do desempenho das campanhas e ajustes conforme necessário para alcançar os melhores resultados.");
+    lines.push("Elaboração de relatórios mensais detalhados sobre o desempenho das campanhas, incluindo métricas como impressões, cliques, conversões e custo por clique.");
+    lines.push("");
+  }
+
+  if (services.includesMenuMgmt) {
+    lines.push("Gerenciamento de Cardápio Digital:");
+    const platforms = services.menuPlatforms && services.menuPlatforms.length > 0 ? services.menuPlatforms.join(", ") : "a definir";
+    lines.push(`Atualização e gestão do cardápio nas plataformas: ${platforms}.`);
+    lines.push("Ajuste de preços, disponibilidade e itens conforme solicitação do cliente.");
+    lines.push("Monitoramento de avaliações e pedidos nas plataformas contratadas.");
+    lines.push("");
+  }
+
+  lines.push("Valor e Forma de Pagamento:");
+  lines.push(`O valor mensal dos serviços é de ${vars.valor}.`);
+  if (vars.paymentDay) {
+    lines.push(`O pagamento será todo dia ${vars.paymentDay} de cada mês.`);
+  }
+  lines.push("");
+
+  lines.push("Prazo de Vigência:");
+  lines.push("O presente contrato poderá ser rescindido por qualquer uma das partes, mediante aviso prévio de 30 (trinta) dias.");
+  lines.push("");
+
+  lines.push("Obrigações do Cliente:");
+  lines.push("Fornecer ao prestador de serviços todas as informações e materiais necessários para a execução dos serviços.");
+  lines.push("Realizar o pagamento dos serviços no prazo estipulado.");
+  lines.push("Aprovar os conteúdos criados pelo prestador de serviços antes da publicação.");
+  lines.push("");
+
+  lines.push("Obrigações do Prestador de Serviços:");
+  lines.push("Executar os serviços com profissionalismo e qualidade.");
+  lines.push("Manter o cliente informado sobre o andamento dos serviços.");
+  lines.push("Respeitar os prazos estabelecidos.");
+  lines.push("Enviar relatórios mensais com os resultados das ações de marketing.");
+  lines.push("");
+
+  lines.push("Assinaturas:");
+  lines.push("");
+  lines.push("");
+  lines.push("______________________________");
+  lines.push(vars.agencia);
+  lines.push("");
+  lines.push("");
+  lines.push("______________________________");
+  lines.push(vars.clienteEmpresa);
+  lines.push("");
+  lines.push(`Data: ${vars.dataAssinatura}`);
+
+  return lines.join("\n");
 }
