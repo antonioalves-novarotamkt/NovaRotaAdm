@@ -45,7 +45,7 @@ function LoginFormInner({ logoUrl }: { logoUrl?: string | null }) {
     <Card className="w-full max-w-sm border-0 shadow-xl">
       <CardContent className="p-8">
         <div className="flex flex-col items-center gap-2 mb-6">
-          <BrandLogo logoUrl={logoUrl} size={48} />
+          <BrandLogo logoUrl={logoUrl} size={72} />
           <p className="text-xs text-gray-500">Entre para gerenciar sua agência</p>
         </div>
 
