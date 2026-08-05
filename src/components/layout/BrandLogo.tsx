@@ -12,10 +12,16 @@ export function BrandLogo({ logoUrl, dark, size = 40 }: { logoUrl?: string | nul
 
   return (
     <div className="leading-none">
-      <span className="text-2xl font-black italic text-orange-500 tracking-tight">
+      <span
+        style={{ fontSize: size * 0.5 }}
+        className="font-black italic text-orange-500 tracking-tight block"
+      >
         novarota
       </span>
-      <div className={cn("text-[10px] tracking-[0.2em] uppercase mt-0.5", dark ? "text-gray-400" : "text-gray-500")}>
+      <div
+        style={{ fontSize: Math.max(size * 0.13, 9) }}
+        className={cn("tracking-[0.2em] uppercase mt-1", dark ? "text-gray-400" : "text-gray-500")}
+      >
         marketing.
       </div>
     </div>

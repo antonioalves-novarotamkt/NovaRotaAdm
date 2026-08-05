@@ -39,8 +39,8 @@ export function Sidebar({ logoUrl }: { logoUrl?: string | null }) {
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-[#0f172a] flex flex-col z-30">
       {/* Logo */}
-      <div className="flex items-center px-6 py-5 bg-white">
-        <BrandLogo logoUrl={logoUrl} size={56} />
+      <div className="flex items-center px-4 py-6 bg-white overflow-hidden">
+        <BrandLogo logoUrl={logoUrl} size={100} />
       </div>
 
       {/* Navigation */}
