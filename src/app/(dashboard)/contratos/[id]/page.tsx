@@ -6,14 +6,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PrintButton } from "@/components/contracts/PrintButton";
 import { prisma } from "@/lib/prisma";
+import { getAgencySettings } from "@/app/actions/agency";
 
 export const dynamic = "force-dynamic";
 
 export default async function ContractViewPage({ params }: { params: { id: string } }) {
-  const contract = await prisma.contract.findUnique({
-    where: { id: params.id },
-    include: { client: true },
-  });
+  const [contract, agency] = await Promise.all([
+    prisma.contract.findUnique({
+      where: { id: params.id },
+      include: { client: true },
+    }),
+    getAgencySettings(),
+  ]);
 
   if (!contract) notFound();
 
@@ -33,6 +37,22 @@ export default async function ContractViewPage({ params }: { params: { id: strin
 
         <Card className="border-0 shadow-sm print:shadow-none print:border-0">
           <CardContent className="p-8">
+            <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                {agency.logoUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={agency.logoUrl} alt={agency.name} className="h-10 object-contain" />
+                )}
+                <div>
+                  <p className="text-sm font-bold text-gray-900">{agency.name}</p>
+                  <p className="text-xs text-gray-400">Contrato de Prestação de Serviços</p>
+                </div>
+              </div>
+              {contract.client.logoUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={contract.client.logoUrl} alt={contract.client.name} className="h-10 object-contain" />
+              )}
+            </div>
             <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">
               {contract.content || "Este contrato não tem um texto gerado."}
             </pre>
