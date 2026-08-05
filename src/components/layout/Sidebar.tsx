@@ -22,7 +22,7 @@ const navItems = [
   { href: "/clientes", label: "Clientes", icon: Users },
   { href: "/contratos", label: "Contratos", icon: FileText },
   { href: "/atividades", label: "Atividades", icon: ClipboardList },
-  { href: "/projetos", label: "Projetos", icon: FolderOpen },
+  { href: "/projetos", label: "Posts", icon: FolderOpen },
   { href: "/financeiro", label: "Financeiro", icon: DollarSign },
   { href: "/metricas", label: "Métricas", icon: BarChart2 },
   { href: "/configuracoes", label: "Configurações", icon: Settings },

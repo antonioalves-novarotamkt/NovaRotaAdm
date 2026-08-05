@@ -31,3 +31,25 @@ export async function deleteClientPost(id: string) {
   await prisma.clientPost.delete({ where: { id } });
   revalidatePath("/projetos");
 }
+
+export async function updatePostMetrics(formData: FormData) {
+  const id = String(formData.get("id") || "");
+  const viewsRaw = String(formData.get("views") || "");
+  const likesRaw = String(formData.get("likes") || "");
+  const sharesRaw = String(formData.get("shares") || "");
+
+  if (!id) {
+    throw new Error("Post não encontrado.");
+  }
+
+  await prisma.clientPost.update({
+    where: { id },
+    data: {
+      views: viewsRaw ? Number(viewsRaw) : null,
+      likes: likesRaw ? Number(likesRaw) : null,
+      shares: sharesRaw ? Number(sharesRaw) : null,
+    },
+  });
+
+  revalidatePath("/projetos");
+}

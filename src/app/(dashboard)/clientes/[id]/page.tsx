@@ -260,14 +260,24 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
               </CardContent>
             </Card>
 
-            <Link href={`/projetos?cliente=${client.id}`} className="block">
-              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <ImageIcon className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-700">Ver posts do mês deste cliente</span>
-                </CardContent>
-              </Card>
-            </Link>
+            <div className="grid grid-cols-2 gap-4">
+              <Link href={`/projetos?cliente=${client.id}`} className="block">
+                <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <ImageIcon className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm font-medium text-gray-700">Ver posts do mês</span>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link href={`/clientes/${client.id}/relatorio`} className="block">
+                <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full bg-orange-50">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <FileText className="h-4 w-4 text-orange-600" />
+                    <span className="text-sm font-medium text-orange-700">Gerar Relatório Mensal</span>
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
 
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">
