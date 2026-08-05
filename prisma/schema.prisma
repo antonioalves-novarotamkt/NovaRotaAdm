@@ -277,6 +277,8 @@ model Invoice {
   paidAt      DateTime?
   description String?       @db.Text
   notes       String?       @db.Text
+  dueSoonReminderSentAt DateTime?
+  lastOverdueReminderAt DateTime?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
