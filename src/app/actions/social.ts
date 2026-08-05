@@ -21,13 +21,16 @@ export async function createSocialAccount(formData: FormData) {
   revalidatePath(`/clientes/${clientId}`);
 }
 
+function optionalNumber(formData: FormData, key: string): number | null {
+  const raw = String(formData.get(key) || "");
+  return raw ? Number(raw) : null;
+}
+
 export async function logSocialMetric(formData: FormData) {
   const socialAccountId = String(formData.get("socialAccountId") || "").trim();
   const clientId = String(formData.get("clientId") || "").trim();
   const monthStr = String(formData.get("month") || "");
   const followers = Number(formData.get("followers") || 0);
-  const reachRaw = String(formData.get("reach") || "");
-  const engagementRateRaw = String(formData.get("engagementRate") || "");
 
   if (!socialAccountId || !monthStr) {
     throw new Error("Conta e mês são obrigatórios.");
@@ -35,21 +38,23 @@ export async function logSocialMetric(formData: FormData) {
 
   const month = new Date(`${monthStr}-01T00:00:00.000Z`);
 
+  const data = {
+    followers,
+    reach: optionalNumber(formData, "reach"),
+    engagementRate: optionalNumber(formData, "engagementRate"),
+    totalViews: optionalNumber(formData, "totalViews"),
+    followerViewsPct: optionalNumber(formData, "followerViewsPct"),
+    profileVisits: optionalNumber(formData, "profileVisits"),
+    linkTaps: optionalNumber(formData, "linkTaps"),
+    addressTaps: optionalNumber(formData, "addressTaps"),
+  };
+
   await prisma.socialMetric.upsert({
     where: { socialAccountId_month: { socialAccountId, month } },
-    update: {
-      followers,
-      reach: reachRaw ? Number(reachRaw) : null,
-      engagementRate: engagementRateRaw ? Number(engagementRateRaw) : null,
-    },
-    create: {
-      socialAccountId,
-      month,
-      followers,
-      reach: reachRaw ? Number(reachRaw) : null,
-      engagementRate: engagementRateRaw ? Number(engagementRateRaw) : null,
-    },
+    update: data,
+    create: { socialAccountId, month, ...data },
   });
 
   revalidatePath(`/clientes/${clientId}`);
+  revalidatePath(`/clientes/${clientId}/relatorio`);
 }

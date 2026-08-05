@@ -165,22 +165,68 @@ export default async function ClientReportPage({
                   (m) => new Date(m.month).getTime() === prevMonthDate.getTime()
                 );
                 const growth = current && previous ? current.followers - previous.followers : null;
+                const showInstagramInsights =
+                  account.platform === "INSTAGRAM" &&
+                  current &&
+                  (current.totalViews != null ||
+                    current.followerViewsPct != null ||
+                    current.profileVisits != null ||
+                    current.linkTaps != null ||
+                    current.addressTaps != null);
                 return (
-                  <div key={account.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100">
-                    <span className="text-sm text-gray-700">
-                      {platformLabel[account.platform] || account.platform} · {account.handle}
-                    </span>
-                    <div className="text-right">
-                      <span className="text-sm font-bold text-gray-900">
-                        {current ? current.followers.toLocaleString("pt-BR") : "—"} seguidores
+                  <div key={account.id} className="p-3 rounded-lg border border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700">
+                        {platformLabel[account.platform] || account.platform} · {account.handle}
                       </span>
-                      {growth != null && (
-                        <p className={`text-xs ${growth >= 0 ? "text-green-600" : "text-red-500"}`}>
-                          {growth >= 0 ? "+" : ""}
-                          {growth.toLocaleString("pt-BR")} no mês
-                        </p>
-                      )}
+                      <div className="text-right">
+                        <span className="text-sm font-bold text-gray-900">
+                          {current ? current.followers.toLocaleString("pt-BR") : "—"} seguidores
+                        </span>
+                        {growth != null && (
+                          <p className={`text-xs ${growth >= 0 ? "text-green-600" : "text-red-500"}`}>
+                            {growth >= 0 ? "+" : ""}
+                            {growth.toLocaleString("pt-BR")} no mês
+                          </p>
+                        )}
+                      </div>
                     </div>
+                    {showInstagramInsights && current && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3 pt-3 border-t border-gray-100">
+                        {current.totalViews != null && (
+                          <div>
+                            <p className="text-xs text-gray-400">Visualizações totais</p>
+                            <p className="text-sm font-semibold text-gray-900">{current.totalViews.toLocaleString("pt-BR")}</p>
+                          </div>
+                        )}
+                        {current.followerViewsPct != null && (
+                          <div>
+                            <p className="text-xs text-gray-400">Seguidores x Não seguidores</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {current.followerViewsPct.toLocaleString("pt-BR")}% / {(100 - current.followerViewsPct).toLocaleString("pt-BR")}%
+                            </p>
+                          </div>
+                        )}
+                        {current.profileVisits != null && (
+                          <div>
+                            <p className="text-xs text-gray-400">Visitas ao perfil</p>
+                            <p className="text-sm font-semibold text-gray-900">{current.profileVisits.toLocaleString("pt-BR")}</p>
+                          </div>
+                        )}
+                        {current.linkTaps != null && (
+                          <div>
+                            <p className="text-xs text-gray-400">Toques em links</p>
+                            <p className="text-sm font-semibold text-gray-900">{current.linkTaps.toLocaleString("pt-BR")}</p>
+                          </div>
+                        )}
+                        {current.addressTaps != null && (
+                          <div>
+                            <p className="text-xs text-gray-400">Toques em endereço</p>
+                            <p className="text-sm font-semibold text-gray-900">{current.addressTaps.toLocaleString("pt-BR")}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}

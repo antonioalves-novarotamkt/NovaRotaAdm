@@ -36,6 +36,10 @@ const currentMonth = new Date().toISOString().slice(0, 7);
 
 export function LogSocialMetricDialog({ clientId, accounts }: { clientId: string; accounts: AccountOption[] }) {
   const [open, setOpen] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState("");
+
+  const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
+  const isInstagram = selectedAccount?.platform === "INSTAGRAM";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -51,7 +55,13 @@ export function LogSocialMetricDialog({ clientId, accounts }: { clientId: string
         </DialogHeader>
         <form action={logSocialMetric} onSubmit={() => setOpen(false)} className="space-y-3">
           <input type="hidden" name="clientId" value={clientId} />
-          <select name="socialAccountId" required defaultValue="" className={inputClass}>
+          <select
+            name="socialAccountId"
+            required
+            value={selectedAccountId}
+            onChange={(e) => setSelectedAccountId(e.target.value)}
+            className={inputClass}
+          >
             <option value="" disabled>
               Selecione a rede
             </option>
@@ -67,6 +77,25 @@ export function LogSocialMetricDialog({ clientId, accounts }: { clientId: string
             <Input name="reach" type="number" placeholder="Alcance (opcional)" />
             <Input name="engagementRate" type="number" step="0.01" placeholder="Engajamento % (opcional)" />
           </div>
+
+          {isInstagram && (
+            <div className="space-y-3 pt-2 border-t">
+              <p className="text-xs font-medium text-gray-500">Métricas do Instagram</p>
+              <div className="grid grid-cols-2 gap-3">
+                <Input name="totalViews" type="number" placeholder="Visualizações totais" />
+                <Input name="followerViewsPct" type="number" step="0.1" min={0} max={100} placeholder="% visto por seguidores" />
+              </div>
+              <p className="text-[11px] text-gray-400 -mt-1.5">
+                O restante é calculado automaticamente como visto por não seguidores.
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <Input name="profileVisits" type="number" placeholder="Visitas ao perfil" />
+                <Input name="linkTaps" type="number" placeholder="Toques em links" />
+                <Input name="addressTaps" type="number" placeholder="Toques em endereço" />
+              </div>
+            </div>
+          )}
+
           <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
             Salvar
           </Button>
