@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { RevenueChart } from "@/components/financeiro/RevenueChart";
 import { NewInvoiceDialog } from "@/components/financeiro/NewInvoiceDialog";
 import { RegisterPaymentButton } from "@/components/financeiro/RegisterPaymentButton";
+import { SendRemindersButton } from "@/components/financeiro/SendRemindersButton";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 
@@ -63,6 +64,13 @@ export default async function FinanceiroPage() {
     <div>
       <Header title="Financeiro" subtitle="Gerencie faturamento, cobranças e relatórios financeiros" />
       <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-400">
+            Lembretes automáticos são enviados 1x/dia: aviso de vencimento próximo e cobrança de faturas em atraso.
+          </p>
+          <SendRemindersButton />
+        </div>
+
         {/* KPI Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="border-0 shadow-sm">
