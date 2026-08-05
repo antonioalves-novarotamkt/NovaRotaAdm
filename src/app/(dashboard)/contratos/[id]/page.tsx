@@ -41,7 +41,7 @@ export default async function ContractViewPage({ params }: { params: { id: strin
               <div className="flex items-center gap-3">
                 {agency.logoUrl && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={agency.logoUrl} alt={agency.name} className="h-10 object-contain" />
+                  <img src={agency.logoUrl} alt={agency.name} className="h-14 object-contain" />
                 )}
                 <div>
                   <p className="text-sm font-bold text-gray-900">{agency.name}</p>
@@ -50,7 +50,7 @@ export default async function ContractViewPage({ params }: { params: { id: strin
               </div>
               {contract.client.logoUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={contract.client.logoUrl} alt={contract.client.name} className="h-10 object-contain" />
+                <img src={contract.client.logoUrl} alt={contract.client.name} className="h-14 object-contain" />
               )}
             </div>
             <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">

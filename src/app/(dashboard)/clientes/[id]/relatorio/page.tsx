@@ -130,7 +130,7 @@ export default async function ClientReportPage({
             <div className="flex items-center gap-4">
               {agency.logoUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={agency.logoUrl} alt={agency.name} className="h-10 object-contain" />
+                <img src={agency.logoUrl} alt={agency.name} className="h-14 object-contain" />
               )}
               <div>
                 <p className="text-xs text-gray-400">Relatório de Performance</p>
@@ -140,7 +140,7 @@ export default async function ClientReportPage({
             <div className="text-right">
               {client.logoUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={client.logoUrl} alt={client.name} className="h-10 object-contain ml-auto mb-1" />
+                <img src={client.logoUrl} alt={client.name} className="h-14 object-contain ml-auto mb-1" />
               )}
               <p className="text-sm font-medium text-gray-700">{monthLabel}</p>
             </div>
