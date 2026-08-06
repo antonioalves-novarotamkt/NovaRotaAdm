@@ -29,7 +29,7 @@ const navItems = [
   { href: "/atividades", label: "Atividades", icon: ClipboardList },
   { href: "/analises", label: "Análises", icon: LineChart },
   { href: "/projetos", label: "Posts", icon: FolderOpen },
-  { href: "/vendas", label: "Vendas", icon: ShoppingCart },
+  { href: "/vendas", label: "Vendas App Clientes", icon: ShoppingCart },
   { href: "/financeiro", label: "Financeiro", icon: DollarSign },
   { href: "/custos", label: "Custos", icon: Wallet },
   { href: "/metricas", label: "Métricas", icon: BarChart2 },

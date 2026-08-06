@@ -37,7 +37,7 @@ export default async function FinanceiroPage() {
       select: { startDate: true },
     }),
     prisma.client.findMany({
-      where: { status: "ACTIVE", billingFrequency: { not: "NONE" }, contractValue: { not: null } },
+      where: { status: { notIn: ["CHURNED", "INACTIVE"] }, billingFrequency: { not: "NONE" }, contractValue: { not: null } },
       select: {
         contractValue: true,
         billingFrequency: true,
