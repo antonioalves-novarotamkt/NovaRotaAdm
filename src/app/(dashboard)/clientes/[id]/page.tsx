@@ -431,6 +431,13 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-bold text-gray-900">{formatCurrency(invoice.total)}</span>
                         <Badge variant={iStatus.variant}>{iStatus.label}</Badge>
+                        {invoice.status === "PAID" && (
+                          <Link href={`/recibo/${invoice.id}`}>
+                            <Button variant="ghost" size="sm" className="text-xs text-orange-600 hover:text-orange-700 h-7">
+                              Recibo
+                            </Button>
+                          </Link>
+                        )}
                       </div>
                     </div>
                   );
