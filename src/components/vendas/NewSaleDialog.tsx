@@ -60,9 +60,13 @@ export function NewSaleDialog({ clients, defaultClientId, defaultMonth }: { clie
             <option value="Outro">Outro</option>
           </select>
           <div className="grid grid-cols-2 gap-3">
-            <Input name="totalValue" type="number" step="0.01" placeholder="Valor total (R$)" required />
-            <Input name="salesCount" type="number" min={0} placeholder="Nº de vendas" required />
+            <Input name="grossValue" type="number" step="0.01" placeholder="Total bruto de vendas (R$)" required />
+            <Input name="netValue" type="number" step="0.01" placeholder="Ganho líquido (R$)" />
           </div>
+          <p className="text-[11px] text-gray-400 -mt-1.5">
+            Ganho líquido é o que sobra após taxas, comissão do app, promoções e entregas — deixe em branco se não souber ainda.
+          </p>
+          <Input name="salesCount" type="number" min={0} placeholder="Nº de vendas" required />
           <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
             Salvar
           </Button>

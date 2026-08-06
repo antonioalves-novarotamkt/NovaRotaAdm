@@ -7,7 +7,8 @@ export async function createClientSale(formData: FormData) {
   const clientId = String(formData.get("clientId") || "").trim();
   const month = String(formData.get("month") || "");
   const platform = String(formData.get("platform") || "").trim();
-  const totalValue = Number(formData.get("totalValue") || 0);
+  const grossValue = Number(formData.get("grossValue") || 0);
+  const netValueRaw = String(formData.get("netValue") || "");
   const salesCount = Number(formData.get("salesCount") || 0);
 
   if (!clientId || !month) {
@@ -19,12 +20,14 @@ export async function createClientSale(formData: FormData) {
       clientId,
       month: new Date(`${month}-01T00:00:00.000Z`),
       platform: platform || null,
-      totalValue,
+      grossValue,
+      netValue: netValueRaw ? Number(netValueRaw) : null,
       salesCount,
     },
   });
 
   revalidatePath("/vendas");
+  revalidatePath("/dashboard");
 }
 
 export async function deleteClientSale(formData: FormData) {
@@ -32,4 +35,5 @@ export async function deleteClientSale(formData: FormData) {
   if (!id) return;
   await prisma.clientSale.delete({ where: { id } });
   revalidatePath("/vendas");
+  revalidatePath("/dashboard");
 }
