@@ -37,6 +37,27 @@ interface BillingRule {
   dayOfMonth2?: number | null;
 }
 
+export function countOccurrencesInMonth(rule: BillingRule, year: number, month: number): number {
+  if (rule.frequency === "WEEKLY" && rule.dayOfWeek != null) {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let count = 0;
+    for (let day = 1; day <= daysInMonth; day++) {
+      if (new Date(year, month, day).getDay() === rule.dayOfWeek) count++;
+    }
+    return count;
+  }
+
+  if (rule.frequency === "MONTHLY" && rule.dayOfMonth1 != null) {
+    return 1;
+  }
+
+  if (rule.frequency === "BIWEEKLY" && rule.dayOfMonth1 != null && rule.dayOfMonth2 != null) {
+    return 2;
+  }
+
+  return 0;
+}
+
 export function computeNextBillingDate(rule: BillingRule, after: Date = new Date()): Date | null {
   if (rule.frequency === "WEEKLY" && rule.dayOfWeek != null) {
     return nextWeekdayOccurrence(after, rule.dayOfWeek);
