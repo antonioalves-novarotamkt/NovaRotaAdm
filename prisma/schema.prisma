@@ -264,7 +264,11 @@ model Contract {
   fileUrl     String?
   content     String?        @db.Text
   notes       String?        @db.Text
-  paymentDay  Int?
+
+  billingFrequency   BillingFrequency @default(MONTHLY)
+  billingDayOfWeek   Int?
+  billingDayOfMonth1 Int?
+  billingDayOfMonth2 Int?
 
   includesSocialMedia   Boolean @default(false)
   postsPerWeek          Int?
