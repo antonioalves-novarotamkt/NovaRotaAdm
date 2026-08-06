@@ -89,9 +89,9 @@ export default async function ClientReportPage({
   const totalSalesValue = sales.reduce((s, sale) => s + sale.totalValue, 0);
   const totalSalesCount = sales.reduce((s, sale) => s + sale.salesCount, 0);
 
-  const totalViews = posts.reduce((s, p) => s + (p.views || 0), 0);
-  const totalLikes = posts.reduce((s, p) => s + (p.likes || 0), 0);
-  const totalShares = posts.reduce((s, p) => s + (p.shares || 0), 0);
+  const totalViews = posts.reduce((s, p) => s + (p.instagramViews || 0) + (p.facebookViews || 0), 0);
+  const totalLikes = posts.reduce((s, p) => s + (p.instagramLikes || 0) + (p.facebookLikes || 0), 0);
+  const totalShares = posts.reduce((s, p) => s + (p.instagramShares || 0) + (p.facebookShares || 0), 0);
 
   const totalSpend = campaigns.reduce((s, c) => s + c.spend, 0);
   const totalImpressions = campaigns.reduce((s, c) => s + c.impressions, 0);

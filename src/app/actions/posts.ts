@@ -32,11 +32,13 @@ export async function deleteClientPost(id: string) {
   revalidatePath("/projetos");
 }
 
+function optionalNumber(formData: FormData, key: string): number | null {
+  const raw = String(formData.get(key) || "");
+  return raw ? Number(raw) : null;
+}
+
 export async function updatePostMetrics(formData: FormData) {
   const id = String(formData.get("id") || "");
-  const viewsRaw = String(formData.get("views") || "");
-  const likesRaw = String(formData.get("likes") || "");
-  const sharesRaw = String(formData.get("shares") || "");
 
   if (!id) {
     throw new Error("Post não encontrado.");
@@ -45,11 +47,15 @@ export async function updatePostMetrics(formData: FormData) {
   await prisma.clientPost.update({
     where: { id },
     data: {
-      views: viewsRaw ? Number(viewsRaw) : null,
-      likes: likesRaw ? Number(likesRaw) : null,
-      shares: sharesRaw ? Number(sharesRaw) : null,
+      instagramViews: optionalNumber(formData, "instagramViews"),
+      instagramLikes: optionalNumber(formData, "instagramLikes"),
+      instagramShares: optionalNumber(formData, "instagramShares"),
+      facebookViews: optionalNumber(formData, "facebookViews"),
+      facebookLikes: optionalNumber(formData, "facebookLikes"),
+      facebookShares: optionalNumber(formData, "facebookShares"),
     },
   });
 
   revalidatePath("/projetos");
+  revalidatePath("/clientes");
 }
