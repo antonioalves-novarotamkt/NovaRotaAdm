@@ -10,6 +10,7 @@ import { NewInvoiceDialog } from "@/components/financeiro/NewInvoiceDialog";
 import { RegisterPaymentButton } from "@/components/financeiro/RegisterPaymentButton";
 import { SendRemindersButton } from "@/components/financeiro/SendRemindersButton";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { countOccurrencesInMonth } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
 
 const frequencyLabel: Record<string, string> = {
@@ -30,8 +31,11 @@ const statusMap: Record<string, { label: string; variant: "success" | "warning" 
 
 const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
+const PROJECTION_MONTHS_AHEAD = 6;
+const MAX_CHART_MONTHS = 36;
+
 export default async function FinanceiroPage() {
-  const [invoices, clients, scheduledClients] = await Promise.all([
+  const [invoices, clients, scheduledClients, earliestContract, projectableClients] = await Promise.all([
     prisma.invoice.findMany({
       orderBy: { issueDate: "desc" },
       include: { client: true },
@@ -44,6 +48,20 @@ export default async function FinanceiroPage() {
       where: { billingFrequency: { not: "NONE" }, nextBillingDate: { not: null } },
       orderBy: { nextBillingDate: "asc" },
     }),
+    prisma.contract.findFirst({
+      orderBy: { startDate: "asc" },
+      select: { startDate: true },
+    }),
+    prisma.client.findMany({
+      where: { status: "ACTIVE", billingFrequency: { not: "NONE" }, contractValue: { not: null } },
+      select: {
+        contractValue: true,
+        billingFrequency: true,
+        billingDayOfWeek: true,
+        billingDayOfMonth1: true,
+        billingDayOfMonth2: true,
+      },
+    }),
   ]);
 
   const paid = invoices.filter((i) => i.status === "PAID").reduce((s, i) => s + i.total, 0);
@@ -52,12 +70,43 @@ export default async function FinanceiroPage() {
   const total = invoices.reduce((s, i) => s + i.total, 0);
 
   const now = new Date();
-  const chartData = Array.from({ length: 6 }).map((_, idx) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (5 - idx), 1);
-    const receita = invoices
-      .filter((i) => i.status === "PAID" && i.paidAt && i.paidAt.getFullYear() === d.getFullYear() && i.paidAt.getMonth() === d.getMonth())
-      .reduce((s, i) => s + i.total, 0);
-    return { month: monthLabels[d.getMonth()], receita };
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const rawStart = earliestContract?.startDate
+    ? new Date(earliestContract.startDate.getFullYear(), earliestContract.startDate.getMonth(), 1)
+    : currentMonthStart;
+  const endMonth = new Date(now.getFullYear(), now.getMonth() + PROJECTION_MONTHS_AHEAD, 1);
+
+  let monthsCount = (endMonth.getFullYear() - rawStart.getFullYear()) * 12 + (endMonth.getMonth() - rawStart.getMonth()) + 1;
+  monthsCount = Math.min(monthsCount, MAX_CHART_MONTHS);
+  const startMonth = new Date(endMonth.getFullYear(), endMonth.getMonth() - monthsCount + 1, 1);
+  const spansMultipleYears = startMonth.getFullYear() !== endMonth.getFullYear();
+
+  const chartData = Array.from({ length: monthsCount }).map((_, idx) => {
+    const d = new Date(startMonth.getFullYear(), startMonth.getMonth() + idx, 1);
+    const label = monthLabels[d.getMonth()] + (spansMultipleYears ? `/${String(d.getFullYear()).slice(2)}` : "");
+    const isFuture = d.getTime() > currentMonthStart.getTime();
+
+    if (!isFuture) {
+      const receita = invoices
+        .filter((i) => i.status === "PAID" && i.paidAt && i.paidAt.getFullYear() === d.getFullYear() && i.paidAt.getMonth() === d.getMonth())
+        .reduce((s, i) => s + i.total, 0);
+      return { month: label, receita, projetado: null };
+    }
+
+    const projetado = projectableClients.reduce((sum, c) => {
+      const occurrences = countOccurrencesInMonth(
+        {
+          frequency: c.billingFrequency,
+          dayOfWeek: c.billingDayOfWeek,
+          dayOfMonth1: c.billingDayOfMonth1,
+          dayOfMonth2: c.billingDayOfMonth2,
+        },
+        d.getFullYear(),
+        d.getMonth()
+      );
+      return sum + occurrences * (c.contractValue || 0);
+    }, 0);
+    return { month: label, receita: null, projetado };
   });
 
   return (
@@ -129,7 +178,10 @@ export default async function FinanceiroPage() {
         {/* Chart */}
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-gray-900">Receita Recebida (6 meses)</CardTitle>
+            <CardTitle className="text-base font-semibold text-gray-900">Receita: Histórico e Previsão</CardTitle>
+            <p className="text-xs text-gray-500">
+              Desde o início do primeiro contrato até {PROJECTION_MONTHS_AHEAD} meses à frente — recebido (real) e previsto (com base na recorrência de cada cliente ativo)
+            </p>
           </CardHeader>
           <CardContent>
             <RevenueChart data={chartData} />
