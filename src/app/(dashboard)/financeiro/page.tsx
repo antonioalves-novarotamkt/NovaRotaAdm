@@ -8,6 +8,7 @@ import { RevenueChart } from "@/components/financeiro/RevenueChart";
 import { NewExtraChargeDialog } from "@/components/financeiro/NewExtraChargeDialog";
 import { DeleteExtraChargeButton } from "@/components/financeiro/DeleteExtraChargeButton";
 import { MarkExtraChargePaidButton } from "@/components/financeiro/MarkExtraChargePaidButton";
+import { EditPaidDateButton } from "@/components/financeiro/EditPaidDateButton";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { countOccurrencesInMonth } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
@@ -56,6 +57,10 @@ export default async function FinanceiroPage() {
   ]);
 
   const extraCharges = invoices.filter((i) => i.description !== "Recebimento programado");
+  const recentlyPaid = invoices
+    .filter((i) => i.status === "PAID" && i.paidAt)
+    .sort((a, b) => (b.paidAt as Date).getTime() - (a.paidAt as Date).getTime())
+    .slice(0, 15);
 
   const paid = invoices.filter((i) => i.status === "PAID").reduce((s, i) => s + i.total, 0);
   const pending = invoices.filter((i) => i.status === "PENDING").reduce((s, i) => s + i.total, 0);
@@ -247,7 +252,42 @@ export default async function FinanceiroPage() {
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-bold text-gray-900">{formatCurrency(invoice.total)}</span>
                     {invoice.status !== "PAID" && <MarkExtraChargePaidButton id={invoice.id} />}
+                    {invoice.status === "PAID" && invoice.paidAt && (
+                      <EditPaidDateButton id={invoice.id} currentDate={invoice.paidAt.toISOString().slice(0, 10)} />
+                    )}
                     <DeleteExtraChargeButton id={invoice.id} />
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Payment history — correct the date of anything already given baixa */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold text-gray-900">Histórico de Recebimentos</CardTitle>
+            <p className="text-xs text-gray-500">Últimos recebimentos confirmados — corrija a data se precisar</p>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {recentlyPaid.length === 0 ? (
+              <p className="text-sm text-gray-400">Nenhum recebimento confirmado ainda.</p>
+            ) : (
+              recentlyPaid.map((invoice) => (
+                <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100">
+                  <div>
+                    <Link href={`/clientes/${invoice.client.id}`} className="text-sm font-medium text-gray-900 hover:text-orange-600">
+                      {invoice.client.company || invoice.client.name}
+                    </Link>
+                    <p className="text-xs text-gray-500">
+                      {invoice.description || "Recebimento"}
+                      {" · recebido em "}
+                      {formatDate(invoice.paidAt as Date)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold text-gray-900">{formatCurrency(invoice.total)}</span>
+                    <EditPaidDateButton id={invoice.id} currentDate={(invoice.paidAt as Date).toISOString().slice(0, 10)} />
                   </div>
                 </div>
               ))
