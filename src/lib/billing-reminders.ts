@@ -17,8 +17,10 @@ export async function runBillingReminders() {
 
   await syncScheduledInvoices();
 
+  // Only auto-flip scheduled billing to OVERDUE — manually entered extra
+  // charges stay PENDING until given baixa by hand.
   await prisma.invoice.updateMany({
-    where: { status: "PENDING", dueDate: { lt: now } },
+    where: { status: "PENDING", dueDate: { lt: now }, description: "Recebimento programado" },
     data: { status: "OVERDUE" },
   });
 
