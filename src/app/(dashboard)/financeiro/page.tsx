@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RegisterPaymentButton } from "@/components/financeiro/RegisterPaymentButton";
 import { SendRemindersButton } from "@/components/financeiro/SendRemindersButton";
 import { RevenueChart } from "@/components/financeiro/RevenueChart";
+import { NewExtraChargeDialog } from "@/components/financeiro/NewExtraChargeDialog";
+import { DeleteExtraChargeButton } from "@/components/financeiro/DeleteExtraChargeButton";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { countOccurrencesInMonth } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
@@ -23,10 +25,14 @@ const PROJECTION_MONTHS_AHEAD = 6;
 const MAX_CHART_MONTHS = 36;
 
 export default async function FinanceiroPage() {
-  const [invoices, scheduledClients, earliestContract, projectableClients] = await Promise.all([
+  const [invoices, clients, scheduledClients, earliestContract, projectableClients] = await Promise.all([
     prisma.invoice.findMany({
       orderBy: { issueDate: "desc" },
       include: { client: true },
+    }),
+    prisma.client.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, company: true },
     }),
     prisma.client.findMany({
       where: { billingFrequency: { not: "NONE" }, nextBillingDate: { not: null } },
@@ -47,6 +53,8 @@ export default async function FinanceiroPage() {
       },
     }),
   ]);
+
+  const extraCharges = invoices.filter((i) => i.description !== "Recebimento programado");
 
   const paid = invoices.filter((i) => i.status === "PAID").reduce((s, i) => s + i.total, 0);
   const pending = invoices.filter((i) => i.status === "PENDING").reduce((s, i) => s + i.total, 0);
@@ -205,6 +213,45 @@ export default async function FinanceiroPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Other manual charges */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-semibold text-gray-900">Outros Recebimentos</CardTitle>
+                <p className="text-xs text-gray-500">Custos extras do cliente lançados na mão, com a data em que o valor foi recebido</p>
+              </div>
+              <NewExtraChargeDialog clients={clients} />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {extraCharges.length === 0 ? (
+              <p className="text-sm text-gray-400">Nenhum recebimento extra lançado ainda.</p>
+            ) : (
+              extraCharges.map((invoice) => (
+                <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100">
+                  <div>
+                    <Link href={`/clientes/${invoice.client.id}`} className="text-sm font-medium text-gray-900 hover:text-orange-600">
+                      {invoice.client.company || invoice.client.name}
+                    </Link>
+                    <p className="text-xs text-gray-500">
+                      {invoice.description}
+                      {" · "}
+                      {invoice.status === "PAID" && invoice.paidAt
+                        ? `recebido em ${formatDate(invoice.paidAt)}`
+                        : `${invoice.status === "OVERDUE" ? "atrasado" : "pendente"} · vence em ${formatDate(invoice.dueDate)}`}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold text-gray-900">{formatCurrency(invoice.total)}</span>
+                    <DeleteExtraChargeButton id={invoice.id} />
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
