@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Eye, Heart, Share2, TrendingUp, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Eye, Heart, Share2, TrendingUp, ShoppingCart, Globe } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,7 @@ export default async function ClientReportPage({
 
   if (!client) notFound();
 
-  const [activities, posts, campaigns, sales] = await Promise.all([
+  const [activities, posts, campaigns, sales, websiteMetric] = await Promise.all([
     prisma.clientActivity.findMany({
       where: {
         clientId: client.id,
@@ -79,6 +79,9 @@ export default async function ClientReportPage({
       },
     }),
     prisma.clientSale.findMany({
+      where: { clientId: client.id, month: monthDate },
+    }),
+    prisma.websiteMetric.findFirst({
       where: { clientId: client.id, month: monthDate },
     }),
   ]);
@@ -233,6 +236,38 @@ export default async function ClientReportPage({
                   </div>
                 );
               })}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Website */}
+        {websiteMetric && (
+          <Card className="border-0 shadow-sm print:shadow-none">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <Globe className="h-4 w-4 text-gray-400" />
+                Site
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs text-gray-400">Visualizações</p>
+                <p className="text-sm font-bold text-gray-900">
+                  {websiteMetric.pageViews != null ? websiteMetric.pageViews.toLocaleString("pt-BR") : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">Total de Usuários</p>
+                <p className="text-sm font-bold text-gray-900">
+                  {websiteMetric.totalUsers != null ? websiteMetric.totalUsers.toLocaleString("pt-BR") : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">Novos Usuários</p>
+                <p className="text-sm font-bold text-gray-900">
+                  {websiteMetric.newUsers != null ? websiteMetric.newUsers.toLocaleString("pt-BR") : "—"}
+                </p>
+              </div>
             </CardContent>
           </Card>
         )}

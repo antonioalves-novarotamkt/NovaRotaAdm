@@ -93,6 +93,18 @@ model Client {
   billingDayOfWeek  Int?
   billingDayOfMonth1 Int?
   billingDayOfMonth2 Int?
+  clientSince DateTime?
+
+  // Produtos/serviços contratados (escopo atual, independente do texto do contrato)
+  includesSocialMedia Boolean @default(false)
+  postsPerWeek        Int?
+  storiesPerWeek      Int?
+  reelsPerWeek        Int?
+  socialNetworksCount Int?
+  includesGoogleAds   Boolean @default(false)
+  includesMenuMgmt    Boolean @default(false)
+  menuPlatforms       String?
+
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -104,9 +116,26 @@ model Client {
   campaignMetrics CampaignMetric[]
   posts           ClientPost[]
   sales           ClientSale[]
+  websiteMetrics  WebsiteMetric[]
   leadOrigin      Lead?
 
   @@map("clients")
+}
+
+model WebsiteMetric {
+  id         String   @id @default(cuid())
+  clientId   String
+  month      DateTime
+  pageViews  Int?
+  totalUsers Int?
+  newUsers   Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, month])
+  @@map("website_metrics")
 }
 
 model Lead {
