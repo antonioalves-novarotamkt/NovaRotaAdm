@@ -156,7 +156,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
               </CardContent>
             </Card>
 
-            {(client.includesSocialMedia || client.includesGoogleAds || client.includesMenuMgmt) && (
+            {(client.includesSocialMedia || client.includesGoogleAds || client.includesMenuMgmt || client.includesWebsiteCreation) && (
               <Card className="border-0 shadow-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -181,6 +181,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                       {client.menuPlatforms && ` · ${client.menuPlatforms.split(",").join(", ")}`}
                     </p>
                   )}
+                  {client.includesWebsiteCreation && <p>Criação de Site</p>}
                 </CardContent>
               </Card>
             )}

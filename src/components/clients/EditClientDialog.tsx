@@ -41,6 +41,7 @@ interface ClientData {
   includesGoogleAds: boolean;
   includesMenuMgmt: boolean;
   menuPlatforms: string | null;
+  includesWebsiteCreation: boolean;
 }
 
 export function EditClientDialog({ client }: { client: ClientData }) {
@@ -48,6 +49,7 @@ export function EditClientDialog({ client }: { client: ClientData }) {
   const [includesSocialMedia, setIncludesSocialMedia] = useState(client.includesSocialMedia);
   const [includesGoogleAds, setIncludesGoogleAds] = useState(client.includesGoogleAds);
   const [includesMenuMgmt, setIncludesMenuMgmt] = useState(client.includesMenuMgmt);
+  const [includesWebsiteCreation, setIncludesWebsiteCreation] = useState(client.includesWebsiteCreation);
   const [menuPlatforms, setMenuPlatforms] = useState<string[]>(
     client.menuPlatforms ? client.menuPlatforms.split(",").filter(Boolean) : []
   );
@@ -194,6 +196,16 @@ export function EditClientDialog({ client }: { client: ClientData }) {
                 </div>
               )}
             </div>
+
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                name="includesWebsiteCreation"
+                checked={includesWebsiteCreation}
+                onChange={(e) => setIncludesWebsiteCreation(e.target.checked)}
+              />
+              Criação de Site
+            </label>
           </div>
 
           <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
