@@ -24,11 +24,11 @@ export const dynamic = "force-dynamic";
 
 const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-const PROJECTION_MONTHS_AHEAD = 6;
-const MAX_CHART_MONTHS = 36;
+const MONTHS_BACK = 2;
+const MONTHS_AHEAD = 2;
 
 export default async function FinanceiroPage() {
-  const [invoices, clients, scheduledClients, earliestContract, projectableClients] = await Promise.all([
+  const [invoices, clients, scheduledClients, projectableClients] = await Promise.all([
     prisma.invoice.findMany({
       orderBy: { issueDate: "desc" },
       include: { client: true },
@@ -40,10 +40,6 @@ export default async function FinanceiroPage() {
     prisma.client.findMany({
       where: { billingFrequency: { not: "NONE" }, nextBillingDate: { not: null } },
       orderBy: { nextBillingDate: "asc" },
-    }),
-    prisma.contract.findFirst({
-      orderBy: { startDate: "asc" },
-      select: { startDate: true },
     }),
     prisma.client.findMany({
       where: { status: { notIn: ["CHURNED", "INACTIVE"] }, billingFrequency: { not: "NONE" }, contractValue: { not: null } },
@@ -70,14 +66,9 @@ export default async function FinanceiroPage() {
 
   const now = new Date();
   const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const rawStart = earliestContract?.startDate
-    ? new Date(earliestContract.startDate.getFullYear(), earliestContract.startDate.getMonth(), 1)
-    : currentMonthStart;
-  const endMonth = new Date(now.getFullYear(), now.getMonth() + PROJECTION_MONTHS_AHEAD, 1);
-
-  let monthsCount = (endMonth.getFullYear() - rawStart.getFullYear()) * 12 + (endMonth.getMonth() - rawStart.getMonth()) + 1;
-  monthsCount = Math.min(monthsCount, MAX_CHART_MONTHS);
-  const startMonth = new Date(endMonth.getFullYear(), endMonth.getMonth() - monthsCount + 1, 1);
+  const startMonth = new Date(now.getFullYear(), now.getMonth() - MONTHS_BACK, 1);
+  const endMonth = new Date(now.getFullYear(), now.getMonth() + MONTHS_AHEAD, 1);
+  const monthsCount = MONTHS_BACK + MONTHS_AHEAD + 1;
   const spansMultipleYears = startMonth.getFullYear() !== endMonth.getFullYear();
 
   const chartData = Array.from({ length: monthsCount }).map((_, idx) => {
@@ -179,7 +170,7 @@ export default async function FinanceiroPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold text-gray-900">Receita: Histórico e Previsão</CardTitle>
             <p className="text-xs text-gray-500">
-              Desde o início do primeiro contrato até {PROJECTION_MONTHS_AHEAD} meses à frente — recebido (real) e previsto (com base na recorrência de cada cliente ativo)
+              {MONTHS_BACK} meses atrás até {MONTHS_AHEAD} meses à frente — recebido (real) e previsto (com base na recorrência de cada cliente ativo)
             </p>
           </CardHeader>
           <CardContent>
