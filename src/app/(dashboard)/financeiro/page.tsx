@@ -1,14 +1,10 @@
 import Link from "next/link";
-import { Search, Download, TrendingUp, TrendingDown, DollarSign, AlertCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, AlertCircle } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { RevenueChart } from "@/components/financeiro/RevenueChart";
-import { NewInvoiceDialog } from "@/components/financeiro/NewInvoiceDialog";
 import { RegisterPaymentButton } from "@/components/financeiro/RegisterPaymentButton";
 import { SendRemindersButton } from "@/components/financeiro/SendRemindersButton";
+import { RevenueChart } from "@/components/financeiro/RevenueChart";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { countOccurrencesInMonth } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
@@ -21,28 +17,16 @@ const frequencyLabel: Record<string, string> = {
 
 export const dynamic = "force-dynamic";
 
-const statusMap: Record<string, { label: string; variant: "success" | "warning" | "danger" | "gray" }> = {
-  PAID: { label: "Pago", variant: "success" },
-  PENDING: { label: "Pendente", variant: "warning" },
-  OVERDUE: { label: "Atrasado", variant: "danger" },
-  DRAFT: { label: "Rascunho", variant: "gray" },
-  CANCELLED: { label: "Cancelado", variant: "gray" },
-};
-
 const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 const PROJECTION_MONTHS_AHEAD = 6;
 const MAX_CHART_MONTHS = 36;
 
 export default async function FinanceiroPage() {
-  const [invoices, clients, scheduledClients, earliestContract, projectableClients] = await Promise.all([
+  const [invoices, scheduledClients, earliestContract, projectableClients] = await Promise.all([
     prisma.invoice.findMany({
       orderBy: { issueDate: "desc" },
       include: { client: true },
-    }),
-    prisma.client.findMany({
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, company: true },
     }),
     prisma.client.findMany({
       where: { billingFrequency: { not: "NONE" }, nextBillingDate: { not: null } },
@@ -131,7 +115,7 @@ export default async function FinanceiroPage() {
                 </div>
               </div>
               <p className="text-2xl font-bold text-gray-900">{formatCurrency(total)}</p>
-              <p className="text-xs text-gray-400 mt-1">{invoices.length} fatura(s)</p>
+              <p className="text-xs text-gray-400 mt-1">{invoices.length} recebimento(s)</p>
             </CardContent>
           </Card>
 
@@ -144,7 +128,7 @@ export default async function FinanceiroPage() {
                 </div>
               </div>
               <p className="text-2xl font-bold text-green-600">{formatCurrency(paid)}</p>
-              <p className="text-xs text-gray-400 mt-1">{invoices.filter((i) => i.status === "PAID").length} faturas pagas</p>
+              <p className="text-xs text-gray-400 mt-1">{invoices.filter((i) => i.status === "PAID").length} recebido(s)</p>
             </CardContent>
           </Card>
 
@@ -157,7 +141,7 @@ export default async function FinanceiroPage() {
                 </div>
               </div>
               <p className="text-2xl font-bold text-yellow-600">{formatCurrency(pending)}</p>
-              <p className="text-xs text-gray-400 mt-1">{invoices.filter((i) => i.status === "PENDING").length} faturas pendentes</p>
+              <p className="text-xs text-gray-400 mt-1">{invoices.filter((i) => i.status === "PENDING").length} programado(s)</p>
             </CardContent>
           </Card>
 
@@ -170,7 +154,7 @@ export default async function FinanceiroPage() {
                 </div>
               </div>
               <p className="text-2xl font-bold text-red-500">{formatCurrency(overdue)}</p>
-              <p className="text-xs text-gray-400 mt-1">{invoices.filter((i) => i.status === "OVERDUE").length} faturas vencidas</p>
+              <p className="text-xs text-gray-400 mt-1">{invoices.filter((i) => i.status === "OVERDUE").length} atrasado(s)</p>
             </CardContent>
           </Card>
         </div>
@@ -221,71 +205,6 @@ export default async function FinanceiroPage() {
             </CardContent>
           </Card>
         )}
-
-        {/* Invoices Table */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold text-gray-900">Faturas</CardTitle>
-              <div className="flex items-center gap-2">
-                <div className="relative w-56">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input placeholder="Buscar fatura..." className="pl-9 h-8 text-xs bg-gray-50 border-gray-200" />
-                </div>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5">
-                  <Download className="h-3.5 w-3.5" />
-                  Exportar
-                </Button>
-                <NewInvoiceDialog clients={clients} />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {invoices.length === 0 ? (
-              <p className="p-10 text-center text-sm text-gray-500">Nenhuma fatura cadastrada ainda.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-gray-50">
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Número</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Emissão</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Vencimento</th>
-                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Valor</th>
-                      <th className="text-center px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoices.map((invoice, idx) => {
-                      const status = statusMap[invoice.status];
-                      return (
-                        <tr key={invoice.id} className={`border-b last:border-0 hover:bg-gray-50 transition-colors ${idx % 2 === 0 ? "" : "bg-gray-50/50"}`}>
-                          <td className="px-6 py-4 font-medium text-gray-900">{invoice.number}</td>
-                          <td className="px-6 py-4 text-gray-600">{invoice.client.company || invoice.client.name}</td>
-                          <td className="px-6 py-4 text-gray-500">{formatDate(invoice.issueDate)}</td>
-                          <td className="px-6 py-4 text-gray-500">{formatDate(invoice.dueDate)}</td>
-                          <td className="px-6 py-4 text-right font-semibold text-gray-900">{formatCurrency(invoice.total)}</td>
-                          <td className="px-6 py-4 text-center">
-                            <Badge variant={status.variant}>{status.label}</Badge>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <Link href={`/clientes/${invoice.client.id}`}>
-                              <Button variant="ghost" size="sm" className="text-xs text-orange-600 hover:text-orange-700 h-7">
-                                Ver
-                              </Button>
-                            </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

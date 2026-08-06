@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { BillingFrequency } from "@prisma/client";
 import { computeNextBillingDate } from "@/lib/billing";
+import { syncScheduledInvoices } from "@/lib/scheduled-invoices";
 
 export async function updateClientBilling(formData: FormData) {
   const clientId = String(formData.get("clientId") || "").trim();
@@ -40,6 +41,8 @@ export async function updateClientBilling(formData: FormData) {
     },
   });
 
+  await syncScheduledInvoices();
+
   revalidatePath(`/clientes/${clientId}`);
   revalidatePath("/financeiro");
 }
@@ -52,22 +55,36 @@ export async function registerScheduledPayment(formData: FormData) {
     throw new Error("Cliente sem recebimento programado.");
   }
 
-  const count = await prisma.invoice.count();
-  const number = `NF-${new Date().getFullYear()}-${String(count + 1).padStart(3, "0")}`;
-
-  await prisma.invoice.create({
-    data: {
-      number,
+  const pendingInvoice = await prisma.invoice.findFirst({
+    where: {
       clientId,
-      amount: client.contractValue,
-      tax: 0,
-      total: client.contractValue,
-      status: "PAID",
       dueDate: client.nextBillingDate,
-      paidAt: new Date(),
-      description: "Recebimento programado",
+      status: { in: ["PENDING", "OVERDUE"] },
     },
   });
+
+  if (pendingInvoice) {
+    await prisma.invoice.update({
+      where: { id: pendingInvoice.id },
+      data: { status: "PAID", paidAt: new Date() },
+    });
+  } else {
+    const count = await prisma.invoice.count();
+    const number = `NF-${new Date().getFullYear()}-${String(count + 1).padStart(3, "0")}`;
+    await prisma.invoice.create({
+      data: {
+        number,
+        clientId,
+        amount: client.contractValue,
+        tax: 0,
+        total: client.contractValue,
+        status: "PAID",
+        dueDate: client.nextBillingDate,
+        paidAt: new Date(),
+        description: "Recebimento programado",
+      },
+    });
+  }
 
   const dayAfter = new Date(client.nextBillingDate);
   dayAfter.setDate(dayAfter.getDate() + 1);
@@ -86,6 +103,8 @@ export async function registerScheduledPayment(formData: FormData) {
     where: { id: clientId },
     data: { nextBillingDate },
   });
+
+  await syncScheduledInvoices();
 
   revalidatePath("/financeiro");
 }
