@@ -30,6 +30,29 @@ export async function createClientSale(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
+export async function updateClientSale(formData: FormData) {
+  const id = String(formData.get("id") || "");
+  const platform = String(formData.get("platform") || "").trim();
+  const grossValue = Number(formData.get("grossValue") || 0);
+  const netValueRaw = String(formData.get("netValue") || "");
+  const salesCount = Number(formData.get("salesCount") || 0);
+
+  if (!id) return;
+
+  await prisma.clientSale.update({
+    where: { id },
+    data: {
+      platform: platform || null,
+      grossValue,
+      netValue: netValueRaw ? Number(netValueRaw) : null,
+      salesCount,
+    },
+  });
+
+  revalidatePath("/vendas");
+  revalidatePath("/dashboard");
+}
+
 export async function deleteClientSale(formData: FormData) {
   const id = String(formData.get("id") || "");
   if (!id) return;

@@ -3,6 +3,7 @@ import { ShoppingCart, DollarSign, Wallet, TrendingDown, Hash } from "lucide-rea
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { NewSaleDialog } from "@/components/vendas/NewSaleDialog";
+import { EditSaleDialog } from "@/components/vendas/EditSaleDialog";
 import { DeleteSaleButton } from "@/components/vendas/DeleteSaleButton";
 import { formatCurrency } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
@@ -226,7 +227,19 @@ export default async function VendasPage({
                         <p className="text-xs text-gray-400">Vendas</p>
                         <p className="text-sm font-bold text-gray-900">{sale.salesCount}</p>
                       </div>
-                      <DeleteSaleButton saleId={sale.id} />
+                      <div className="flex items-center gap-1">
+                        <EditSaleDialog
+                          sale={{
+                            id: sale.id,
+                            clientName: sale.client.company || sale.client.name,
+                            platform: sale.platform,
+                            grossValue: sale.grossValue,
+                            netValue: sale.netValue,
+                            salesCount: sale.salesCount,
+                          }}
+                        />
+                        <DeleteSaleButton saleId={sale.id} />
+                      </div>
                     </div>
                   </div>
                 ))}
