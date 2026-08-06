@@ -61,8 +61,8 @@ export default async function DashboardPage() {
     prisma.invoice.findMany({ where: { status: "PAID" }, select: { total: true, paidAt: true } }),
     prisma.client.count({ where: { status: "ACTIVE" } }),
     prisma.client.count({ where: { createdAt: { gte: monthStart } } }),
-    prisma.clientSale.aggregate({ where: { month: monthStart }, _sum: { totalValue: true } }),
-    prisma.clientSale.aggregate({ where: { month: prevMonthStart }, _sum: { totalValue: true } }),
+    prisma.clientSale.aggregate({ where: { month: monthStart }, _sum: { grossValue: true } }),
+    prisma.clientSale.aggregate({ where: { month: prevMonthStart }, _sum: { grossValue: true } }),
     prisma.invoice.findMany({ where: { status: "OVERDUE" }, select: { total: true } }),
     prisma.client.count({
       where: { nextBillingDate: { gte: now, lte: in7Days } },
@@ -90,8 +90,8 @@ export default async function DashboardPage() {
     .reduce((s, i) => s + i.total, 0);
   const revenueChange = revenuePrevMonth > 0 ? ((revenueThisMonth - revenuePrevMonth) / revenuePrevMonth) * 100 : 0;
 
-  const salesTotalThisMonth = salesThisMonth._sum.totalValue || 0;
-  const salesTotalPrevMonth = salesPrevMonth._sum.totalValue || 0;
+  const salesTotalThisMonth = salesThisMonth._sum.grossValue || 0;
+  const salesTotalPrevMonth = salesPrevMonth._sum.grossValue || 0;
   const salesChange = salesTotalPrevMonth > 0 ? ((salesTotalThisMonth - salesTotalPrevMonth) / salesTotalPrevMonth) * 100 : 0;
 
   const overdueTotal = overdueInvoices.reduce((s, i) => s + i.total, 0);
@@ -116,7 +116,7 @@ export default async function DashboardPage() {
 
   const salesByMonth = await prisma.clientSale.groupBy({
     by: ["month"],
-    _sum: { totalValue: true },
+    _sum: { grossValue: true },
     where: {
       month: {
         gte: new Date(Date.UTC(now.getFullYear(), now.getMonth() - 5, 1)),
@@ -126,7 +126,7 @@ export default async function DashboardPage() {
   });
   for (const entry of salesByMonth) {
     const idx = chartData.findIndex((c) => c.key === new Date(entry.month).getTime());
-    if (idx !== -1) chartData[idx].vendas = entry._sum.totalValue || 0;
+    if (idx !== -1) chartData[idx].vendas = entry._sum.grossValue || 0;
   }
 
   return (

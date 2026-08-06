@@ -86,8 +86,12 @@ export default async function ClientReportPage({
     }),
   ]);
 
-  const totalSalesValue = sales.reduce((s, sale) => s + sale.totalValue, 0);
+  const totalSalesValue = sales.reduce((s, sale) => s + sale.grossValue, 0);
   const totalSalesCount = sales.reduce((s, sale) => s + sale.salesCount, 0);
+  const salesWithNet = sales.filter((s) => s.netValue != null);
+  const totalNetValue = salesWithNet.reduce((s, sale) => s + (sale.netValue as number), 0);
+  const totalSalesLoss = salesWithNet.reduce((s, sale) => s + (sale.grossValue - (sale.netValue as number)), 0);
+  const hasNetData = salesWithNet.length > 0;
 
   const totalViews = posts.reduce((s, p) => s + (p.instagramViews || 0) + (p.facebookViews || 0), 0);
   const totalLikes = posts.reduce((s, p) => s + (p.instagramLikes || 0) + (p.facebookLikes || 0), 0);
@@ -350,7 +354,7 @@ export default async function ClientReportPage({
             <CardContent>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-3">
                 <div>
-                  <p className="text-xs text-gray-400">Valor Total</p>
+                  <p className="text-xs text-gray-400">Total Bruto de Vendas</p>
                   <p className="text-sm font-bold text-gray-900">{formatCurrency(totalSalesValue)}</p>
                 </div>
                 <div>
@@ -364,13 +368,32 @@ export default async function ClientReportPage({
                   </p>
                 </div>
               </div>
+              {hasNetData && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-3 pt-3 border-t border-gray-100">
+                  <div>
+                    <p className="text-xs text-gray-400">Ganho Líquido</p>
+                    <p className="text-sm font-bold text-gray-900">{formatCurrency(totalNetValue)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Perdas com Taxas/Promoções/Entregas</p>
+                    <p className="text-sm font-bold text-red-600">{formatCurrency(totalSalesLoss)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">% Perdido do Bruto</p>
+                    <p className="text-sm font-bold text-red-600">
+                      {totalSalesValue > 0 ? `${((totalSalesLoss / totalSalesValue) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%` : "—"}
+                    </p>
+                  </div>
+                </div>
+              )}
               {sales.length > 1 && (
                 <div className="space-y-1.5 border-t pt-3">
                   {sales.map((sale) => (
                     <div key={sale.id} className="flex items-center justify-between text-xs text-gray-600">
                       <span>{sale.platform || "Geral"}</span>
                       <span>
-                        {formatCurrency(sale.totalValue)} · {sale.salesCount} vendas
+                        {formatCurrency(sale.grossValue)}
+                        {sale.netValue != null && ` (líquido ${formatCurrency(sale.netValue)})`} · {sale.salesCount} vendas
                       </span>
                     </div>
                   ))}

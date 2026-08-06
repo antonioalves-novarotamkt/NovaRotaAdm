@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShoppingCart, DollarSign, Hash, TrendingUp } from "lucide-react";
+import { ShoppingCart, DollarSign, Wallet, TrendingDown, Hash } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { NewSaleDialog } from "@/components/vendas/NewSaleDialog";
@@ -35,23 +35,35 @@ export default async function VendasPage({
     }),
   ]);
 
-  const totalValue = sales.reduce((s, sale) => s + sale.totalValue, 0);
+  const totalGross = sales.reduce((s, sale) => s + sale.grossValue, 0);
+  const totalNet = sales.reduce((s, sale) => s + (sale.netValue ?? 0), 0);
+  const salesWithNet = sales.filter((s) => s.netValue != null);
+  const totalLoss = salesWithNet.reduce((s, sale) => s + (sale.grossValue - (sale.netValue as number)), 0);
   const totalCount = sales.reduce((s, sale) => s + sale.salesCount, 0);
-  const avgTicket = totalCount > 0 ? totalValue / totalCount : 0;
+  const avgTicket = totalCount > 0 ? totalGross / totalCount : 0;
 
-  const byClient = new Map<string, { name: string; totalValue: number; salesCount: number }>();
+  const byClient = new Map<
+    string,
+    { name: string; grossValue: number; netValue: number; hasNet: boolean; salesCount: number }
+  >();
   for (const sale of sales) {
     const key = sale.clientId;
     const entry = byClient.get(key) || {
       name: sale.client.company || sale.client.name,
-      totalValue: 0,
+      grossValue: 0,
+      netValue: 0,
+      hasNet: false,
       salesCount: 0,
     };
-    entry.totalValue += sale.totalValue;
+    entry.grossValue += sale.grossValue;
+    if (sale.netValue != null) {
+      entry.netValue += sale.netValue;
+      entry.hasNet = true;
+    }
     entry.salesCount += sale.salesCount;
     byClient.set(key, entry);
   }
-  const clientSummaries = Array.from(byClient.entries()).sort((a, b) => b[1].totalValue - a[1].totalValue);
+  const clientSummaries = Array.from(byClient.entries()).sort((a, b) => b[1].grossValue - a[1].grossValue);
 
   return (
     <div>
@@ -85,16 +97,38 @@ export default async function VendasPage({
         </div>
 
         {/* KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-gray-500">Valor Total de Vendas</p>
+                <p className="text-xs text-gray-500">Total Bruto de Vendas</p>
                 <div className="h-8 w-8 rounded-lg bg-green-50 flex items-center justify-center">
                   <DollarSign className="h-4 w-4 text-green-600" />
                 </div>
               </div>
-              <p className="text-xl font-bold text-gray-900">{formatCurrency(totalValue)}</p>
+              <p className="text-xl font-bold text-gray-900">{formatCurrency(totalGross)}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs text-gray-500">Ganho Líquido</p>
+                <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                  <Wallet className="h-4 w-4 text-emerald-600" />
+                </div>
+              </div>
+              <p className="text-xl font-bold text-gray-900">{formatCurrency(totalNet)}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs text-gray-500">Perdas (taxas/promoções/entrega)</p>
+                <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center">
+                  <TrendingDown className="h-4 w-4 text-red-500" />
+                </div>
+              </div>
+              <p className="text-xl font-bold text-red-600">{formatCurrency(totalLoss)}</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-sm">
@@ -113,7 +147,7 @@ export default async function VendasPage({
               <div className="flex items-center justify-between mb-1">
                 <p className="text-xs text-gray-500">Ticket Médio</p>
                 <div className="h-8 w-8 rounded-lg bg-purple-50 flex items-center justify-center">
-                  <TrendingUp className="h-4 w-4 text-purple-600" />
+                  <ShoppingCart className="h-4 w-4 text-purple-600" />
                 </div>
               </div>
               <p className="text-xl font-bold text-gray-900">{formatCurrency(avgTicket)}</p>
@@ -130,9 +164,10 @@ export default async function VendasPage({
                   <thead>
                     <tr className="border-b bg-gray-50">
                       <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente</th>
-                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Valor Total</th>
+                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Bruto</th>
+                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Líquido</th>
+                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Perdas</th>
                       <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nº Vendas</th>
-                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ticket Médio</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -143,11 +178,14 @@ export default async function VendasPage({
                             {summary.name}
                           </Link>
                         </td>
-                        <td className="px-6 py-3 text-right font-semibold text-gray-900">{formatCurrency(summary.totalValue)}</td>
-                        <td className="px-6 py-3 text-right text-gray-600">{summary.salesCount.toLocaleString("pt-BR")}</td>
+                        <td className="px-6 py-3 text-right font-semibold text-gray-900">{formatCurrency(summary.grossValue)}</td>
                         <td className="px-6 py-3 text-right text-gray-600">
-                          {formatCurrency(summary.salesCount > 0 ? summary.totalValue / summary.salesCount : 0)}
+                          {summary.hasNet ? formatCurrency(summary.netValue) : "—"}
                         </td>
+                        <td className="px-6 py-3 text-right text-red-600">
+                          {summary.hasNet ? formatCurrency(summary.grossValue - summary.netValue) : "—"}
+                        </td>
+                        <td className="px-6 py-3 text-right text-gray-600">{summary.salesCount.toLocaleString("pt-BR")}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -175,8 +213,14 @@ export default async function VendasPage({
                     </div>
                     <div className="flex items-center gap-6">
                       <div className="text-right">
-                        <p className="text-xs text-gray-400">Valor</p>
-                        <p className="text-sm font-bold text-gray-900">{formatCurrency(sale.totalValue)}</p>
+                        <p className="text-xs text-gray-400">Bruto</p>
+                        <p className="text-sm font-bold text-gray-900">{formatCurrency(sale.grossValue)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-400">Líquido</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {sale.netValue != null ? formatCurrency(sale.netValue) : "—"}
+                        </p>
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-gray-400">Vendas</p>
