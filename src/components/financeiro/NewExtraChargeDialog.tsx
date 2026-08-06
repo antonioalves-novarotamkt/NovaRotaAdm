@@ -52,10 +52,13 @@ export function NewExtraChargeDialog({ clients }: { clients: ClientOption[] }) {
           <div className="grid grid-cols-2 gap-3">
             <Input name="amount" type="number" step="0.01" placeholder="Valor (R$)" required />
             <label className="text-xs text-gray-500 space-y-1">
-              Data de recebimento
+              Data de vencimento
               <Input name="receivedDate" type="date" required />
             </label>
           </div>
+          <p className="text-[11px] text-gray-400 -mt-1.5">
+            Entra como pendente. Use &quot;Dar Baixa&quot; na lista quando o valor for recebido.
+          </p>
           <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
             Salvar
           </Button>

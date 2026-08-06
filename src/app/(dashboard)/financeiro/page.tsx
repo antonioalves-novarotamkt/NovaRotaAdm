@@ -7,6 +7,7 @@ import { SendRemindersButton } from "@/components/financeiro/SendRemindersButton
 import { RevenueChart } from "@/components/financeiro/RevenueChart";
 import { NewExtraChargeDialog } from "@/components/financeiro/NewExtraChargeDialog";
 import { DeleteExtraChargeButton } from "@/components/financeiro/DeleteExtraChargeButton";
+import { MarkExtraChargePaidButton } from "@/components/financeiro/MarkExtraChargePaidButton";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { countOccurrencesInMonth } from "@/lib/billing";
 import { prisma } from "@/lib/prisma";
@@ -245,6 +246,7 @@ export default async function FinanceiroPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-bold text-gray-900">{formatCurrency(invoice.total)}</span>
+                    {invoice.status !== "PAID" && <MarkExtraChargePaidButton id={invoice.id} />}
                     <DeleteExtraChargeButton id={invoice.id} />
                   </div>
                 </div>

@@ -7,13 +7,13 @@ export async function createExtraCharge(formData: FormData) {
   const clientId = String(formData.get("clientId") || "").trim();
   const description = String(formData.get("description") || "").trim();
   const amount = Number(formData.get("amount") || 0);
-  const receivedDateRaw = String(formData.get("receivedDate") || "");
+  const dateRaw = String(formData.get("receivedDate") || "");
 
-  if (!clientId || !description || !amount || !receivedDateRaw) {
-    throw new Error("Cliente, descrição, valor e data de recebimento são obrigatórios.");
+  if (!clientId || !description || !amount || !dateRaw) {
+    throw new Error("Cliente, descrição, valor e data são obrigatórios.");
   }
 
-  const receivedDate = new Date(`${receivedDateRaw}T00:00:00.000Z`);
+  const date = new Date(`${dateRaw}T00:00:00.000Z`);
   const count = await prisma.invoice.count();
   const number = `NF-${new Date().getFullYear()}-${String(count + 1).padStart(3, "0")}`;
 
@@ -24,14 +24,23 @@ export async function createExtraCharge(formData: FormData) {
       amount,
       tax: 0,
       total: amount,
-      status: "PAID",
-      issueDate: receivedDate,
-      dueDate: receivedDate,
-      paidAt: receivedDate,
+      status: "PENDING",
+      issueDate: new Date(),
+      dueDate: date,
       description,
     },
   });
 
+  revalidatePath("/financeiro");
+}
+
+export async function markExtraChargePaid(formData: FormData) {
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+  await prisma.invoice.update({
+    where: { id },
+    data: { status: "PAID", paidAt: new Date() },
+  });
   revalidatePath("/financeiro");
 }
 
