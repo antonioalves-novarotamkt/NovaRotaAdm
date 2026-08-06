@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { TrendingUp, TrendingDown, DollarSign, AlertCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, AlertCircle, Receipt } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { RegisterPaymentButton } from "@/components/financeiro/RegisterPaymentButton";
 import { SendRemindersButton } from "@/components/financeiro/SendRemindersButton";
 import { RevenueChart } from "@/components/financeiro/RevenueChart";
@@ -253,7 +254,15 @@ export default async function FinanceiroPage() {
                     <span className="text-sm font-bold text-gray-900">{formatCurrency(invoice.total)}</span>
                     {invoice.status !== "PAID" && <MarkExtraChargePaidButton id={invoice.id} />}
                     {invoice.status === "PAID" && invoice.paidAt && (
-                      <EditPaidDateButton id={invoice.id} currentDate={invoice.paidAt.toISOString().slice(0, 10)} />
+                      <>
+                        <EditPaidDateButton id={invoice.id} currentDate={invoice.paidAt.toISOString().slice(0, 10)} />
+                        <Link href={`/recibo/${invoice.id}`}>
+                          <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs">
+                            <Receipt className="h-3.5 w-3.5" />
+                            Recibo
+                          </Button>
+                        </Link>
+                      </>
                     )}
                     <DeleteExtraChargeButton id={invoice.id} />
                   </div>
@@ -288,6 +297,12 @@ export default async function FinanceiroPage() {
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-bold text-gray-900">{formatCurrency(invoice.total)}</span>
                     <EditPaidDateButton id={invoice.id} currentDate={(invoice.paidAt as Date).toISOString().slice(0, 10)} />
+                    <Link href={`/recibo/${invoice.id}`}>
+                      <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs">
+                        <Receipt className="h-3.5 w-3.5" />
+                        Recibo
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               ))
