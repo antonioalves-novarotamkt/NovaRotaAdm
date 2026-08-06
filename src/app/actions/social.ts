@@ -58,4 +58,12 @@ export async function logSocialMetric(formData: FormData) {
 
   revalidatePath(`/clientes/${clientId}`);
   revalidatePath(`/clientes/${clientId}/relatorio`);
+  revalidatePath("/analises");
+}
+
+export async function deleteSocialMetric(formData: FormData) {
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+  await prisma.socialMetric.delete({ where: { id } });
+  revalidatePath("/analises");
 }

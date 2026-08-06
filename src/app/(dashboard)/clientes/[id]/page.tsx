@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { ArrowLeft, Mail, Phone, Globe, MapPin, Building2, Calendar, DollarSign, FileText, Users2, ClipboardList, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Globe, MapPin, Building2, Calendar, DollarSign, FileText, Users2, ClipboardList, Image as ImageIcon, LineChart, Package } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate, getInitials } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { NewSocialAccountDialog } from "@/components/clients/NewSocialAccountDialog";
-import { LogSocialMetricDialog } from "@/components/clients/LogSocialMetricDialog";
 import { NewActivityDialog } from "@/components/clients/NewActivityDialog";
 import { ClientLogoUpload } from "@/components/clients/ClientLogoUpload";
 import { ClientBillingForm } from "@/components/clients/ClientBillingForm";
+import { EditClientDialog } from "@/components/clients/EditClientDialog";
 
 const platformLabel: Record<string, string> = {
   INSTAGRAM: "Instagram",
@@ -66,6 +66,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
         include: { metrics: { orderBy: { month: "desc" }, take: 1 } },
       },
       activities: { orderBy: { date: "desc" }, take: 20 },
+      websiteMetrics: { orderBy: { month: "desc" }, take: 1 },
     },
   });
 
@@ -103,9 +104,12 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                       {getInitials(client.name)}
                     </div>
                   )}
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-900">{client.name}</h2>
-                    <Badge variant={status.variant}>{status.label}</Badge>
+                  <div className="flex-1 flex items-start justify-between gap-2">
+                    <div>
+                      <h2 className="text-lg font-bold text-gray-900">{client.name}</h2>
+                      <Badge variant={status.variant}>{status.label}</Badge>
+                    </div>
+                    <EditClientDialog client={client} />
                   </div>
                 </div>
 
@@ -146,11 +150,40 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                   )}
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Calendar className="h-4 w-4 text-gray-400" />
-                    Cliente desde {formatDate(client.createdAt)}
+                    Cliente desde {formatDate(client.clientSince || client.createdAt)}
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {(client.includesSocialMedia || client.includesGoogleAds || client.includesMenuMgmt) && (
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <Package className="h-4 w-4 text-purple-500" />
+                    Produtos Contratados
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-gray-600">
+                  {client.includesSocialMedia && (
+                    <p>
+                      Social Media
+                      {client.socialNetworksCount != null && ` · ${client.socialNetworksCount} rede(s)`}
+                      {client.postsPerWeek != null && ` · ${client.postsPerWeek} post(s)/sem`}
+                      {client.storiesPerWeek != null && ` · ${client.storiesPerWeek} stories/sem`}
+                      {client.reelsPerWeek != null && ` · ${client.reelsPerWeek} reel(s)/sem`}
+                    </p>
+                  )}
+                  {client.includesGoogleAds && <p>Google Ads</p>}
+                  {client.includesMenuMgmt && (
+                    <p>
+                      Cardápio Digital
+                      {client.menuPlatforms && ` · ${client.menuPlatforms.split(",").join(", ")}`}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-2">
@@ -193,11 +226,10 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                     <Users2 className="h-4 w-4 text-gray-400" />
                     Redes Sociais ({client.socialAccounts.length})
                   </CardTitle>
-                  <div className="flex gap-2">
-                    <LogSocialMetricDialog
-                      clientId={client.id}
-                      accounts={client.socialAccounts.map((a) => ({ id: a.id, handle: a.handle, platform: a.platform }))}
-                    />
+                  <div className="flex items-center gap-2">
+                    <Link href={`/analises?cliente=${client.id}`} className="text-xs text-orange-600 hover:underline">
+                      Ver Análises
+                    </Link>
                     <NewSocialAccountDialog clientId={client.id} />
                   </div>
                 </div>
@@ -231,6 +263,39 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                 })}
               </CardContent>
             </Card>
+
+            {client.websiteMetrics.length > 0 && (
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                      <LineChart className="h-4 w-4 text-gray-400" />
+                      Site
+                    </CardTitle>
+                    <Link href={`/analises?cliente=${client.id}`} className="text-xs text-orange-600 hover:underline">
+                      Ver Análises
+                    </Link>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const latest = client.websiteMetrics[0];
+                    return (
+                      <div className="flex items-center justify-between p-3 rounded-lg border border-gray-100">
+                        <span className="text-xs text-gray-500">
+                          {formatDate(latest.month, { month: "long", year: "numeric", day: undefined })}
+                        </span>
+                        <p className="text-sm text-gray-700">
+                          {latest.pageViews != null && `${latest.pageViews.toLocaleString("pt-BR")} visualizações`}
+                          {latest.totalUsers != null && ` · ${latest.totalUsers.toLocaleString("pt-BR")} usuários`}
+                          {latest.newUsers != null && ` · ${latest.newUsers.toLocaleString("pt-BR")} novos usuários`}
+                        </p>
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            )}
 
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">

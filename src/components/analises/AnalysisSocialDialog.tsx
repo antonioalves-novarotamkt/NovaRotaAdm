@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { TrendingUp } from "lucide-react";
+import { Users2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,6 +19,13 @@ interface AccountOption {
   platform: string;
 }
 
+interface ClientOption {
+  id: string;
+  name: string;
+  company: string | null;
+  socialAccounts: AccountOption[];
+}
+
 const platformLabel: Record<string, string> = {
   INSTAGRAM: "Instagram",
   FACEBOOK: "Facebook",
@@ -34,36 +41,70 @@ const inputClass =
 
 const currentMonth = new Date().toISOString().slice(0, 7);
 
-export function LogSocialMetricDialog({ clientId, accounts }: { clientId: string; accounts: AccountOption[] }) {
+export function AnalysisSocialDialog({
+  clients,
+  defaultClientId,
+}: {
+  clients: ClientOption[];
+  defaultClientId?: string;
+}) {
   const [open, setOpen] = useState(false);
-  const [selectedAccountId, setSelectedAccountId] = useState("");
+  const [clientId, setClientId] = useState(defaultClientId || "");
+  const [socialAccountId, setSocialAccountId] = useState("");
 
-  const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
+  const selectedClient = clients.find((c) => c.id === clientId);
+  const accounts = selectedClient?.socialAccounts || [];
+  const selectedAccount = accounts.find((a) => a.id === socialAccountId);
   const isInstagram = selectedAccount?.platform === "INSTAGRAM";
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) setSocialAccountId("");
+      }}
+    >
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" disabled={accounts.length === 0}>
-          <TrendingUp className="h-3.5 w-3.5" />
-          Registrar Mês
+        <Button size="sm" variant="outline" className="h-9 gap-1.5">
+          <Users2 className="h-4 w-4" />
+          Registrar Redes Sociais
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Registrar Métrica Mensal</DialogTitle>
+          <DialogTitle>Registrar Métrica de Rede Social</DialogTitle>
         </DialogHeader>
         <form action={logSocialMetric} onSubmit={() => setOpen(false)} className="space-y-3">
           <input type="hidden" name="clientId" value={clientId} />
           <select
-            name="socialAccountId"
             required
-            value={selectedAccountId}
-            onChange={(e) => setSelectedAccountId(e.target.value)}
+            value={clientId}
+            onChange={(e) => {
+              setClientId(e.target.value);
+              setSocialAccountId("");
+            }}
             className={inputClass}
           >
             <option value="" disabled>
-              Selecione a rede
+              Selecione o cliente
+            </option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.company || c.name}
+              </option>
+            ))}
+          </select>
+          <select
+            name="socialAccountId"
+            required
+            value={socialAccountId}
+            onChange={(e) => setSocialAccountId(e.target.value)}
+            disabled={!clientId}
+            className={inputClass}
+          >
+            <option value="" disabled>
+              {clientId ? "Selecione a rede" : "Escolha um cliente primeiro"}
             </option>
             {accounts.map((acc) => (
               <option key={acc.id} value={acc.id}>
@@ -94,7 +135,7 @@ export function LogSocialMetricDialog({ clientId, accounts }: { clientId: string
             </div>
           )}
 
-          <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
+          <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700" disabled={!socialAccountId}>
             Salvar
           </Button>
         </form>
