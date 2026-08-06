@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NewContractDialog } from "@/components/contracts/NewContractDialog";
+import { EditContractDialog } from "@/components/contracts/EditContractDialog";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { getAgencySettings } from "@/app/actions/agency";
@@ -105,6 +106,7 @@ export default async function ContratosPage() {
                         <p className="text-sm font-bold text-gray-900">{formatCurrency(contract.value)}</p>
                       </div>
                       <Badge variant={status.variant}>{status.label}</Badge>
+                      <EditContractDialog contract={contract} />
                       {contract.content && (
                         <Link href={`/contratos/${contract.id}`}>
                           <Button variant="ghost" size="sm" className="text-xs text-orange-600 hover:text-orange-700 h-7">

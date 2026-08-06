@@ -37,9 +37,11 @@ export async function createExtraCharge(formData: FormData) {
 export async function markExtraChargePaid(formData: FormData) {
   const id = String(formData.get("id") || "");
   if (!id) return;
+  const paidAtRaw = String(formData.get("paidAt") || "");
+  const paidAt = paidAtRaw ? new Date(`${paidAtRaw}T00:00:00.000Z`) : new Date();
   await prisma.invoice.update({
     where: { id },
-    data: { status: "PAID", paidAt: new Date() },
+    data: { status: "PAID", paidAt },
   });
   revalidatePath("/financeiro");
 }
