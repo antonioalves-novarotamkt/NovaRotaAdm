@@ -49,6 +49,8 @@ export async function updateClientBilling(formData: FormData) {
 
 export async function registerScheduledPayment(formData: FormData) {
   const clientId = String(formData.get("clientId") || "").trim();
+  const paidAtRaw = String(formData.get("paidAt") || "");
+  const paidAt = paidAtRaw ? new Date(`${paidAtRaw}T00:00:00.000Z`) : new Date();
 
   const client = await prisma.client.findUnique({ where: { id: clientId } });
   if (!client || !client.nextBillingDate || !client.contractValue) {
@@ -66,7 +68,7 @@ export async function registerScheduledPayment(formData: FormData) {
   if (pendingInvoice) {
     await prisma.invoice.update({
       where: { id: pendingInvoice.id },
-      data: { status: "PAID", paidAt: new Date() },
+      data: { status: "PAID", paidAt },
     });
   } else {
     const count = await prisma.invoice.count();
@@ -80,7 +82,7 @@ export async function registerScheduledPayment(formData: FormData) {
         total: client.contractValue,
         status: "PAID",
         dueDate: client.nextBillingDate,
-        paidAt: new Date(),
+        paidAt,
         description: "Recebimento programado",
       },
     });

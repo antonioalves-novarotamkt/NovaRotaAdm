@@ -52,3 +52,48 @@ export async function createContract(formData: FormData) {
   revalidatePath("/contratos");
   redirect("/contratos");
 }
+
+export async function updateContract(formData: FormData) {
+  const id = String(formData.get("id") || "");
+  const title = String(formData.get("title") || "").trim();
+  const value = Number(formData.get("value") || 0);
+  const startDate = String(formData.get("startDate") || "");
+  const endDate = String(formData.get("endDate") || "");
+  const status = String(formData.get("status") || "ACTIVE") as ContractStatus;
+  const notes = String(formData.get("notes") || "").trim();
+  const paymentDayRaw = String(formData.get("paymentDay") || "");
+
+  const includesSocialMedia = formData.get("includesSocialMedia") === "on";
+  const postsPerWeekRaw = String(formData.get("postsPerWeek") || "");
+  const reelsPerWeekRaw = String(formData.get("reelsPerWeek") || "");
+  const socialNetworksCountRaw = String(formData.get("socialNetworksCount") || "");
+  const includesGoogleAds = formData.get("includesGoogleAds") === "on";
+  const includesMenuMgmt = formData.get("includesMenuMgmt") === "on";
+  const menuPlatformsRaw = String(formData.get("menuPlatforms") || "");
+
+  if (!id || !title || !startDate) {
+    throw new Error("Título e data de início são obrigatórios.");
+  }
+
+  await prisma.contract.update({
+    where: { id },
+    data: {
+      title,
+      value,
+      startDate: new Date(startDate),
+      endDate: endDate ? new Date(endDate) : null,
+      status,
+      notes: notes || null,
+      paymentDay: paymentDayRaw ? Number(paymentDayRaw) : null,
+      includesSocialMedia,
+      postsPerWeek: postsPerWeekRaw ? Number(postsPerWeekRaw) : null,
+      reelsPerWeek: reelsPerWeekRaw ? Number(reelsPerWeekRaw) : null,
+      socialNetworksCount: socialNetworksCountRaw ? Number(socialNetworksCountRaw) : null,
+      includesGoogleAds,
+      includesMenuMgmt,
+      menuPlatforms: menuPlatformsRaw || null,
+    },
+  });
+
+  revalidatePath("/contratos");
+}
