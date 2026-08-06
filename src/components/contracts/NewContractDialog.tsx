@@ -11,8 +11,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import type { BillingFrequency } from "@prisma/client";
 import { createContract } from "@/app/actions/contracts";
 import { generateContractText } from "@/lib/contract-template";
+import { billingScheduleText, weekdayLabel } from "@/lib/billing";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const inputClass =
@@ -25,13 +27,18 @@ interface ClientOption {
 }
 
 const MENU_PLATFORMS = ["iFood", "Keeta", "99Food", "App próprio"];
+const WEEKDAY_OPTIONS = [0, 1, 2, 3, 4, 5, 6];
+const MONTH_DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => i + 1);
 
 export function NewContractDialog({ clients, agencyName }: { clients: ClientOption[]; agencyName: string }) {
   const [open, setOpen] = useState(false);
   const [clientId, setClientId] = useState("");
   const [value, setValue] = useState("");
   const [startDate, setStartDate] = useState("");
-  const [paymentDay, setPaymentDay] = useState("");
+  const [billingFrequency, setBillingFrequency] = useState("MONTHLY");
+  const [billingDayOfWeek, setBillingDayOfWeek] = useState("");
+  const [billingDayOfMonth1, setBillingDayOfMonth1] = useState("");
+  const [billingDayOfMonth2, setBillingDayOfMonth2] = useState("");
   const [content, setContent] = useState("");
 
   const [includesSocialMedia, setIncludesSocialMedia] = useState(true);
@@ -59,7 +66,12 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
         clienteEmpresa: client.company || client.name,
         agencia: agencyName,
         valor: formatCurrency(Number(value)),
-        paymentDay: paymentDay ? Number(paymentDay) : undefined,
+        scheduleText: billingScheduleText({
+          frequency: billingFrequency as BillingFrequency,
+          dayOfWeek: billingDayOfWeek ? Number(billingDayOfWeek) : null,
+          dayOfMonth1: billingDayOfMonth1 ? Number(billingDayOfMonth1) : null,
+          dayOfMonth2: billingDayOfMonth2 ? Number(billingDayOfMonth2) : null,
+        }),
         dataAssinatura: formatDate(new Date(startDate)),
         services: {
           includesSocialMedia,
@@ -121,23 +133,103 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
               <option value="CANCELLED">Cancelado</option>
             </select>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="text-xs text-gray-500 space-y-1">
-              Início
-              <Input name="startDate" type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            </label>
-            <label className="text-xs text-gray-500 space-y-1">
-              Dia do pagamento (opcional)
-              <Input
-                name="paymentDay"
-                type="number"
-                min={1}
-                max={31}
-                placeholder="Ex: 10"
-                value={paymentDay}
-                onChange={(e) => setPaymentDay(e.target.value)}
-              />
-            </label>
+          <Input name="startDate" type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+
+          <div className="border rounded-lg p-3 space-y-3 bg-gray-50">
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Recorrência do recebimento</p>
+            <select
+              name="billingFrequency"
+              value={billingFrequency}
+              onChange={(e) => setBillingFrequency(e.target.value)}
+              className={inputClass}
+            >
+              <option value="WEEKLY">Semanal</option>
+              <option value="BIWEEKLY">Quinzenal</option>
+              <option value="MONTHLY">Mensal</option>
+            </select>
+
+            {billingFrequency === "WEEKLY" && (
+              <label className="text-xs text-gray-500 space-y-1 block">
+                Dia da semana
+                <select
+                  name="billingDayOfWeek"
+                  value={billingDayOfWeek}
+                  onChange={(e) => setBillingDayOfWeek(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="" disabled>
+                    Selecione o dia
+                  </option>
+                  {WEEKDAY_OPTIONS.map((d) => (
+                    <option key={d} value={d}>
+                      {weekdayLabel(d)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {billingFrequency === "MONTHLY" && (
+              <label className="text-xs text-gray-500 space-y-1 block">
+                Dia do mês
+                <select
+                  name="billingDayOfMonth1"
+                  value={billingDayOfMonth1}
+                  onChange={(e) => setBillingDayOfMonth1(e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="" disabled>
+                    Selecione o dia
+                  </option>
+                  {MONTH_DAY_OPTIONS.map((d) => (
+                    <option key={d} value={d}>
+                      Dia {d}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {billingFrequency === "BIWEEKLY" && (
+              <div className="grid grid-cols-2 gap-3">
+                <label className="text-xs text-gray-500 space-y-1 block">
+                  1º dia do mês
+                  <select
+                    name="billingDayOfMonth1"
+                    value={billingDayOfMonth1}
+                    onChange={(e) => setBillingDayOfMonth1(e.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="" disabled>
+                      Dia
+                    </option>
+                    {MONTH_DAY_OPTIONS.map((d) => (
+                      <option key={d} value={d}>
+                        Dia {d}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-xs text-gray-500 space-y-1 block">
+                  2º dia do mês
+                  <select
+                    name="billingDayOfMonth2"
+                    value={billingDayOfMonth2}
+                    onChange={(e) => setBillingDayOfMonth2(e.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="" disabled>
+                      Dia
+                    </option>
+                    {MONTH_DAY_OPTIONS.map((d) => (
+                      <option key={d} value={d}>
+                        Dia {d}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
           </div>
 
           <div className="border rounded-lg p-3 space-y-3 bg-gray-50">

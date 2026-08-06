@@ -12,11 +12,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { updateContract } from "@/app/actions/contracts";
+import { weekdayLabel } from "@/lib/billing";
 
 const inputClass =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
 const MENU_PLATFORMS = ["iFood", "Keeta", "99Food", "App próprio"];
+const WEEKDAY_OPTIONS = [0, 1, 2, 3, 4, 5, 6];
+const MONTH_DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => i + 1);
 
 interface ContractData {
   id: string;
@@ -26,7 +29,10 @@ interface ContractData {
   endDate: Date | null;
   status: string;
   notes: string | null;
-  paymentDay: number | null;
+  billingFrequency: string;
+  billingDayOfWeek: number | null;
+  billingDayOfMonth1: number | null;
+  billingDayOfMonth2: number | null;
   includesSocialMedia: boolean;
   postsPerWeek: number | null;
   reelsPerWeek: number | null;
@@ -38,6 +44,7 @@ interface ContractData {
 
 export function EditContractDialog({ contract }: { contract: ContractData }) {
   const [open, setOpen] = useState(false);
+  const [billingFrequency, setBillingFrequency] = useState(contract.billingFrequency);
   const [includesSocialMedia, setIncludesSocialMedia] = useState(contract.includesSocialMedia);
   const [includesGoogleAds, setIncludesGoogleAds] = useState(contract.includesGoogleAds);
   const [includesMenuMgmt, setIncludesMenuMgmt] = useState(contract.includesMenuMgmt);
@@ -85,10 +92,82 @@ export function EditContractDialog({ contract }: { contract: ContractData }) {
               <Input name="endDate" type="date" defaultValue={contract.endDate ? contract.endDate.toISOString().slice(0, 10) : ""} />
             </label>
           </div>
-          <label className="text-xs text-gray-500 space-y-1 block">
-            Dia do pagamento (opcional)
-            <Input name="paymentDay" type="number" min={1} max={31} placeholder="Ex: 10" defaultValue={contract.paymentDay ?? ""} />
-          </label>
+          <div className="border rounded-lg p-3 space-y-3 bg-gray-50">
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Recorrência do recebimento</p>
+            <select
+              name="billingFrequency"
+              value={billingFrequency}
+              onChange={(e) => setBillingFrequency(e.target.value)}
+              className={inputClass}
+            >
+              <option value="WEEKLY">Semanal</option>
+              <option value="BIWEEKLY">Quinzenal</option>
+              <option value="MONTHLY">Mensal</option>
+            </select>
+
+            {billingFrequency === "WEEKLY" && (
+              <label className="text-xs text-gray-500 space-y-1 block">
+                Dia da semana
+                <select name="billingDayOfWeek" defaultValue={contract.billingDayOfWeek ?? ""} className={inputClass}>
+                  <option value="" disabled>
+                    Selecione o dia
+                  </option>
+                  {WEEKDAY_OPTIONS.map((d) => (
+                    <option key={d} value={d}>
+                      {weekdayLabel(d)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {billingFrequency === "MONTHLY" && (
+              <label className="text-xs text-gray-500 space-y-1 block">
+                Dia do mês
+                <select name="billingDayOfMonth1" defaultValue={contract.billingDayOfMonth1 ?? ""} className={inputClass}>
+                  <option value="" disabled>
+                    Selecione o dia
+                  </option>
+                  {MONTH_DAY_OPTIONS.map((d) => (
+                    <option key={d} value={d}>
+                      Dia {d}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {billingFrequency === "BIWEEKLY" && (
+              <div className="grid grid-cols-2 gap-3">
+                <label className="text-xs text-gray-500 space-y-1 block">
+                  1º dia do mês
+                  <select name="billingDayOfMonth1" defaultValue={contract.billingDayOfMonth1 ?? ""} className={inputClass}>
+                    <option value="" disabled>
+                      Dia
+                    </option>
+                    {MONTH_DAY_OPTIONS.map((d) => (
+                      <option key={d} value={d}>
+                        Dia {d}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-xs text-gray-500 space-y-1 block">
+                  2º dia do mês
+                  <select name="billingDayOfMonth2" defaultValue={contract.billingDayOfMonth2 ?? ""} className={inputClass}>
+                    <option value="" disabled>
+                      Dia
+                    </option>
+                    {MONTH_DAY_OPTIONS.map((d) => (
+                      <option key={d} value={d}>
+                        Dia {d}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
+          </div>
 
           <div className="border rounded-lg p-3 space-y-3 bg-gray-50">
             <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Serviços contratados</p>

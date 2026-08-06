@@ -19,6 +19,12 @@ const statusMap: Record<string, { label: string; variant: "success" | "warning" 
   DRAFT: { label: "Rascunho", variant: "warning" },
 };
 
+const frequencyLabel: Record<string, string> = {
+  WEEKLY: "Semanal",
+  BIWEEKLY: "Quinzenal",
+  MONTHLY: "Mensal",
+};
+
 export default async function ContratosPage() {
   const [contracts, clients, agency] = await Promise.all([
     prisma.contract.findMany({
@@ -104,6 +110,7 @@ export default async function ContratosPage() {
                       <div className="text-right">
                         <p className="text-xs text-gray-400">Valor</p>
                         <p className="text-sm font-bold text-gray-900">{formatCurrency(contract.value)}</p>
+                        <p className="text-[11px] text-gray-400">{frequencyLabel[contract.billingFrequency]}</p>
                       </div>
                       <Badge variant={status.variant}>{status.label}</Badge>
                       <EditContractDialog contract={contract} />

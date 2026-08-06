@@ -58,6 +58,19 @@ export function countOccurrencesInMonth(rule: BillingRule, year: number, month: 
   return 0;
 }
 
+export function billingScheduleText(rule: BillingRule): string {
+  if (rule.frequency === "WEEKLY" && rule.dayOfWeek != null) {
+    return `Semanal, toda ${weekdayLabel(rule.dayOfWeek)}`;
+  }
+  if (rule.frequency === "MONTHLY" && rule.dayOfMonth1 != null) {
+    return `Mensal, todo dia ${rule.dayOfMonth1} de cada mês`;
+  }
+  if (rule.frequency === "BIWEEKLY" && rule.dayOfMonth1 != null && rule.dayOfMonth2 != null) {
+    return `Quinzenal, nos dias ${rule.dayOfMonth1} e ${rule.dayOfMonth2} de cada mês`;
+  }
+  return "";
+}
+
 export function computeNextBillingDate(rule: BillingRule, after: Date = new Date()): Date | null {
   if (rule.frequency === "WEEKLY" && rule.dayOfWeek != null) {
     return nextWeekdayOccurrence(after, rule.dayOfWeek);
