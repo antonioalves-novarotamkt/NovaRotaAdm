@@ -104,6 +104,7 @@ model Client {
   includesGoogleAds   Boolean @default(false)
   includesMenuMgmt    Boolean @default(false)
   menuPlatforms       String?
+  includesWebsiteCreation Boolean @default(false)
 
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt

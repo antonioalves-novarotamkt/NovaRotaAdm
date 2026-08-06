@@ -62,6 +62,7 @@ export async function updateClient(formData: FormData) {
   const includesGoogleAds = formData.get("includesGoogleAds") === "on";
   const includesMenuMgmt = formData.get("includesMenuMgmt") === "on";
   const menuPlatforms = String(formData.get("menuPlatforms") || "");
+  const includesWebsiteCreation = formData.get("includesWebsiteCreation") === "on";
 
   if (!id || !name || !email) {
     throw new Error("Nome e email são obrigatórios.");
@@ -90,6 +91,7 @@ export async function updateClient(formData: FormData) {
       includesGoogleAds,
       includesMenuMgmt,
       menuPlatforms: menuPlatforms || null,
+      includesWebsiteCreation,
     },
   });
 
