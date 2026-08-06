@@ -1,15 +1,18 @@
 import { prisma } from "@/lib/prisma";
 
 /**
- * Ensures every active client on a recurring billing schedule has a PENDING
- * (or later OVERDUE) invoice matching their current nextBillingDate, so that
+ * Ensures every client on a recurring billing schedule has a PENDING (or
+ * later OVERDUE) invoice matching their current nextBillingDate, so that
  * "A Receber" / "Em Atraso" and the automated reminder emails have something
- * to work with, without any manual invoice creation.
+ * to work with, without any manual invoice creation. Only clients marked
+ * CHURNED or INACTIVE are excluded — a schedule + contract value is itself
+ * a strong signal the client is being actively billed, regardless of the
+ * status label (new clients default to PROSPECT).
  */
 export async function syncScheduledInvoices() {
   const clients = await prisma.client.findMany({
     where: {
-      status: "ACTIVE",
+      status: { notIn: ["CHURNED", "INACTIVE"] },
       billingFrequency: { not: "NONE" },
       contractValue: { not: null },
       nextBillingDate: { not: null },

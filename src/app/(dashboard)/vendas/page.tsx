@@ -55,7 +55,7 @@ export default async function VendasPage({
 
   return (
     <div>
-      <Header title="Vendas" subtitle="Vendas mensais de cada cliente pelos apps que administramos (iFood, Keeta, 99, app próprio)" />
+      <Header title="Vendas App Clientes" subtitle="Vendas mensais de cada cliente pelos apps que administramos (iFood, Keeta, 99, app próprio) — não é o faturamento da agência" />
       <div className="p-6 space-y-6">
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
           <form className="flex items-center gap-2" method="get">
