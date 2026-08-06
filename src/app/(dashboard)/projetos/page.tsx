@@ -88,7 +88,15 @@ export default async function ProjetosPage({
               <Card key={post.id} className="border-0 shadow-sm overflow-hidden">
                 <div className="relative aspect-square bg-gray-100">
                   <Image src={post.imageUrl} alt={post.caption || "Post"} fill className="object-cover" unoptimized />
-                  <EditPostMetrics postId={post.id} views={post.views} likes={post.likes} shares={post.shares} />
+                  <EditPostMetrics
+                    postId={post.id}
+                    instagramViews={post.instagramViews}
+                    instagramLikes={post.instagramLikes}
+                    instagramShares={post.instagramShares}
+                    facebookViews={post.facebookViews}
+                    facebookLikes={post.facebookLikes}
+                    facebookShares={post.facebookShares}
+                  />
                   <DeletePostButton postId={post.id} />
                 </div>
                 <CardContent className="p-3 space-y-1">
@@ -99,25 +107,32 @@ export default async function ProjetosPage({
                   <p className="text-[11px] text-gray-400">
                     {post.postDate ? formatDate(post.postDate) : formatDate(post.createdAt)}
                   </p>
-                  {(post.views != null || post.likes != null || post.shares != null) && (
-                    <div className="flex items-center gap-3 pt-1 text-[11px] text-gray-500">
-                      {post.views != null && (
+                  {(() => {
+                    const hasMetrics =
+                      post.instagramViews != null ||
+                      post.instagramLikes != null ||
+                      post.instagramShares != null ||
+                      post.facebookViews != null ||
+                      post.facebookLikes != null ||
+                      post.facebookShares != null;
+                    if (!hasMetrics) return null;
+                    const totalViews = (post.instagramViews ?? 0) + (post.facebookViews ?? 0);
+                    const totalLikes = (post.instagramLikes ?? 0) + (post.facebookLikes ?? 0);
+                    const totalShares = (post.instagramShares ?? 0) + (post.facebookShares ?? 0);
+                    return (
+                      <div className="flex items-center gap-3 pt-1 text-[11px] text-gray-500">
                         <span className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" /> {post.views.toLocaleString("pt-BR")}
+                          <Eye className="h-3 w-3" /> {totalViews.toLocaleString("pt-BR")}
                         </span>
-                      )}
-                      {post.likes != null && (
                         <span className="flex items-center gap-1">
-                          <Heart className="h-3 w-3" /> {post.likes.toLocaleString("pt-BR")}
+                          <Heart className="h-3 w-3" /> {totalLikes.toLocaleString("pt-BR")}
                         </span>
-                      )}
-                      {post.shares != null && (
                         <span className="flex items-center gap-1">
-                          <Share2 className="h-3 w-3" /> {post.shares.toLocaleString("pt-BR")}
+                          <Share2 className="h-3 w-3" /> {totalShares.toLocaleString("pt-BR")}
                         </span>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             ))}

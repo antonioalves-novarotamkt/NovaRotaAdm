@@ -231,9 +231,14 @@ model ClientPost {
   imageUrl  String
   caption   String?
   postDate  DateTime?
-  views     Int?
-  likes     Int?
-  shares    Int?
+
+  instagramViews  Int?
+  instagramLikes  Int?
+  instagramShares Int?
+  facebookViews   Int?
+  facebookLikes   Int?
+  facebookShares  Int?
+
   createdAt DateTime @default(now())
 
   client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)

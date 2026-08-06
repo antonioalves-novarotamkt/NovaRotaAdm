@@ -15,12 +15,23 @@ import { updatePostMetrics } from "@/app/actions/posts";
 
 interface Props {
   postId: string;
-  views: number | null;
-  likes: number | null;
-  shares: number | null;
+  instagramViews: number | null;
+  instagramLikes: number | null;
+  instagramShares: number | null;
+  facebookViews: number | null;
+  facebookLikes: number | null;
+  facebookShares: number | null;
 }
 
-export function EditPostMetrics({ postId, views, likes, shares }: Props) {
+export function EditPostMetrics({
+  postId,
+  instagramViews,
+  instagramLikes,
+  instagramShares,
+  facebookViews,
+  facebookLikes,
+  facebookShares,
+}: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -37,20 +48,35 @@ export function EditPostMetrics({ postId, views, likes, shares }: Props) {
         <DialogHeader>
           <DialogTitle>Métricas do Post</DialogTitle>
         </DialogHeader>
-        <form action={updatePostMetrics} onSubmit={() => setOpen(false)} className="space-y-3">
+        <form action={updatePostMetrics} onSubmit={() => setOpen(false)} className="space-y-4">
           <input type="hidden" name="id" value={postId} />
-          <label className="text-xs text-gray-500 space-y-1 block">
-            Visualizações
-            <Input name="views" type="number" min={0} defaultValue={views ?? ""} />
-          </label>
-          <label className="text-xs text-gray-500 space-y-1 block">
-            Curtidas
-            <Input name="likes" type="number" min={0} defaultValue={likes ?? ""} />
-          </label>
-          <label className="text-xs text-gray-500 space-y-1 block">
-            Compartilhamentos
-            <Input name="shares" type="number" min={0} defaultValue={shares ?? ""} />
-          </label>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              Instagram <span className="font-normal normal-case text-gray-400">(opcional)</span>
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              <Input name="instagramViews" type="number" min={0} placeholder="Views" defaultValue={instagramViews ?? ""} />
+              <Input name="instagramLikes" type="number" min={0} placeholder="Curtidas" defaultValue={instagramLikes ?? ""} />
+              <Input name="instagramShares" type="number" min={0} placeholder="Compart." defaultValue={instagramShares ?? ""} />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+              Facebook <span className="font-normal normal-case text-gray-400">(opcional)</span>
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              <Input name="facebookViews" type="number" min={0} placeholder="Views" defaultValue={facebookViews ?? ""} />
+              <Input name="facebookLikes" type="number" min={0} placeholder="Curtidas" defaultValue={facebookLikes ?? ""} />
+              <Input name="facebookShares" type="number" min={0} placeholder="Compart." defaultValue={facebookShares ?? ""} />
+            </div>
+          </div>
+
+          <p className="text-[11px] text-gray-400">
+            Preencha só as redes em que o cliente está presente — nenhum campo é obrigatório.
+          </p>
+
           <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
             Salvar
           </Button>
