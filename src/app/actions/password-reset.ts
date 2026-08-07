@@ -62,7 +62,7 @@ export async function resetPassword(formData: FormData) {
 
   await prisma.user.update({
     where: { id: resetToken.userId },
-    data: { password: hash },
+    data: { password: hash, failedLoginAttempts: 0, lockedUntil: null },
   });
 
   await prisma.passwordResetToken.delete({ where: { token } });
