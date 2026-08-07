@@ -3,6 +3,8 @@ import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { AnalysisSocialDialog } from "@/components/analises/AnalysisSocialDialog";
 import { AnalysisWebsiteDialog } from "@/components/analises/AnalysisWebsiteDialog";
+import { EditSocialMetricDialog } from "@/components/analises/EditSocialMetricDialog";
+import { EditWebsiteMetricDialog } from "@/components/analises/EditWebsiteMetricDialog";
 import { DeleteMetricButton } from "@/components/analises/DeleteMetricButton";
 import { prisma } from "@/lib/prisma";
 
@@ -165,7 +167,41 @@ export default async function AnalisesPage({
                         )}
                       </div>
                     </div>
-                    <DeleteMetricButton id={entry.id} type={entry.kind} />
+                    <div className="flex items-center gap-1 shrink-0">
+                      {entry.kind === "social" ? (
+                        <EditSocialMetricDialog
+                          metric={{
+                            clientId: entry.metric.socialAccount.clientId,
+                            clientName: entry.clientName,
+                            socialAccountId: entry.metric.socialAccountId,
+                            accountLabel: `${platformLabel[entry.metric.socialAccount.platform] || entry.metric.socialAccount.platform} — ${entry.metric.socialAccount.handle}`,
+                            isInstagram: entry.metric.socialAccount.platform === "INSTAGRAM",
+                            month: new Date(entry.metric.month).toISOString().slice(0, 7),
+                            followers: entry.metric.followers,
+                            reach: entry.metric.reach,
+                            engagementRate: entry.metric.engagementRate,
+                            totalViews: entry.metric.totalViews,
+                            followerViewsPct: entry.metric.followerViewsPct,
+                            nonFollowerViewsPct: entry.metric.nonFollowerViewsPct,
+                            profileVisits: entry.metric.profileVisits,
+                            linkTaps: entry.metric.linkTaps,
+                            addressTaps: entry.metric.addressTaps,
+                          }}
+                        />
+                      ) : (
+                        <EditWebsiteMetricDialog
+                          metric={{
+                            clientId: entry.metric.clientId,
+                            clientName: entry.clientName,
+                            month: new Date(entry.metric.month).toISOString().slice(0, 7),
+                            pageViews: entry.metric.pageViews,
+                            totalUsers: entry.metric.totalUsers,
+                            newUsers: entry.metric.newUsers,
+                          }}
+                        />
+                      )}
+                      <DeleteMetricButton id={entry.id} type={entry.kind} />
+                    </div>
                   </div>
                 ))}
               </div>
