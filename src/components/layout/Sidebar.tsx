@@ -17,6 +17,7 @@ import {
   Target,
   LineChart,
   LogOut,
+  Search,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { BrandLogo } from "@/components/layout/BrandLogo";
@@ -24,6 +25,7 @@ import { BrandLogo } from "@/components/layout/BrandLogo";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/funil", label: "Funil de Vendas", icon: Target },
+  { href: "/prospeccao", label: "Prospecção", icon: Search },
   { href: "/clientes", label: "Clientes", icon: Users },
   { href: "/contratos", label: "Contratos", icon: FileText },
   { href: "/atividades", label: "Atividades", icon: ClipboardList },

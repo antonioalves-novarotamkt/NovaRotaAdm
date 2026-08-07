@@ -156,6 +156,8 @@ model Lead {
   convertedClientId String? @unique
   convertedClient   Client? @relation(fields: [convertedClientId], references: [id])
 
+  googlePlaceId String? @unique
+
   @@map("leads")
 }
 
