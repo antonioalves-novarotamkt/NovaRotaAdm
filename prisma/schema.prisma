@@ -173,7 +173,7 @@ model ClientSale {
   clientId   String
   month      DateTime
   platform   String?
-  grossValue Float
+  grossValue Float   @map("totalValue")
   netValue   Float?
   salesCount Int
   createdAt  DateTime @default(now())
