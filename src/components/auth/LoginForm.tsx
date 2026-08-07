@@ -33,7 +33,11 @@ function LoginFormInner({ logoUrl }: { logoUrl?: string | null }) {
     setLoading(false);
 
     if (result?.error) {
-      setError("Email ou senha inválidos.");
+      setError(
+        result.error === "LOCKED"
+          ? "Muitas tentativas de login. Tente novamente em alguns minutos ou redefina sua senha."
+          : "Email ou senha inválidos."
+      );
       return;
     }
 
