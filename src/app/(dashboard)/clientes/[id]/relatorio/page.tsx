@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PrintButton } from "@/components/contracts/PrintButton";
+import { SendReportEmailButton } from "@/components/clientes/SendReportEmailButton";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { getAgencySettings } from "@/app/actions/agency";
@@ -127,6 +128,7 @@ export default async function ClientReportPage({
                 Ver mês
               </button>
             </form>
+            <SendReportEmailButton clientId={client.id} month={selectedMonth} />
             <PrintButton />
           </div>
         </div>
