@@ -76,6 +76,25 @@ export async function sendInvoiceOverdueEmailToClient(
   });
 }
 
+export async function sendMonthlyReportEmail(
+  to: string,
+  params: { clientName: string; agencyName: string; monthLabel: string; bodyHtml: string }
+) {
+  await mailer.sendMail({
+    from: process.env.EMAIL_FROM,
+    to,
+    subject: `Relatório de Performance — ${params.monthLabel} — ${params.agencyName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
+        <p style="color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Relatório de Performance</p>
+        <h2 style="color: #1e293b; margin-top: 4px;">${params.clientName} · ${params.monthLabel}</h2>
+        ${params.bodyHtml}
+        <p style="color: #94a3b8; font-size: 13px; margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 16px;">${params.agencyName}</p>
+      </div>
+    `,
+  });
+}
+
 export async function sendOverdueSummaryToAgency(
   to: string[],
   invoices: { clientName: string; invoiceNumber: string; total: number; dueDate: Date }[]
