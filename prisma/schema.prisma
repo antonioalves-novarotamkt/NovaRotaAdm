@@ -465,6 +465,9 @@ model AgencySettings {
   name       String  @default("NovaRota Marketing")
   logoUrl    String?
   appIconUrl String?
+  cnpj       String?
+  website    String?
+  phone      String?
 
   @@map("agency_settings")
 }
