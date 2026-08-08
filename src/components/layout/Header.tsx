@@ -1,8 +1,9 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSidebar } from "@/components/layout/SidebarContext";
 
 interface HeaderProps {
   title: string;
@@ -10,11 +11,22 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
+  const { toggle } = useSidebar();
+
   return (
-    <header className="h-16 border-b bg-white flex items-center justify-between px-6 sticky top-0 z-20">
-      <div>
-        <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
-        {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+    <header className="h-16 border-b bg-white flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20">
+      <div className="flex items-center gap-3 min-w-0">
+        <button
+          onClick={toggle}
+          className="lg:hidden shrink-0 h-9 w-9 rounded-md flex items-center justify-center text-gray-600 hover:bg-gray-100"
+          title="Abrir menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div className="min-w-0">
+          <h1 className="text-lg font-semibold text-gray-900 truncate">{title}</h1>
+          {subtitle && <p className="text-xs text-gray-500 line-clamp-1 sm:line-clamp-none">{subtitle}</p>}
+        </div>
       </div>
       <div className="flex items-center gap-3">
         <div className="relative hidden sm:block">
