@@ -25,6 +25,20 @@ export async function updateAgencyLogo(logoUrl: string) {
   revalidatePath("/", "layout");
 }
 
+export async function updateAgencyAppIcon(appIconUrl: string) {
+  if (!appIconUrl) {
+    throw new Error("Imagem é obrigatória.");
+  }
+
+  await prisma.agencySettings.upsert({
+    where: { id: "singleton" },
+    update: { appIconUrl },
+    create: { id: "singleton", appIconUrl },
+  });
+
+  revalidatePath("/", "layout");
+}
+
 export async function updateAgencyName(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   if (!name) {

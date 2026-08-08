@@ -461,9 +461,10 @@ enum CostCategory {
 }
 
 model AgencySettings {
-  id      String  @id @default("singleton")
-  name    String  @default("NovaRota Marketing")
-  logoUrl String?
+  id         String  @id @default("singleton")
+  name       String  @default("NovaRota Marketing")
+  logoUrl    String?
+  appIconUrl String?
 
   @@map("agency_settings")
 }

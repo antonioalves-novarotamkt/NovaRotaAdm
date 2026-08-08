@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { NewUserDialog } from "@/components/settings/NewUserDialog";
 import { UserRow } from "@/components/settings/UserRow";
 import { LogoUpload } from "@/components/settings/LogoUpload";
-import { getAgencySettings, updateAgencyLogo, updateAgencyName } from "@/app/actions/agency";
+import { getAgencySettings, updateAgencyLogo, updateAgencyAppIcon, updateAgencyName } from "@/app/actions/agency";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +90,13 @@ export default async function ConfiguracoesPage() {
               <label className="text-sm font-medium text-gray-700 block mb-1.5">Logo da Agência</label>
               <LogoUpload currentUrl={agency.logoUrl} onUploaded={updateAgencyLogo} label="Enviar Logo" />
               <p className="text-xs text-gray-400 mt-1.5">Usada no menu lateral, tela de login e relatórios.</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">Ícone do App</label>
+              <LogoUpload currentUrl={agency.appIconUrl} onUploaded={updateAgencyAppIcon} label="Enviar Ícone" />
+              <p className="text-xs text-gray-400 mt-1.5">
+                Usado como ícone ao instalar o app na tela inicial do celular. Envie uma imagem quadrada — se não enviar, usamos um ícone padrão.
+              </p>
             </div>
             <form action={updateAgencyName} className="grid grid-cols-2 gap-4">
               <div>
