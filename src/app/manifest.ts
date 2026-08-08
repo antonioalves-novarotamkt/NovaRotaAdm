@@ -15,10 +15,10 @@ function guessImageType(url: string): string {
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const agency = await getAgencySettings();
 
-  const icons: MetadataRoute.Manifest["icons"] = agency.logoUrl
+  const icons: MetadataRoute.Manifest["icons"] = agency.appIconUrl
     ? [
-        { src: agency.logoUrl, sizes: "192x192", type: guessImageType(agency.logoUrl) },
-        { src: agency.logoUrl, sizes: "512x512", type: guessImageType(agency.logoUrl) },
+        { src: agency.appIconUrl, sizes: "192x192", type: guessImageType(agency.appIconUrl) },
+        { src: agency.appIconUrl, sizes: "512x512", type: guessImageType(agency.appIconUrl) },
       ]
     : [
         { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
