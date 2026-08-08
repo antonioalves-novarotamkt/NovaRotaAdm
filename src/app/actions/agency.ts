@@ -41,14 +41,20 @@ export async function updateAgencyAppIcon(appIconUrl: string) {
 
 export async function updateAgencyName(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
+  const cnpj = String(formData.get("cnpj") || "").trim();
+  const website = String(formData.get("website") || "").trim();
+  const phone = String(formData.get("phone") || "").trim();
+
   if (!name) {
     throw new Error("Nome é obrigatório.");
   }
 
+  const data = { name, cnpj: cnpj || null, website: website || null, phone: phone || null };
+
   await prisma.agencySettings.upsert({
     where: { id: "singleton" },
-    update: { name },
-    create: { id: "singleton", name },
+    update: data,
+    create: { id: "singleton", ...data },
   });
 
   revalidatePath("/", "layout");

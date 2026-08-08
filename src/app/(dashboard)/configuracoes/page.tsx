@@ -105,18 +105,18 @@ export default async function ConfiguracoesPage() {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">CNPJ</label>
-                <Input placeholder="00.000.000/0001-00" className="border-gray-200" disabled />
+                <Input name="cnpj" defaultValue={agency.cnpj || ""} placeholder="00.000.000/0001-00" className="border-gray-200" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">Website</label>
-                <Input placeholder="https://novarota.com.br" className="border-gray-200" disabled />
+                <Input name="website" defaultValue={agency.website || ""} placeholder="https://novarota.com.br" className="border-gray-200" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">Telefone</label>
-                <Input placeholder="(11) 3333-4444" className="border-gray-200" disabled />
+                <Input name="phone" defaultValue={agency.phone || ""} placeholder="(11) 3333-4444" className="border-gray-200" />
               </div>
               <div className="col-span-2 flex justify-end">
-                <Button type="submit" size="sm" className="bg-orange-600 hover:bg-orange-700">Salvar Nome</Button>
+                <Button type="submit" size="sm" className="bg-orange-600 hover:bg-orange-700">Salvar</Button>
               </div>
             </form>
           </CardContent>
