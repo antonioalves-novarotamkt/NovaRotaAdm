@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getAgencySettings } from "@/app/actions/agency";
-import { syncScheduledInvoices } from "@/lib/scheduled-invoices";
+import { syncInvoiceStatuses } from "@/lib/scheduled-invoices";
 import {
   sendInvoiceDueSoonEmail,
   sendInvoiceOverdueEmailToClient,
@@ -15,14 +15,7 @@ export async function runBillingReminders() {
   const dueSoonWindow = new Date(now.getTime() + DUE_SOON_WINDOW_DAYS * 24 * 60 * 60 * 1000);
   const overdueResendCutoff = new Date(now.getTime() - OVERDUE_RESEND_DAYS * 24 * 60 * 60 * 1000);
 
-  await syncScheduledInvoices();
-
-  // Only auto-flip scheduled billing to OVERDUE — manually entered extra
-  // charges stay PENDING until given baixa by hand.
-  await prisma.invoice.updateMany({
-    where: { status: "PENDING", dueDate: { lt: now }, description: "Recebimento programado" },
-    data: { status: "OVERDUE" },
-  });
+  await syncInvoiceStatuses();
 
   const agency = await getAgencySettings();
 
