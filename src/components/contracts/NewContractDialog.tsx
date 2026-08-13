@@ -15,7 +15,7 @@ import type { BillingFrequency } from "@prisma/client";
 import { createContract } from "@/app/actions/contracts";
 import { generateContractText } from "@/lib/contract-template";
 import { billingScheduleText, weekdayLabel } from "@/lib/billing";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
 const inputClass =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
@@ -35,6 +35,7 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
   const [clientId, setClientId] = useState("");
   const [value, setValue] = useState("");
   const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [billingFrequency, setBillingFrequency] = useState("MONTHLY");
   const [billingDayOfWeek, setBillingDayOfWeek] = useState("");
   const [billingDayOfMonth1, setBillingDayOfMonth1] = useState("");
@@ -72,7 +73,9 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
           dayOfMonth1: billingDayOfMonth1 ? Number(billingDayOfMonth1) : null,
           dayOfMonth2: billingDayOfMonth2 ? Number(billingDayOfMonth2) : null,
         }),
-        dataAssinatura: formatDate(new Date(startDate)),
+        startDate: new Date(startDate),
+        endDate: endDate ? new Date(endDate) : null,
+        signatureDate: new Date(),
         services: {
           includesSocialMedia,
           postsPerWeek: postsPerWeek ? Number(postsPerWeek) : undefined,
@@ -133,7 +136,16 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
               <option value="CANCELLED">Cancelado</option>
             </select>
           </div>
-          <Input name="startDate" type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          <div className="grid grid-cols-2 gap-3">
+            <label className="text-xs text-gray-500 space-y-1">
+              Início
+              <Input name="startDate" type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            </label>
+            <label className="text-xs text-gray-500 space-y-1">
+              Fim (opcional)
+              <Input name="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            </label>
+          </div>
 
           <div className="border rounded-lg p-3 space-y-3 bg-gray-50">
             <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Recorrência do recebimento</p>
