@@ -53,3 +53,19 @@ export async function syncScheduledInvoices() {
 
   return { created };
 }
+
+/**
+ * Keeps invoice status accurate regardless of whether the daily reminder
+ * cron has actually run (e.g. CRON_SECRET not configured yet) — creates any
+ * missing scheduled invoices and flips anything unpaid past its due date to
+ * OVERDUE, for scheduled billing and manually entered extra charges alike.
+ * Cheap and side-effect-free for humans (no emails), safe to call on every
+ * Financeiro/Dashboard page load.
+ */
+export async function syncInvoiceStatuses() {
+  await syncScheduledInvoices();
+  await prisma.invoice.updateMany({
+    where: { status: "PENDING", dueDate: { lt: new Date() } },
+    data: { status: "OVERDUE" },
+  });
+}

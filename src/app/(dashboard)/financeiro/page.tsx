@@ -12,6 +12,7 @@ import { MarkExtraChargePaidButton } from "@/components/financeiro/MarkExtraChar
 import { EditPaidDateButton } from "@/components/financeiro/EditPaidDateButton";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { countOccurrencesInMonth } from "@/lib/billing";
+import { syncInvoiceStatuses } from "@/lib/scheduled-invoices";
 import { prisma } from "@/lib/prisma";
 
 const frequencyLabel: Record<string, string> = {
@@ -28,6 +29,8 @@ const MONTHS_BACK = 2;
 const MONTHS_AHEAD = 2;
 
 export default async function FinanceiroPage() {
+  await syncInvoiceStatuses();
+
   const [invoices, clients, scheduledClients, projectableClients] = await Promise.all([
     prisma.invoice.findMany({
       orderBy: { issueDate: "desc" },

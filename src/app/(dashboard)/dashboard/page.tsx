@@ -16,6 +16,7 @@ import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { syncInvoiceStatuses } from "@/lib/scheduled-invoices";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,8 @@ const invoiceStatusMap: Record<string, { label: string; variant: "success" | "wa
 const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 export default async function DashboardPage() {
+  await syncInvoiceStatuses();
+
   const now = new Date();
   const monthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
   const nextMonthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1));
