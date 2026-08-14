@@ -113,7 +113,11 @@ export default async function ContratosPage() {
                         <p className="text-[11px] text-gray-400">{frequencyLabel[contract.billingFrequency]}</p>
                       </div>
                       <Badge variant={status.variant}>{status.label}</Badge>
-                      <EditContractDialog contract={contract} />
+                      <EditContractDialog
+                        contract={contract}
+                        clientName={contract.client.company || contract.client.name}
+                        agencyName={agency.name}
+                      />
                       {contract.content && (
                         <Link href={`/contratos/${contract.id}`}>
                           <Button variant="ghost" size="sm" className="text-xs text-orange-600 hover:text-orange-700 h-7">

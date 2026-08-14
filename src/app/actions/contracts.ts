@@ -74,6 +74,7 @@ export async function updateContract(formData: FormData) {
   const endDate = String(formData.get("endDate") || "");
   const status = String(formData.get("status") || "ACTIVE") as ContractStatus;
   const notes = String(formData.get("notes") || "").trim();
+  const content = String(formData.get("content") || "").trim();
 
   const includesSocialMedia = formData.get("includesSocialMedia") === "on";
   const postsPerWeekRaw = String(formData.get("postsPerWeek") || "");
@@ -96,6 +97,7 @@ export async function updateContract(formData: FormData) {
       endDate: endDate ? new Date(endDate) : null,
       status,
       notes: notes || null,
+      content: content || null,
       ...readBillingFields(formData),
       includesSocialMedia,
       postsPerWeek: postsPerWeekRaw ? Number(postsPerWeekRaw) : null,

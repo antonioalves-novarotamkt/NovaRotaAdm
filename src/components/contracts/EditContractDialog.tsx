@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,8 +11,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import type { BillingFrequency } from "@prisma/client";
 import { updateContract } from "@/app/actions/contracts";
-import { weekdayLabel } from "@/lib/billing";
+import { generateContractText } from "@/lib/contract-template";
+import { billingScheduleText, weekdayLabel } from "@/lib/billing";
+import { formatCurrency } from "@/lib/utils";
 
 const inputClass =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
@@ -29,6 +32,7 @@ interface ContractData {
   endDate: Date | null;
   status: string;
   notes: string | null;
+  content: string | null;
   billingFrequency: string;
   billingDayOfWeek: number | null;
   billingDayOfMonth1: number | null;
@@ -42,19 +46,69 @@ interface ContractData {
   menuPlatforms: string | null;
 }
 
-export function EditContractDialog({ contract }: { contract: ContractData }) {
+export function EditContractDialog({
+  contract,
+  clientName,
+  agencyName,
+}: {
+  contract: ContractData;
+  clientName: string;
+  agencyName: string;
+}) {
   const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(String(contract.value));
+  const [startDate, setStartDate] = useState(contract.startDate.toISOString().slice(0, 10));
+  const [endDate, setEndDate] = useState(contract.endDate ? contract.endDate.toISOString().slice(0, 10) : "");
   const [billingFrequency, setBillingFrequency] = useState(contract.billingFrequency);
+  const [billingDayOfWeek, setBillingDayOfWeek] = useState(contract.billingDayOfWeek?.toString() ?? "");
+  const [billingDayOfMonth1, setBillingDayOfMonth1] = useState(contract.billingDayOfMonth1?.toString() ?? "");
+  const [billingDayOfMonth2, setBillingDayOfMonth2] = useState(contract.billingDayOfMonth2?.toString() ?? "");
   const [includesSocialMedia, setIncludesSocialMedia] = useState(contract.includesSocialMedia);
+  const [postsPerWeek, setPostsPerWeek] = useState(contract.postsPerWeek?.toString() ?? "");
+  const [reelsPerWeek, setReelsPerWeek] = useState(contract.reelsPerWeek?.toString() ?? "");
+  const [socialNetworksCount, setSocialNetworksCount] = useState(contract.socialNetworksCount?.toString() ?? "");
   const [includesGoogleAds, setIncludesGoogleAds] = useState(contract.includesGoogleAds);
   const [includesMenuMgmt, setIncludesMenuMgmt] = useState(contract.includesMenuMgmt);
   const [menuPlatforms, setMenuPlatforms] = useState<string[]>(
     contract.menuPlatforms ? contract.menuPlatforms.split(",").filter(Boolean) : []
   );
+  const [content, setContent] = useState(contract.content || "");
 
   function toggleMenuPlatform(platform: string) {
     setMenuPlatforms((prev) =>
       prev.includes(platform) ? prev.filter((p) => p !== platform) : [...prev, platform]
+    );
+  }
+
+  function handleRegenerate() {
+    if (!value || !startDate) {
+      alert("Preencha o valor e a data de início antes de gerar o texto.");
+      return;
+    }
+    setContent(
+      generateContractText({
+        clienteEmpresa: clientName,
+        agencia: agencyName,
+        valor: formatCurrency(Number(value)),
+        scheduleText: billingScheduleText({
+          frequency: billingFrequency as BillingFrequency,
+          dayOfWeek: billingDayOfWeek ? Number(billingDayOfWeek) : null,
+          dayOfMonth1: billingDayOfMonth1 ? Number(billingDayOfMonth1) : null,
+          dayOfMonth2: billingDayOfMonth2 ? Number(billingDayOfMonth2) : null,
+        }),
+        startDate: new Date(startDate),
+        endDate: endDate ? new Date(endDate) : null,
+        signatureDate: new Date(),
+        services: {
+          includesSocialMedia,
+          postsPerWeek: postsPerWeek ? Number(postsPerWeek) : undefined,
+          reelsPerWeek: reelsPerWeek ? Number(reelsPerWeek) : undefined,
+          socialNetworksCount: socialNetworksCount ? Number(socialNetworksCount) : undefined,
+          includesGoogleAds,
+          includesMenuMgmt,
+          menuPlatforms,
+        },
+      })
     );
   }
 
@@ -68,13 +122,21 @@ export function EditContractDialog({ contract }: { contract: ContractData }) {
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Editar Contrato</DialogTitle>
+          <DialogTitle>Editar Contrato — {clientName}</DialogTitle>
         </DialogHeader>
         <form action={updateContract} onSubmit={() => setOpen(false)} className="space-y-3">
           <input type="hidden" name="id" value={contract.id} />
           <Input name="title" placeholder="Título do contrato" defaultValue={contract.title} required />
           <div className="grid grid-cols-2 gap-3">
-            <Input name="value" type="number" step="0.01" placeholder="Valor mensal (R$)" defaultValue={contract.value} required />
+            <Input
+              name="value"
+              type="number"
+              step="0.01"
+              placeholder="Valor mensal (R$)"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              required
+            />
             <select name="status" defaultValue={contract.status} className={inputClass}>
               <option value="ACTIVE">Ativo</option>
               <option value="DRAFT">Rascunho</option>
@@ -85,11 +147,11 @@ export function EditContractDialog({ contract }: { contract: ContractData }) {
           <div className="grid grid-cols-2 gap-3">
             <label className="text-xs text-gray-500 space-y-1">
               Início
-              <Input name="startDate" type="date" defaultValue={contract.startDate.toISOString().slice(0, 10)} required />
+              <Input name="startDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
             </label>
             <label className="text-xs text-gray-500 space-y-1">
               Fim (opcional)
-              <Input name="endDate" type="date" defaultValue={contract.endDate ? contract.endDate.toISOString().slice(0, 10) : ""} />
+              <Input name="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </label>
           </div>
           <div className="border rounded-lg p-3 space-y-3 bg-gray-50">
@@ -108,7 +170,12 @@ export function EditContractDialog({ contract }: { contract: ContractData }) {
             {billingFrequency === "WEEKLY" && (
               <label className="text-xs text-gray-500 space-y-1 block">
                 Dia da semana
-                <select name="billingDayOfWeek" defaultValue={contract.billingDayOfWeek ?? ""} className={inputClass}>
+                <select
+                  name="billingDayOfWeek"
+                  value={billingDayOfWeek}
+                  onChange={(e) => setBillingDayOfWeek(e.target.value)}
+                  className={inputClass}
+                >
                   <option value="" disabled>
                     Selecione o dia
                   </option>
@@ -124,7 +191,12 @@ export function EditContractDialog({ contract }: { contract: ContractData }) {
             {billingFrequency === "MONTHLY" && (
               <label className="text-xs text-gray-500 space-y-1 block">
                 Dia do mês
-                <select name="billingDayOfMonth1" defaultValue={contract.billingDayOfMonth1 ?? ""} className={inputClass}>
+                <select
+                  name="billingDayOfMonth1"
+                  value={billingDayOfMonth1}
+                  onChange={(e) => setBillingDayOfMonth1(e.target.value)}
+                  className={inputClass}
+                >
                   <option value="" disabled>
                     Selecione o dia
                   </option>
@@ -141,7 +213,12 @@ export function EditContractDialog({ contract }: { contract: ContractData }) {
               <div className="grid grid-cols-2 gap-3">
                 <label className="text-xs text-gray-500 space-y-1 block">
                   1º dia do mês
-                  <select name="billingDayOfMonth1" defaultValue={contract.billingDayOfMonth1 ?? ""} className={inputClass}>
+                  <select
+                    name="billingDayOfMonth1"
+                    value={billingDayOfMonth1}
+                    onChange={(e) => setBillingDayOfMonth1(e.target.value)}
+                    className={inputClass}
+                  >
                     <option value="" disabled>
                       Dia
                     </option>
@@ -154,7 +231,12 @@ export function EditContractDialog({ contract }: { contract: ContractData }) {
                 </label>
                 <label className="text-xs text-gray-500 space-y-1 block">
                   2º dia do mês
-                  <select name="billingDayOfMonth2" defaultValue={contract.billingDayOfMonth2 ?? ""} className={inputClass}>
+                  <select
+                    name="billingDayOfMonth2"
+                    value={billingDayOfMonth2}
+                    onChange={(e) => setBillingDayOfMonth2(e.target.value)}
+                    className={inputClass}
+                  >
                     <option value="" disabled>
                       Dia
                     </option>
@@ -189,21 +271,24 @@ export function EditContractDialog({ contract }: { contract: ContractData }) {
                     type="number"
                     min={0}
                     placeholder="Nº redes"
-                    defaultValue={contract.socialNetworksCount ?? ""}
+                    value={socialNetworksCount}
+                    onChange={(e) => setSocialNetworksCount(e.target.value)}
                   />
                   <Input
                     name="postsPerWeek"
                     type="number"
                     min={0}
                     placeholder="Posts/semana"
-                    defaultValue={contract.postsPerWeek ?? ""}
+                    value={postsPerWeek}
+                    onChange={(e) => setPostsPerWeek(e.target.value)}
                   />
                   <Input
                     name="reelsPerWeek"
                     type="number"
                     min={0}
                     placeholder="Reels/semana"
-                    defaultValue={contract.reelsPerWeek ?? ""}
+                    value={reelsPerWeek}
+                    onChange={(e) => setReelsPerWeek(e.target.value)}
                   />
                 </div>
               )}
@@ -246,6 +331,23 @@ export function EditContractDialog({ contract }: { contract: ContractData }) {
               )}
             </div>
           </div>
+
+          <Button type="button" variant="outline" size="sm" className="w-full gap-1.5" onClick={handleRegenerate}>
+            <Sparkles className="h-3.5 w-3.5" />
+            Gerar Texto do Contrato Novamente
+          </Button>
+          <p className="text-[11px] text-gray-400 -mt-1.5">
+            Isso substitui o texto abaixo pelos dados atuais (cliente, valor, prazo e serviços). Você pode editar livremente depois.
+          </p>
+
+          <textarea
+            name="content"
+            placeholder="O texto do contrato aparece aqui — você pode editar livremente antes de salvar"
+            rows={8}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className={inputClass + " resize-y font-mono text-xs leading-relaxed"}
+          />
 
           <textarea
             name="notes"
