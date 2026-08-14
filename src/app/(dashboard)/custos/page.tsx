@@ -55,7 +55,7 @@ export default async function CustosPage({
             <select
               name="categoria"
               defaultValue={selectedCategory}
-              className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm"
+              className="h-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm"
             >
               <option value="">Todas as categorias</option>
               {Object.entries(categoryLabel).map(([value, label]) => (
@@ -68,9 +68,9 @@ export default async function CustosPage({
               type="month"
               name="mes"
               defaultValue={selectedMonth}
-              className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm"
+              className="h-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm"
             />
-            <button type="submit" className="h-9 px-3 rounded-md border border-gray-200 bg-white text-sm text-gray-600 hover:bg-gray-50">
+            <button type="submit" className="h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
               Filtrar
             </button>
           </form>
@@ -82,38 +82,38 @@ export default async function CustosPage({
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-gray-500">Custos Totais do Mês</p>
-                <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center">
-                  <DollarSign className="h-4 w-4 text-red-500" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">Custos Totais do Mês</p>
+                <div className="h-8 w-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center">
+                  <DollarSign className="h-4 w-4 text-red-500 dark:text-red-400" />
                 </div>
               </div>
-              <p className="text-xl font-bold text-gray-900">{formatCurrency(totalValue)}</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalValue)}</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-gray-500">Lançamentos</p>
-                <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center">
-                  <Wallet className="h-4 w-4 text-orange-600" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">Lançamentos</p>
+                <div className="h-8 w-8 rounded-lg bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center">
+                  <Wallet className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
-              <p className="text-xl font-bold text-gray-900">{costs.length}</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{costs.length}</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-gray-500">Maior Categoria</p>
-                <div className="h-8 w-8 rounded-lg bg-purple-50 flex items-center justify-center">
-                  <PieChart className="h-4 w-4 text-purple-600" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">Maior Categoria</p>
+                <div className="h-8 w-8 rounded-lg bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center">
+                  <PieChart className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
                 {biggestCategory ? categoryLabel[biggestCategory[0]] : "—"}
               </p>
               {biggestCategory && (
-                <p className="text-xs text-gray-400 mt-0.5">{formatCurrency(biggestCategory[1])}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatCurrency(biggestCategory[1])}</p>
               )}
             </CardContent>
           </Card>
@@ -126,18 +126,18 @@ export default async function CustosPage({
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b bg-gray-50">
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Categoria</th>
-                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Valor Total</th>
-                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">% do Total</th>
+                    <tr className="border-b bg-gray-50 dark:bg-gray-900">
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Categoria</th>
+                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Valor Total</th>
+                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">% do Total</th>
                     </tr>
                   </thead>
                   <tbody>
                     {categorySummaries.map(([category, value]) => (
-                      <tr key={category} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-3 font-medium text-gray-900">{categoryLabel[category] || category}</td>
-                        <td className="px-6 py-3 text-right font-semibold text-gray-900">{formatCurrency(value)}</td>
-                        <td className="px-6 py-3 text-right text-gray-600">
+                      <tr key={category} className="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <td className="px-6 py-3 font-medium text-gray-900 dark:text-gray-100">{categoryLabel[category] || category}</td>
+                        <td className="px-6 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(value)}</td>
+                        <td className="px-6 py-3 text-right text-gray-600 dark:text-gray-300">
                           {totalValue > 0 ? ((value / totalValue) * 100).toFixed(0) : 0}%
                         </td>
                       </tr>
@@ -153,8 +153,8 @@ export default async function CustosPage({
         <Card className="border-0 shadow-sm">
           <CardContent className="p-0">
             {costs.length === 0 ? (
-              <p className="p-10 text-center text-sm text-gray-500 flex flex-col items-center gap-2">
-                <Wallet className="h-6 w-6 text-gray-300" />
+              <p className="p-10 text-center text-sm text-gray-500 dark:text-gray-400 flex flex-col items-center gap-2">
+                <Wallet className="h-6 w-6 text-gray-300 dark:text-gray-600" />
                 Nenhum custo registrado para este período.
               </p>
             ) : (
@@ -162,11 +162,11 @@ export default async function CustosPage({
                 {costs.map((cost) => (
                   <div key={cost.id} className="flex items-center justify-between p-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{cost.description}</p>
-                      <p className="text-xs text-gray-500">{categoryLabel[cost.category] || cost.category}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{cost.description}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{categoryLabel[cost.category] || cost.category}</p>
                     </div>
                     <div className="flex items-center gap-6">
-                      <span className="text-sm font-bold text-gray-900">{formatCurrency(cost.amount)}</span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(cost.amount)}</span>
                       <DeleteCostButton costId={cost.id} />
                     </div>
                   </div>

@@ -63,12 +63,12 @@ export default async function MetricasPage() {
         {/* KPI Row */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { label: "Impressões", value: (totalImpressions / 1000).toFixed(0) + "K", sub: "total", color: "text-orange-600", bg: "bg-orange-50" },
-            { label: "Cliques", value: (totalClicks / 1000).toFixed(1) + "K", sub: "total", color: "text-purple-600", bg: "bg-purple-50" },
-            { label: "CTR Médio", value: avgCTR + "%", sub: "todos os canais", color: "text-indigo-600", bg: "bg-indigo-50" },
-            { label: "Conversões", value: totalConversions.toLocaleString("pt-BR"), sub: "total", color: "text-emerald-600", bg: "bg-emerald-50" },
-            { label: "ROAS Médio", value: avgROAS + "x", sub: "retorno sobre ad spend", color: "text-orange-600", bg: "bg-orange-50" },
-            { label: "Investimento", value: "R$" + (totalSpend / 1000).toFixed(0) + "K", sub: "total", color: "text-rose-600", bg: "bg-rose-50" },
+            { label: "Impressões", value: (totalImpressions / 1000).toFixed(0) + "K", sub: "total", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-500/10" },
+            { label: "Cliques", value: (totalClicks / 1000).toFixed(1) + "K", sub: "total", color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-500/10" },
+            { label: "CTR Médio", value: avgCTR + "%", sub: "todos os canais", color: "text-indigo-600", bg: "bg-indigo-50 dark:bg-indigo-500/10" },
+            { label: "Conversões", value: totalConversions.toLocaleString("pt-BR"), sub: "total", color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
+            { label: "ROAS Médio", value: avgROAS + "x", sub: "retorno sobre ad spend", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-500/10" },
+            { label: "Investimento", value: "R$" + (totalSpend / 1000).toFixed(0) + "K", sub: "total", color: "text-rose-600", bg: "bg-rose-50 dark:bg-rose-500/10" },
           ].map((kpi) => (
             <Card key={kpi.label} className="border-0 shadow-sm">
               <CardContent className="p-4">
@@ -76,7 +76,7 @@ export default async function MetricasPage() {
                   <div className={`h-2 w-2 rounded-full ${kpi.color.replace("text-", "bg-")}`} />
                 </div>
                 <p className={`text-xl font-bold ${kpi.color}`}>{kpi.value}</p>
-                <p className="text-xs text-gray-400 leading-tight mt-0.5">{kpi.label}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 leading-tight mt-0.5">{kpi.label}</p>
               </CardContent>
             </Card>
           ))}
@@ -84,7 +84,7 @@ export default async function MetricasPage() {
 
         {campaigns.length === 0 ? (
           <Card className="border-0 shadow-sm">
-            <CardContent className="p-10 text-center text-sm text-gray-500">
+            <CardContent className="p-10 text-center text-sm text-gray-500 dark:text-gray-400">
               Nenhuma campanha registrada ainda. Clique em &quot;Nova Campanha&quot; para começar a acompanhar Google Ads e outras mídias pagas.
             </CardContent>
           </Card>
@@ -94,8 +94,8 @@ export default async function MetricasPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <Card className="border-0 shadow-sm lg:col-span-2">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-semibold text-gray-900">Performance de Campanhas</CardTitle>
-                  <p className="text-xs text-gray-500">Impressões, cliques e conversões (6 meses)</p>
+                  <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Performance de Campanhas</CardTitle>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Impressões, cliques e conversões (6 meses)</p>
                 </CardHeader>
                 <CardContent>
                   <PerformanceLineChart data={performanceData} />
@@ -104,8 +104,8 @@ export default async function MetricasPage() {
 
               <Card className="border-0 shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-semibold text-gray-900">Distribuição de Investimento</CardTitle>
-                  <p className="text-xs text-gray-500">Por plataforma</p>
+                  <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Distribuição de Investimento</CardTitle>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Por plataforma</p>
                 </CardHeader>
                 <CardContent>
                   <SpendPieChart data={platformData} />
@@ -115,7 +115,7 @@ export default async function MetricasPage() {
 
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold text-gray-900">Investimento x Receita por Plataforma</CardTitle>
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Investimento x Receita por Plataforma</CardTitle>
               </CardHeader>
               <CardContent>
                 <PlatformBarChart data={platformData} />
@@ -125,34 +125,34 @@ export default async function MetricasPage() {
             {/* Campaign Table */}
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-gray-900">Campanhas</CardTitle>
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Campanhas</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b bg-gray-50">
+                      <tr className="border-b bg-gray-50 dark:bg-gray-900">
                         {["Campanha", "Cliente", "Plataforma", "Status", "Impressões", "Cliques", "CTR", "Conversões", "ROAS"].map((h) => (
-                          <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                          <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {campaigns.map((campaign) => (
-                        <tr key={campaign.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap">{campaign.name || "—"}</td>
-                          <td className="px-6 py-3 text-gray-600 whitespace-nowrap">{campaign.client.company || campaign.client.name}</td>
-                          <td className="px-6 py-3 text-gray-500">{campaign.platform}</td>
+                        <tr key={campaign.id} className="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                          <td className="px-6 py-3 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">{campaign.name || "—"}</td>
+                          <td className="px-6 py-3 text-gray-600 dark:text-gray-300 whitespace-nowrap">{campaign.client.company || campaign.client.name}</td>
+                          <td className="px-6 py-3 text-gray-500 dark:text-gray-400">{campaign.platform}</td>
                           <td className="px-6 py-3">
                             <Badge variant={campaign.status === "ACTIVE" ? "success" : campaign.status === "PAUSED" ? "warning" : "gray"}>
                               {campaign.status === "ACTIVE" ? "Ativa" : campaign.status === "PAUSED" ? "Pausada" : "Concluída"}
                             </Badge>
                           </td>
-                          <td className="px-6 py-3 text-gray-600">{(campaign.impressions / 1000).toFixed(1)}K</td>
-                          <td className="px-6 py-3 text-gray-600">{campaign.clicks.toLocaleString("pt-BR")}</td>
-                          <td className="px-6 py-3 text-gray-600">{campaign.ctr.toFixed(1)}%</td>
-                          <td className="px-6 py-3 text-gray-600">{campaign.conversions}</td>
-                          <td className={`px-6 py-3 font-bold ${campaign.roas >= 3 ? "text-green-600" : campaign.roas >= 2 ? "text-yellow-600" : "text-red-500"}`}>
+                          <td className="px-6 py-3 text-gray-600 dark:text-gray-300">{(campaign.impressions / 1000).toFixed(1)}K</td>
+                          <td className="px-6 py-3 text-gray-600 dark:text-gray-300">{campaign.clicks.toLocaleString("pt-BR")}</td>
+                          <td className="px-6 py-3 text-gray-600 dark:text-gray-300">{campaign.ctr.toFixed(1)}%</td>
+                          <td className="px-6 py-3 text-gray-600 dark:text-gray-300">{campaign.conversions}</td>
+                          <td className={`px-6 py-3 font-bold ${campaign.roas >= 3 ? "text-green-600 dark:text-green-400" : campaign.roas >= 2 ? "text-yellow-600" : "text-red-500 dark:text-red-400"}`}>
                             {campaign.roas.toFixed(1)}x
                           </td>
                         </tr>

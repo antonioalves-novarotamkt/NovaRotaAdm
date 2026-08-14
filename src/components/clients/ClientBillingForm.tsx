@@ -56,17 +56,17 @@ export function ClientBillingForm({
     return (
       <div className="space-y-2">
         <div>
-          <span className="text-2xl font-bold text-gray-900">
+          <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             {contractValue != null ? formatCurrency(contractValue) : "—"}
           </span>
-          <p className="text-xs text-gray-400 mt-0.5">Valor do contrato</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Valor do contrato</p>
         </div>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 dark:text-gray-300">
           Recebimento: <span className="font-medium">{frequencyLabel[billingFrequency] || billingFrequency}</span>
         </div>
-        {scheduleText && <div className="text-sm text-gray-600">{scheduleText}</div>}
+        {scheduleText && <div className="text-sm text-gray-600 dark:text-gray-300">{scheduleText}</div>}
         {nextBillingDate && (
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 dark:text-gray-300">
             Próximo vencimento: <span className="font-medium">{formatDate(nextBillingDate)}</span>
           </div>
         )}
@@ -107,7 +107,7 @@ export function ClientBillingForm({
       </select>
 
       {frequency === "WEEKLY" && (
-        <label className="text-xs text-gray-500 space-y-1 block">
+        <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
           Dia da semana que repete
           <select name="billingDayOfWeek" defaultValue={billingDayOfWeek ?? ""} className={inputClass}>
             <option value="" disabled>
@@ -123,7 +123,7 @@ export function ClientBillingForm({
       )}
 
       {frequency === "MONTHLY" && (
-        <label className="text-xs text-gray-500 space-y-1 block">
+        <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
           Dia do mês que o cliente paga
           <select name="billingDayOfMonth1" defaultValue={billingDayOfMonth1 ?? ""} className={inputClass}>
             <option value="" disabled>
@@ -140,7 +140,7 @@ export function ClientBillingForm({
 
       {frequency === "BIWEEKLY" && (
         <div className="grid grid-cols-2 gap-3">
-          <label className="text-xs text-gray-500 space-y-1 block">
+          <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
             1º dia do mês
             <select name="billingDayOfMonth1" defaultValue={billingDayOfMonth1 ?? ""} className={inputClass}>
               <option value="" disabled>
@@ -153,7 +153,7 @@ export function ClientBillingForm({
               ))}
             </select>
           </label>
-          <label className="text-xs text-gray-500 space-y-1 block">
+          <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
             2º dia do mês
             <select name="billingDayOfMonth2" defaultValue={billingDayOfMonth2 ?? ""} className={inputClass}>
               <option value="" disabled>
@@ -169,7 +169,7 @@ export function ClientBillingForm({
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400">
+      <p className="text-[11px] text-gray-400 dark:text-gray-500">
         A próxima data de vencimento é calculada automaticamente a partir dessa regra.
       </p>
 

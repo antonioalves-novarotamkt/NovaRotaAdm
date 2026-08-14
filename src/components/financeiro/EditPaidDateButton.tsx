@@ -19,7 +19,7 @@ export function EditPaidDateButton({ id, currentDate }: { id: string; currentDat
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-gray-700" title="Corrigir data">
+        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200" title="Corrigir data">
           <Pencil className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
@@ -29,7 +29,7 @@ export function EditPaidDateButton({ id, currentDate }: { id: string; currentDat
         </DialogHeader>
         <form action={updateInvoicePaidDate} onSubmit={() => setOpen(false)} className="space-y-3">
           <input type="hidden" name="id" value={id} />
-          <label className="text-xs text-gray-500 space-y-1 block">
+          <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
             Data em que foi recebido
             <Input name="paidAt" type="date" defaultValue={currentDate} required />
           </label>

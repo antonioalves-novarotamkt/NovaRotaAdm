@@ -23,6 +23,7 @@ import {
 import { cn, getInitials } from "@/lib/utils";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { useSidebar } from "@/components/layout/SidebarContext";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -109,6 +110,7 @@ export function Sidebar({ logoUrl }: { logoUrl?: string | null }) {
               <p className="text-white text-xs font-medium truncate">{userName}</p>
               <p className="text-[#64748b] text-xs truncate">{userEmail}</p>
             </div>
+            <ThemeToggle />
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
               className="text-[#64748b] hover:text-white transition-colors shrink-0"

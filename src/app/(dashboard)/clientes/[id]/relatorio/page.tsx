@@ -111,7 +111,7 @@ export default async function ClientReportPage({
       <div className="p-6 space-y-4 max-w-3xl mx-auto">
         <div className="flex items-center justify-between print:hidden">
           <Link href={`/clientes/${client.id}`}>
-            <Button variant="ghost" size="sm" className="gap-2 text-gray-600">
+            <Button variant="ghost" size="sm" className="gap-2 text-gray-600 dark:text-gray-300">
               <ArrowLeft className="h-4 w-4" />
               Voltar
             </Button>
@@ -122,9 +122,9 @@ export default async function ClientReportPage({
                 type="month"
                 name="mes"
                 defaultValue={selectedMonth}
-                className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm"
+                className="h-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm"
               />
-              <button type="submit" className="h-9 px-3 rounded-md border border-gray-200 bg-white text-sm text-gray-600 hover:bg-gray-50">
+              <button type="submit" className="h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
                 Ver mês
               </button>
             </form>
@@ -142,8 +142,8 @@ export default async function ClientReportPage({
                 <img src={agency.logoUrl} alt={agency.name} className="h-14 object-contain" />
               )}
               <div>
-                <p className="text-xs text-gray-400">Relatório de Performance</p>
-                <p className="text-lg font-bold text-gray-900">{client.company || client.name}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Relatório de Performance</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{client.company || client.name}</p>
               </div>
             </div>
             <div className="text-right">
@@ -151,7 +151,7 @@ export default async function ClientReportPage({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={client.logoUrl} alt={client.name} className="h-14 object-contain ml-auto mb-1" />
               )}
-              <p className="text-sm font-medium text-gray-700">{monthLabel}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{monthLabel}</p>
             </div>
           </CardContent>
         </Card>
@@ -160,8 +160,8 @@ export default async function ClientReportPage({
         {client.socialAccounts.length > 0 && (
           <Card className="border-0 shadow-sm print:shadow-none">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-gray-400" />
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                 Redes Sociais
               </CardTitle>
             </CardHeader>
@@ -184,17 +184,17 @@ export default async function ClientReportPage({
                     current.linkTaps != null ||
                     current.addressTaps != null);
                 return (
-                  <div key={account.id} className="p-3 rounded-lg border border-gray-100">
+                  <div key={account.id} className="p-3 rounded-lg border border-gray-100 dark:border-gray-800">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
                         {platformLabel[account.platform] || account.platform} · {account.handle}
                       </span>
                       <div className="text-right">
-                        <span className="text-sm font-bold text-gray-900">
+                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
                           {current ? current.followers.toLocaleString("pt-BR") : "—"} seguidores
                         </span>
                         {growth != null && (
-                          <p className={`text-xs ${growth >= 0 ? "text-green-600" : "text-red-500"}`}>
+                          <p className={`text-xs ${growth >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}`}>
                             {growth >= 0 ? "+" : ""}
                             {growth.toLocaleString("pt-BR")} no mês
                           </p>
@@ -202,17 +202,17 @@ export default async function ClientReportPage({
                       </div>
                     </div>
                     {showInstagramInsights && current && (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3 pt-3 border-t border-gray-100">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
                         {current.totalViews != null && (
                           <div>
-                            <p className="text-xs text-gray-400">Visualizações totais</p>
-                            <p className="text-sm font-semibold text-gray-900">{current.totalViews.toLocaleString("pt-BR")}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">Visualizações totais</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{current.totalViews.toLocaleString("pt-BR")}</p>
                           </div>
                         )}
                         {(current.followerViewsPct != null || current.nonFollowerViewsPct != null) && (
                           <div>
-                            <p className="text-xs text-gray-400">Seguidores x Não seguidores</p>
-                            <p className="text-sm font-semibold text-gray-900">
+                            <p className="text-xs text-gray-400 dark:text-gray-500">Seguidores x Não seguidores</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                               {current.followerViewsPct != null ? `${current.followerViewsPct.toLocaleString("pt-BR")}%` : "—"}
                               {" / "}
                               {current.nonFollowerViewsPct != null ? `${current.nonFollowerViewsPct.toLocaleString("pt-BR")}%` : "—"}
@@ -221,20 +221,20 @@ export default async function ClientReportPage({
                         )}
                         {current.profileVisits != null && (
                           <div>
-                            <p className="text-xs text-gray-400">Visitas ao perfil</p>
-                            <p className="text-sm font-semibold text-gray-900">{current.profileVisits.toLocaleString("pt-BR")}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">Visitas ao perfil</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{current.profileVisits.toLocaleString("pt-BR")}</p>
                           </div>
                         )}
                         {current.linkTaps != null && (
                           <div>
-                            <p className="text-xs text-gray-400">Toques em links</p>
-                            <p className="text-sm font-semibold text-gray-900">{current.linkTaps.toLocaleString("pt-BR")}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">Toques em links</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{current.linkTaps.toLocaleString("pt-BR")}</p>
                           </div>
                         )}
                         {current.addressTaps != null && (
                           <div>
-                            <p className="text-xs text-gray-400">Toques em endereço</p>
-                            <p className="text-sm font-semibold text-gray-900">{current.addressTaps.toLocaleString("pt-BR")}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">Toques em endereço</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{current.addressTaps.toLocaleString("pt-BR")}</p>
                           </div>
                         )}
                       </div>
@@ -250,27 +250,27 @@ export default async function ClientReportPage({
         {websiteMetric && (
           <Card className="border-0 shadow-sm print:shadow-none">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <Globe className="h-4 w-4 text-gray-400" />
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <Globe className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                 Site
               </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-3 gap-4">
               <div>
-                <p className="text-xs text-gray-400">Visualizações</p>
-                <p className="text-sm font-bold text-gray-900">
+                <p className="text-xs text-gray-400 dark:text-gray-500">Visualizações</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
                   {websiteMetric.pageViews != null ? websiteMetric.pageViews.toLocaleString("pt-BR") : "—"}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-400">Total de Usuários</p>
-                <p className="text-sm font-bold text-gray-900">
+                <p className="text-xs text-gray-400 dark:text-gray-500">Total de Usuários</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
                   {websiteMetric.totalUsers != null ? websiteMetric.totalUsers.toLocaleString("pt-BR") : "—"}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-400">Novos Usuários</p>
-                <p className="text-sm font-bold text-gray-900">
+                <p className="text-xs text-gray-400 dark:text-gray-500">Novos Usuários</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
                   {websiteMetric.newUsers != null ? websiteMetric.newUsers.toLocaleString("pt-BR") : "—"}
                 </p>
               </div>
@@ -281,13 +281,13 @@ export default async function ClientReportPage({
         {/* Posts */}
         <Card className="border-0 shadow-sm print:shadow-none">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">
+            <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
               Posts do Mês ({posts.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
             {posts.length === 0 ? (
-              <p className="text-sm text-gray-400">Nenhum post registrado neste mês.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum post registrado neste mês.</p>
             ) : (
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
@@ -297,19 +297,19 @@ export default async function ClientReportPage({
                       key={post.id}
                       src={post.imageUrl}
                       alt={post.caption || "Post"}
-                      className="aspect-square object-cover rounded-lg border border-gray-100"
+                      className="aspect-square object-cover rounded-lg border border-gray-100 dark:border-gray-800"
                     />
                   ))}
                 </div>
-                <div className="flex items-center gap-6 text-sm text-gray-700 border-t pt-3">
+                <div className="flex items-center gap-6 text-sm text-gray-700 dark:text-gray-300 border-t pt-3">
                   <span className="flex items-center gap-1.5">
-                    <Eye className="h-4 w-4 text-gray-400" /> {totalViews.toLocaleString("pt-BR")} visualizações
+                    <Eye className="h-4 w-4 text-gray-400 dark:text-gray-500" /> {totalViews.toLocaleString("pt-BR")} visualizações
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Heart className="h-4 w-4 text-gray-400" /> {totalLikes.toLocaleString("pt-BR")} curtidas
+                    <Heart className="h-4 w-4 text-gray-400 dark:text-gray-500" /> {totalLikes.toLocaleString("pt-BR")} curtidas
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Share2 className="h-4 w-4 text-gray-400" /> {totalShares.toLocaleString("pt-BR")} compartilhamentos
+                    <Share2 className="h-4 w-4 text-gray-400 dark:text-gray-500" /> {totalShares.toLocaleString("pt-BR")} compartilhamentos
                   </span>
                 </div>
               </>
@@ -321,24 +321,24 @@ export default async function ClientReportPage({
         {campaigns.length > 0 && (
           <Card className="border-0 shadow-sm print:shadow-none">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900">Campanhas Pagas</CardTitle>
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Campanhas Pagas</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
-                <p className="text-xs text-gray-400">Investimento</p>
-                <p className="text-sm font-bold text-gray-900">{formatCurrency(totalSpend)}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Investimento</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalSpend)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-400">Impressões</p>
-                <p className="text-sm font-bold text-gray-900">{totalImpressions.toLocaleString("pt-BR")}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Impressões</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{totalImpressions.toLocaleString("pt-BR")}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-400">Cliques</p>
-                <p className="text-sm font-bold text-gray-900">{totalClicks.toLocaleString("pt-BR")}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Cliques</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{totalClicks.toLocaleString("pt-BR")}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-400">Conversões</p>
-                <p className="text-sm font-bold text-gray-900">{totalConversions.toLocaleString("pt-BR")}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Conversões</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{totalConversions.toLocaleString("pt-BR")}</p>
               </div>
             </CardContent>
           </Card>
@@ -348,41 +348,41 @@ export default async function ClientReportPage({
         {sales.length > 0 && (
           <Card className="border-0 shadow-sm print:shadow-none">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <ShoppingCart className="h-4 w-4 text-gray-400" />
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                 Vendas do Mês
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-3">
                 <div>
-                  <p className="text-xs text-gray-400">Total Bruto de Vendas</p>
-                  <p className="text-sm font-bold text-gray-900">{formatCurrency(totalSalesValue)}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Total Bruto de Vendas</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalSalesValue)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Nº de Vendas</p>
-                  <p className="text-sm font-bold text-gray-900">{totalSalesCount.toLocaleString("pt-BR")}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Nº de Vendas</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{totalSalesCount.toLocaleString("pt-BR")}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Ticket Médio</p>
-                  <p className="text-sm font-bold text-gray-900">
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Ticket Médio</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
                     {formatCurrency(totalSalesCount > 0 ? totalSalesValue / totalSalesCount : 0)}
                   </p>
                 </div>
               </div>
               {hasNetData && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-3 pt-3 border-t border-gray-100">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-3 pt-3 border-t border-gray-100 dark:border-gray-800">
                   <div>
-                    <p className="text-xs text-gray-400">Ganho Líquido</p>
-                    <p className="text-sm font-bold text-gray-900">{formatCurrency(totalNetValue)}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">Ganho Líquido</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalNetValue)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400">Perdas com Taxas/Promoções/Entregas</p>
-                    <p className="text-sm font-bold text-red-600">{formatCurrency(totalSalesLoss)}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">Perdas com Taxas/Promoções/Entregas</p>
+                    <p className="text-sm font-bold text-red-600 dark:text-red-400">{formatCurrency(totalSalesLoss)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400">% Perdido do Bruto</p>
-                    <p className="text-sm font-bold text-red-600">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">% Perdido do Bruto</p>
+                    <p className="text-sm font-bold text-red-600 dark:text-red-400">
                       {totalSalesValue > 0 ? `${((totalSalesLoss / totalSalesValue) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%` : "—"}
                     </p>
                   </div>
@@ -391,7 +391,7 @@ export default async function ClientReportPage({
               {sales.length > 1 && (
                 <div className="space-y-1.5 border-t pt-3">
                   {sales.map((sale) => (
-                    <div key={sale.id} className="flex items-center justify-between text-xs text-gray-600">
+                    <div key={sale.id} className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
                       <span>{sale.platform || "Geral"}</span>
                       <span>
                         {formatCurrency(sale.grossValue)}
@@ -408,18 +408,18 @@ export default async function ClientReportPage({
         {/* Activities */}
         <Card className="border-0 shadow-sm print:shadow-none">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">
+            <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
               Atividades Realizadas ({activities.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {activities.length === 0 ? (
-              <p className="text-sm text-gray-400">Nenhuma atividade registrada neste mês.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma atividade registrada neste mês.</p>
             ) : (
               activities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-100">
-                  <span className="text-xs text-gray-400 whitespace-nowrap pt-0.5">{formatDate(activity.date)}</span>
-                  <p className="text-sm text-gray-700 flex-1">{activity.description}</p>
+                <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-100 dark:border-gray-800">
+                  <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap pt-0.5">{formatDate(activity.date)}</span>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 flex-1">{activity.description}</p>
                 </div>
               ))
             )}

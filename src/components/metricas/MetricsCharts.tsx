@@ -70,9 +70,9 @@ export function SpendPieChart({ data }: { data: PlatformPoint[] }) {
           <div key={item.platform} className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
               <div className="h-2.5 w-2.5 rounded-full" style={{ background: PIE_COLORS[index % PIE_COLORS.length] }} />
-              <span className="text-gray-600">{item.platform}</span>
+              <span className="text-gray-600 dark:text-gray-300">{item.platform}</span>
             </div>
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-gray-900 dark:text-gray-100">
               {total > 0 ? ((item.spend / total) * 100).toFixed(0) : 0}%
             </span>
           </div>

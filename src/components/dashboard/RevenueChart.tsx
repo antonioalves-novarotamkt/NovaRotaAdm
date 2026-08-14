@@ -23,8 +23,8 @@ export function RevenueChart({ data }: RevenueChartProps) {
   return (
     <Card className="border-0 shadow-sm col-span-2">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold text-gray-900">Faturamento vs Vendas dos Clientes</CardTitle>
-        <p className="text-xs text-gray-500">Últimos 6 meses</p>
+        <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Faturamento vs Vendas dos Clientes</CardTitle>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Últimos 6 meses</p>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={280}>

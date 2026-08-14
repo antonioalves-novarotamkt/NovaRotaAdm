@@ -32,7 +32,7 @@ export function MarkExtraChargePaidButton({ id }: { id: string }) {
         </DialogHeader>
         <form action={markExtraChargePaid} onSubmit={() => setOpen(false)} className="space-y-3">
           <input type="hidden" name="id" value={id} />
-          <label className="text-xs text-gray-500 space-y-1 block">
+          <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
             Data em que foi recebido
             <Input name="paidAt" type="date" defaultValue={today} required />
           </label>

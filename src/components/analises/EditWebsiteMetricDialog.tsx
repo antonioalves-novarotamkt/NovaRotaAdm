@@ -29,7 +29,7 @@ export function EditWebsiteMetricDialog({ metric }: { metric: WebsiteMetricData 
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
-          className="h-8 w-8 rounded-md flex items-center justify-center text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors"
+          className="h-8 w-8 rounded-md flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-orange-600 hover:bg-orange-50 transition-colors"
           title="Editar"
         >
           <Pencil className="h-4 w-4" />

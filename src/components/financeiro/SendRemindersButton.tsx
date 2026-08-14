@@ -32,7 +32,7 @@ export function SendRemindersButton() {
         {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bell className="h-3.5 w-3.5" />}
         Enviar Lembretes Agora
       </Button>
-      {result && <span className="text-xs text-gray-500">{result}</span>}
+      {result && <span className="text-xs text-gray-500 dark:text-gray-400">{result}</span>}
     </div>
   );
 }

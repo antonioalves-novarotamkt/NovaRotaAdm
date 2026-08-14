@@ -121,7 +121,7 @@ export function AnalysisSocialDialog({
 
           {isInstagram && (
             <div className="space-y-3 pt-2 border-t">
-              <p className="text-xs font-medium text-gray-500">Métricas do Instagram</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Métricas do Instagram</p>
               <Input name="totalViews" type="number" placeholder="Visualizações totais" />
               <div className="grid grid-cols-2 gap-3">
                 <Input name="followerViewsPct" type="number" step="0.1" min={0} max={100} placeholder="% seguidores" />

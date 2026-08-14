@@ -75,7 +75,7 @@ export default async function VendasPage({
             <select
               name="cliente"
               defaultValue={selectedClientId}
-              className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm"
+              className="h-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm"
             >
               <option value="">Todos os clientes</option>
               {clients.map((c) => (
@@ -88,9 +88,9 @@ export default async function VendasPage({
               type="month"
               name="mes"
               defaultValue={selectedMonth}
-              className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm"
+              className="h-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm"
             />
-            <button type="submit" className="h-9 px-3 rounded-md border border-gray-200 bg-white text-sm text-gray-600 hover:bg-gray-50">
+            <button type="submit" className="h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
               Filtrar
             </button>
           </form>
@@ -102,56 +102,56 @@ export default async function VendasPage({
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-gray-500">Total Bruto de Vendas</p>
-                <div className="h-8 w-8 rounded-lg bg-green-50 flex items-center justify-center">
-                  <DollarSign className="h-4 w-4 text-green-600" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">Total Bruto de Vendas</p>
+                <div className="h-8 w-8 rounded-lg bg-green-50 dark:bg-green-500/10 flex items-center justify-center">
+                  <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
                 </div>
               </div>
-              <p className="text-xl font-bold text-gray-900">{formatCurrency(totalGross)}</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalGross)}</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-gray-500">Ganho Líquido</p>
-                <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                  <Wallet className="h-4 w-4 text-emerald-600" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">Ganho Líquido</p>
+                <div className="h-8 w-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
+                  <Wallet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
               </div>
-              <p className="text-xl font-bold text-gray-900">{formatCurrency(totalNet)}</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalNet)}</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-gray-500">Perdas (taxas/promoções/entrega)</p>
-                <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center">
-                  <TrendingDown className="h-4 w-4 text-red-500" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">Perdas (taxas/promoções/entrega)</p>
+                <div className="h-8 w-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center">
+                  <TrendingDown className="h-4 w-4 text-red-500 dark:text-red-400" />
                 </div>
               </div>
-              <p className="text-xl font-bold text-red-600">{formatCurrency(totalLoss)}</p>
+              <p className="text-xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totalLoss)}</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-gray-500">Número de Vendas</p>
-                <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center">
-                  <Hash className="h-4 w-4 text-orange-600" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">Número de Vendas</p>
+                <div className="h-8 w-8 rounded-lg bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center">
+                  <Hash className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
-              <p className="text-xl font-bold text-gray-900">{totalCount.toLocaleString("pt-BR")}</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{totalCount.toLocaleString("pt-BR")}</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-gray-500">Ticket Médio</p>
-                <div className="h-8 w-8 rounded-lg bg-purple-50 flex items-center justify-center">
-                  <ShoppingCart className="h-4 w-4 text-purple-600" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">Ticket Médio</p>
+                <div className="h-8 w-8 rounded-lg bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center">
+                  <ShoppingCart className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
-              <p className="text-xl font-bold text-gray-900">{formatCurrency(avgTicket)}</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(avgTicket)}</p>
             </CardContent>
           </Card>
         </div>
@@ -163,30 +163,30 @@ export default async function VendasPage({
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b bg-gray-50">
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente</th>
-                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Bruto</th>
-                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Líquido</th>
-                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Perdas</th>
-                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nº Vendas</th>
+                    <tr className="border-b bg-gray-50 dark:bg-gray-900">
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cliente</th>
+                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bruto</th>
+                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Líquido</th>
+                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Perdas</th>
+                      <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nº Vendas</th>
                     </tr>
                   </thead>
                   <tbody>
                     {clientSummaries.map(([clientId, summary]) => (
-                      <tr key={clientId} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-3 font-medium text-gray-900">
+                      <tr key={clientId} className="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <td className="px-6 py-3 font-medium text-gray-900 dark:text-gray-100">
                           <Link href={`/clientes/${clientId}`} className="hover:text-orange-600">
                             {summary.name}
                           </Link>
                         </td>
-                        <td className="px-6 py-3 text-right font-semibold text-gray-900">{formatCurrency(summary.grossValue)}</td>
-                        <td className="px-6 py-3 text-right text-gray-600">
+                        <td className="px-6 py-3 text-right font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(summary.grossValue)}</td>
+                        <td className="px-6 py-3 text-right text-gray-600 dark:text-gray-300">
                           {summary.hasNet ? formatCurrency(summary.netValue) : "—"}
                         </td>
-                        <td className="px-6 py-3 text-right text-red-600">
+                        <td className="px-6 py-3 text-right text-red-600 dark:text-red-400">
                           {summary.hasNet ? formatCurrency(summary.grossValue - summary.netValue) : "—"}
                         </td>
-                        <td className="px-6 py-3 text-right text-gray-600">{summary.salesCount.toLocaleString("pt-BR")}</td>
+                        <td className="px-6 py-3 text-right text-gray-600 dark:text-gray-300">{summary.salesCount.toLocaleString("pt-BR")}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -200,8 +200,8 @@ export default async function VendasPage({
         <Card className="border-0 shadow-sm">
           <CardContent className="p-0">
             {sales.length === 0 ? (
-              <p className="p-10 text-center text-sm text-gray-500 flex flex-col items-center gap-2">
-                <ShoppingCart className="h-6 w-6 text-gray-300" />
+              <p className="p-10 text-center text-sm text-gray-500 dark:text-gray-400 flex flex-col items-center gap-2">
+                <ShoppingCart className="h-6 w-6 text-gray-300 dark:text-gray-600" />
                 Nenhuma venda registrada para este período.
               </p>
             ) : (
@@ -209,23 +209,23 @@ export default async function VendasPage({
                 {sales.map((sale) => (
                   <div key={sale.id} className="flex items-center justify-between p-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{sale.client.company || sale.client.name}</p>
-                      <p className="text-xs text-gray-500">{sale.platform || "Todos os apps"}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{sale.client.company || sale.client.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{sale.platform || "Todos os apps"}</p>
                     </div>
                     <div className="flex items-center gap-6">
                       <div className="text-right">
-                        <p className="text-xs text-gray-400">Bruto</p>
-                        <p className="text-sm font-bold text-gray-900">{formatCurrency(sale.grossValue)}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Bruto</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(sale.grossValue)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-400">Líquido</p>
-                        <p className="text-sm font-bold text-gray-900">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Líquido</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
                           {sale.netValue != null ? formatCurrency(sale.netValue) : "—"}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-400">Vendas</p>
-                        <p className="text-sm font-bold text-gray-900">{sale.salesCount}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Vendas</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{sale.salesCount}</p>
                       </div>
                       <div className="flex items-center gap-1">
                         <EditSaleDialog

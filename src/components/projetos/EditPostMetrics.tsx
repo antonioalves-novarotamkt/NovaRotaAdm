@@ -52,8 +52,8 @@ export function EditPostMetrics({
           <input type="hidden" name="id" value={postId} />
 
           <div className="space-y-2">
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Instagram <span className="font-normal normal-case text-gray-400">(opcional)</span>
+            <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
+              Instagram <span className="font-normal normal-case text-gray-400 dark:text-gray-500">(opcional)</span>
             </p>
             <div className="grid grid-cols-3 gap-2">
               <Input name="instagramViews" type="number" min={0} placeholder="Views" defaultValue={instagramViews ?? ""} />
@@ -63,8 +63,8 @@ export function EditPostMetrics({
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Facebook <span className="font-normal normal-case text-gray-400">(opcional)</span>
+            <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
+              Facebook <span className="font-normal normal-case text-gray-400 dark:text-gray-500">(opcional)</span>
             </p>
             <div className="grid grid-cols-3 gap-2">
               <Input name="facebookViews" type="number" min={0} placeholder="Views" defaultValue={facebookViews ?? ""} />
@@ -73,7 +73,7 @@ export function EditPostMetrics({
             </div>
           </div>
 
-          <p className="text-[11px] text-gray-400">
+          <p className="text-[11px] text-gray-400 dark:text-gray-500">
             Preencha só as redes em que o cliente está presente — nenhum campo é obrigatório.
           </p>
 

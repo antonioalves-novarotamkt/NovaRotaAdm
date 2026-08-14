@@ -89,7 +89,7 @@ export default async function AnalisesPage({
             <select
               name="cliente"
               defaultValue={selectedClientId}
-              className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm"
+              className="h-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm"
             >
               <option value="">Todos os clientes</option>
               {clients.map((c) => (
@@ -102,9 +102,9 @@ export default async function AnalisesPage({
               type="month"
               name="mes"
               defaultValue={selectedMonth}
-              className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm"
+              className="h-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm"
             />
-            <button type="submit" className="h-9 px-3 rounded-md border border-gray-200 bg-white text-sm text-gray-600 hover:bg-gray-50">
+            <button type="submit" className="h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
               Filtrar
             </button>
           </form>
@@ -117,8 +117,8 @@ export default async function AnalisesPage({
         <Card className="border-0 shadow-sm">
           <CardContent className="p-0">
             {feed.length === 0 ? (
-              <p className="p-10 text-center text-sm text-gray-500 flex flex-col items-center gap-2">
-                <BarChart2 className="h-6 w-6 text-gray-300" />
+              <p className="p-10 text-center text-sm text-gray-500 dark:text-gray-400 flex flex-col items-center gap-2">
+                <BarChart2 className="h-6 w-6 text-gray-300 dark:text-gray-600" />
                 Nenhuma análise registrada para este período.
               </p>
             ) : (
@@ -126,28 +126,28 @@ export default async function AnalisesPage({
                 {feed.map((entry) => (
                   <div key={`${entry.kind}-${entry.id}`} className="flex items-center justify-between p-4">
                     <div className="flex items-start gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="h-8 w-8 rounded-lg bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center shrink-0 mt-0.5">
                         {entry.kind === "social" ? (
-                          <Users2 className="h-4 w-4 text-orange-600" />
+                          <Users2 className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                         ) : (
-                          <Globe className="h-4 w-4 text-orange-600" />
+                          <Globe className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                         )}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {entry.clientName}
                           {entry.kind === "social" && (
-                            <span className="text-gray-400 font-normal">
+                            <span className="text-gray-400 dark:text-gray-500 font-normal">
                               {" · "}
                               {platformLabel[entry.metric.socialAccount.platform] || entry.metric.socialAccount.platform}
                               {" · "}
                               {entry.metric.socialAccount.handle}
                             </span>
                           )}
-                          {entry.kind === "website" && <span className="text-gray-400 font-normal"> · Site</span>}
+                          {entry.kind === "website" && <span className="text-gray-400 dark:text-gray-500 font-normal"> · Site</span>}
                         </p>
                         {entry.kind === "social" ? (
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                             {entry.metric.followers.toLocaleString("pt-BR")} seguidores
                             {entry.metric.engagementRate != null && ` · ${entry.metric.engagementRate}% engajamento`}
                             {entry.metric.totalViews != null && ` · ${entry.metric.totalViews.toLocaleString("pt-BR")} visualizações`}
@@ -159,7 +159,7 @@ export default async function AnalisesPage({
                             {entry.metric.addressTaps != null && ` · ${entry.metric.addressTaps.toLocaleString("pt-BR")} toques em endereço`}
                           </p>
                         ) : (
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                             {entry.metric.pageViews != null && `${entry.metric.pageViews.toLocaleString("pt-BR")} visualizações`}
                             {entry.metric.totalUsers != null && ` · ${entry.metric.totalUsers.toLocaleString("pt-BR")} usuários`}
                             {entry.metric.newUsers != null && ` · ${entry.metric.newUsers.toLocaleString("pt-BR")} novos usuários`}

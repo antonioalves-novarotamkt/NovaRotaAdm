@@ -32,7 +32,7 @@ export function EditSaleDialog({ sale }: { sale: SaleData }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
-          className="h-8 w-8 rounded-md flex items-center justify-center text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors"
+          className="h-8 w-8 rounded-md flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-orange-600 hover:bg-orange-50 transition-colors"
           title="Editar"
         >
           <Pencil className="h-4 w-4" />
@@ -56,7 +56,7 @@ export function EditSaleDialog({ sale }: { sale: SaleData }) {
             <Input name="grossValue" type="number" step="0.01" defaultValue={sale.grossValue} placeholder="Total bruto de vendas (R$)" required />
             <Input name="netValue" type="number" step="0.01" defaultValue={sale.netValue ?? ""} placeholder="Ganho líquido (R$)" />
           </div>
-          <p className="text-[11px] text-gray-400 -mt-1.5">
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 -mt-1.5">
             Ganho líquido é o que sobra após taxas, comissão do app, promoções e entregas — deixe em branco se não souber ainda.
           </p>
           <Input name="salesCount" type="number" min={0} defaultValue={sale.salesCount} placeholder="Nº de vendas" required />
