@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -10,17 +11,18 @@ interface KPICardProps {
   trend: "up" | "down" | "neutral";
   icon: React.ReactNode;
   iconBg?: string;
+  href?: string;
 }
 
-export function KPICard({ title, value, change, changeLabel, trend, icon, iconBg }: KPICardProps) {
+export function KPICard({ title, value, change, changeLabel, trend, icon, iconBg, href }: KPICardProps) {
   const TrendIcon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
   const trendColor =
     trend === "up" ? "text-green-600 dark:text-green-400" : trend === "down" ? "text-red-500 dark:text-red-400" : "text-gray-500 dark:text-gray-400";
   const trendBg =
     trend === "up" ? "bg-green-50 dark:bg-green-500/10" : trend === "down" ? "bg-red-50 dark:bg-red-500/10" : "bg-gray-100 dark:bg-gray-800";
 
-  return (
-    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+  const card = (
+    <Card className={cn("border-0 shadow-sm hover:shadow-md transition-shadow", href && "cursor-pointer")}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -41,4 +43,6 @@ export function KPICard({ title, value, change, changeLabel, trend, icon, iconBg
       </CardContent>
     </Card>
   );
+
+  return href ? <Link href={href}>{card}</Link> : card;
 }
