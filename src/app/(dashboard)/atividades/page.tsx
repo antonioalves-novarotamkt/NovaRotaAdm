@@ -46,7 +46,7 @@ export default async function AtividadesPage({
       <div className="p-6 space-y-6 max-w-3xl mx-auto">
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-gray-900">Nova Atividade</CardTitle>
+            <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Nova Atividade</CardTitle>
           </CardHeader>
           <CardContent>
             <ActivityFeedForm clients={clients} defaultClientId={selectedClientId} />
@@ -57,7 +57,7 @@ export default async function AtividadesPage({
           <select
             name="cliente"
             defaultValue={selectedClientId}
-            className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm"
+            className="h-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm"
           >
             <option value="">Todos os clientes</option>
             {clients.map((c) => (
@@ -70,13 +70,13 @@ export default async function AtividadesPage({
             type="month"
             name="mes"
             defaultValue={selectedMonth}
-            className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm"
+            className="h-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm"
           />
-          <button type="submit" className="h-9 px-3 rounded-md border border-gray-200 bg-white text-sm text-gray-600 hover:bg-gray-50">
+          <button type="submit" className="h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
             Filtrar
           </button>
           {(selectedClientId || selectedMonth) && (
-            <Link href="/atividades" className="text-xs text-gray-400 hover:text-gray-600">
+            <Link href="/atividades" className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
               Limpar filtros
             </Link>
           )}
@@ -84,8 +84,8 @@ export default async function AtividadesPage({
 
         {activities.length === 0 ? (
           <Card className="border-0 shadow-sm">
-            <CardContent className="p-10 text-center text-sm text-gray-500 flex flex-col items-center gap-2">
-              <ClipboardList className="h-6 w-6 text-gray-300" />
+            <CardContent className="p-10 text-center text-sm text-gray-500 dark:text-gray-400 flex flex-col items-center gap-2">
+              <ClipboardList className="h-6 w-6 text-gray-300 dark:text-gray-600" />
               Nenhuma atividade encontrada.
             </CardContent>
           </Card>
@@ -101,13 +101,13 @@ export default async function AtividadesPage({
                     <div className="flex items-center justify-between">
                       <Link
                         href={`/clientes/${activity.client.id}`}
-                        className="text-sm font-semibold text-gray-900 hover:text-orange-600"
+                        className="text-sm font-semibold text-gray-900 dark:text-gray-100 hover:text-orange-600"
                       >
                         {activity.client.company || activity.client.name}
                       </Link>
-                      <span className="text-xs text-gray-400">{formatDate(activity.date)}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(activity.date)}</span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{activity.description}</p>
                   </div>
                 </CardContent>
               </Card>

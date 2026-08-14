@@ -38,14 +38,14 @@ export default async function ClientesPage() {
         {/* Stats Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: "Total de Clientes", value: clients.length, color: "text-orange-600", bg: "bg-orange-50" },
-            { label: "Ativos", value: activeCount, color: "text-green-600", bg: "bg-green-50" },
-            { label: "Prospects", value: clients.filter((c) => c.status === "PROSPECT").length, color: "text-orange-500", bg: "bg-orange-50" },
-            { label: "MRR Total", value: formatCurrency(totalMRR), color: "text-purple-600", bg: "bg-purple-50" },
+            { label: "Total de Clientes", value: clients.length, color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-500/10" },
+            { label: "Ativos", value: activeCount, color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-500/10" },
+            { label: "Prospects", value: clients.filter((c) => c.status === "PROSPECT").length, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-500/10" },
+            { label: "MRR Total", value: formatCurrency(totalMRR), color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-500/10" },
           ].map((stat) => (
             <Card key={stat.label} className="border-0 shadow-sm">
               <CardContent className="p-4">
-                <p className="text-xs text-gray-500 mb-1">{stat.label}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{stat.label}</p>
                 <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
               </CardContent>
             </Card>
@@ -56,8 +56,8 @@ export default async function ClientesPage() {
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <div className="relative flex-1 sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input placeholder="Buscar cliente, empresa..." className="pl-9 h-9 bg-white border-gray-200" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+              <Input placeholder="Buscar cliente, empresa..." className="pl-9 h-9 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700" />
             </div>
             <Button variant="outline" size="sm" className="h-9 gap-1.5">
               <Filter className="h-4 w-4" />
@@ -70,7 +70,7 @@ export default async function ClientesPage() {
         {/* Clients Grid */}
         {clients.length === 0 ? (
           <Card className="border-0 shadow-sm">
-            <CardContent className="p-10 text-center text-sm text-gray-500">
+            <CardContent className="p-10 text-center text-sm text-gray-500 dark:text-gray-400">
               Nenhum cliente cadastrado ainda. Clique em &quot;Novo Cliente&quot; para começar.
             </CardContent>
           </Card>
@@ -89,8 +89,8 @@ export default async function ClientesPage() {
                             {getInitials(client.name)}
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900 text-sm">{client.name}</p>
-                            <p className="text-xs text-gray-500 flex items-center gap-1">
+                            <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{client.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                               <Building2 className="h-3 w-3" />
                               {client.company ?? "—"}
                             </p>
@@ -100,18 +100,18 @@ export default async function ClientesPage() {
                       </div>
 
                       <div className="space-y-1.5 mb-4">
-                        <p className="flex items-center gap-2 text-xs text-gray-500">
+                        <p className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                           <Mail className="h-3.5 w-3.5" />
                           {client.email}
                         </p>
                         {client.phone && (
-                          <p className="flex items-center gap-2 text-xs text-gray-500">
+                          <p className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                             <Phone className="h-3.5 w-3.5" />
                             {client.phone}
                           </p>
                         )}
                         {client.website && (
-                          <p className="flex items-center gap-2 text-xs text-gray-500">
+                          <p className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                             <Globe className="h-3.5 w-3.5" />
                             {client.website}
                           </p>
@@ -120,18 +120,18 @@ export default async function ClientesPage() {
 
                       <div className="flex items-center justify-between border-t pt-3">
                         <div>
-                          <p className="text-xs text-gray-400">Valor Contrato</p>
-                          <p className="text-sm font-bold text-gray-900">
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Valor Contrato</p>
+                          <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
                             {client.contractValue ? formatCurrency(client.contractValue) : "—"}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs text-gray-400">Projetos</p>
-                          <p className="text-sm font-bold text-gray-900">{client._count.projects}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Projetos</p>
+                          <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{client._count.projects}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs text-gray-400">Cidade</p>
-                          <p className="text-sm font-medium text-gray-700">
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Cidade</p>
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                             {client.city ? `${client.city}, ${client.state}` : "—"}
                           </p>
                         </div>

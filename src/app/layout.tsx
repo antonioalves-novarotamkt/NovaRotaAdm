@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { PwaRegister } from "@/components/providers/PwaRegister";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { getAgencySettings } from "@/app/actions/agency";
 import "./globals.css";
 
@@ -35,10 +36,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body className={inter.className}>
-        <SessionProvider>{children}</SessionProvider>
-        <PwaRegister />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <SessionProvider>{children}</SessionProvider>
+          <PwaRegister />
+        </ThemeProvider>
       </body>
     </html>
   );

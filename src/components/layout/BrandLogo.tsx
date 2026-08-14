@@ -20,7 +20,7 @@ export function BrandLogo({ logoUrl, dark, size = 40 }: { logoUrl?: string | nul
       </span>
       <div
         style={{ fontSize: Math.max(size * 0.13, 9) }}
-        className={cn("tracking-[0.2em] uppercase mt-1", dark ? "text-gray-400" : "text-gray-500")}
+        className={cn("tracking-[0.2em] uppercase mt-1", dark ? "text-gray-400 dark:text-gray-500" : "text-gray-500 dark:text-gray-400")}
       >
         marketing.
       </div>

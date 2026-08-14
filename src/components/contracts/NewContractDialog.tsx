@@ -137,18 +137,18 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <label className="text-xs text-gray-500 space-y-1">
+            <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
               Início
               <Input name="startDate" type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </label>
-            <label className="text-xs text-gray-500 space-y-1">
+            <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
               Fim (opcional)
               <Input name="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </label>
           </div>
 
-          <div className="border rounded-lg p-3 space-y-3 bg-gray-50">
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Recorrência do recebimento</p>
+          <div className="border rounded-lg p-3 space-y-3 bg-gray-50 dark:bg-gray-900">
+            <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Recorrência do recebimento</p>
             <select
               name="billingFrequency"
               value={billingFrequency}
@@ -161,7 +161,7 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
             </select>
 
             {billingFrequency === "WEEKLY" && (
-              <label className="text-xs text-gray-500 space-y-1 block">
+              <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
                 Dia da semana
                 <select
                   name="billingDayOfWeek"
@@ -182,7 +182,7 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
             )}
 
             {billingFrequency === "MONTHLY" && (
-              <label className="text-xs text-gray-500 space-y-1 block">
+              <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
                 Dia do mês
                 <select
                   name="billingDayOfMonth1"
@@ -204,7 +204,7 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
 
             {billingFrequency === "BIWEEKLY" && (
               <div className="grid grid-cols-2 gap-3">
-                <label className="text-xs text-gray-500 space-y-1 block">
+                <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
                   1º dia do mês
                   <select
                     name="billingDayOfMonth1"
@@ -222,7 +222,7 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
                     ))}
                   </select>
                 </label>
-                <label className="text-xs text-gray-500 space-y-1 block">
+                <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
                   2º dia do mês
                   <select
                     name="billingDayOfMonth2"
@@ -244,11 +244,11 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
             )}
           </div>
 
-          <div className="border rounded-lg p-3 space-y-3 bg-gray-50">
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Serviços contratados</p>
+          <div className="border rounded-lg p-3 space-y-3 bg-gray-50 dark:bg-gray-900">
+            <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Serviços contratados</p>
 
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                 <input
                   type="checkbox"
                   name="includesSocialMedia"
@@ -287,7 +287,7 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
               )}
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
                 name="includesGoogleAds"
@@ -298,7 +298,7 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
             </label>
 
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                 <input
                   type="checkbox"
                   name="includesMenuMgmt"
@@ -310,7 +310,7 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
               {includesMenuMgmt && (
                 <div className="flex flex-wrap gap-3 pl-6">
                   {MENU_PLATFORMS.map((platform) => (
-                    <label key={platform} className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <label key={platform} className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
                       <input
                         type="checkbox"
                         checked={menuPlatforms.includes(platform)}

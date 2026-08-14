@@ -38,7 +38,7 @@ export function EditSocialMetricDialog({ metric }: { metric: SocialMetricData })
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
-          className="h-8 w-8 rounded-md flex items-center justify-center text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors"
+          className="h-8 w-8 rounded-md flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-orange-600 hover:bg-orange-50 transition-colors"
           title="Editar"
         >
           <Pencil className="h-4 w-4" />
@@ -68,7 +68,7 @@ export function EditSocialMetricDialog({ metric }: { metric: SocialMetricData })
 
           {metric.isInstagram && (
             <div className="space-y-3 pt-2 border-t">
-              <p className="text-xs font-medium text-gray-500">Métricas do Instagram</p>
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Métricas do Instagram</p>
               <Input name="totalViews" type="number" defaultValue={metric.totalViews ?? ""} placeholder="Visualizações totais" />
               <div className="grid grid-cols-2 gap-3">
                 <Input

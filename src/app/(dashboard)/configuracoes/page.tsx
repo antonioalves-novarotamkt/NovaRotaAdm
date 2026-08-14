@@ -37,8 +37,8 @@ export default async function ConfiguracoesPage() {
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-orange-600" />
-              <CardTitle className="text-base font-semibold text-gray-900">Perfil do Usuário</CardTitle>
+              <User className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Perfil do Usuário</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -47,28 +47,28 @@ export default async function ConfiguracoesPage() {
                 AD
               </div>
               <div>
-                <p className="font-semibold text-gray-900">Admin User</p>
-                <p className="text-sm text-gray-500">admin@novarota.com</p>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">Admin User</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">admin@novarota.com</p>
                 <Badge variant="info" className="mt-1">Administrador</Badge>
               </div>
               <Button variant="outline" size="sm" className="ml-auto">Alterar Foto</Button>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Nome Completo</label>
-                <Input defaultValue="Admin User" className="border-gray-200" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Nome Completo</label>
+                <Input defaultValue="Admin User" className="border-gray-200 dark:border-gray-700" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Email</label>
-                <Input defaultValue="admin@novarota.com" type="email" className="border-gray-200" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Email</label>
+                <Input defaultValue="admin@novarota.com" type="email" className="border-gray-200 dark:border-gray-700" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Telefone</label>
-                <Input placeholder="(11) 99999-9999" className="border-gray-200" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Telefone</label>
+                <Input placeholder="(11) 99999-9999" className="border-gray-200 dark:border-gray-700" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Cargo</label>
-                <Input defaultValue="Gerente de Agência" className="border-gray-200" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Cargo</label>
+                <Input defaultValue="Gerente de Agência" className="border-gray-200 dark:border-gray-700" />
               </div>
             </div>
             <div className="flex justify-end">
@@ -81,39 +81,39 @@ export default async function ConfiguracoesPage() {
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <Palette className="h-4 w-4 text-purple-600" />
-              <CardTitle className="text-base font-semibold text-gray-900">Dados da Agência</CardTitle>
+              <Palette className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Dados da Agência</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">Logo da Agência</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Logo da Agência</label>
               <LogoUpload currentUrl={agency.logoUrl} onUploaded={updateAgencyLogo} label="Enviar Logo" />
-              <p className="text-xs text-gray-400 mt-1.5">Usada no menu lateral, tela de login e relatórios.</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">Usada no menu lateral, tela de login e relatórios.</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">Ícone do App</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Ícone do App</label>
               <LogoUpload currentUrl={agency.appIconUrl} onUploaded={updateAgencyAppIcon} label="Enviar Ícone" />
-              <p className="text-xs text-gray-400 mt-1.5">
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
                 Usado como ícone ao instalar o app na tela inicial do celular. Envie uma imagem quadrada — se não enviar, usamos um ícone padrão.
               </p>
             </div>
             <form action={updateAgencyName} className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Nome da Agência</label>
-                <Input name="name" defaultValue={agency.name} className="border-gray-200" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Nome da Agência</label>
+                <Input name="name" defaultValue={agency.name} className="border-gray-200 dark:border-gray-700" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">CNPJ</label>
-                <Input name="cnpj" defaultValue={agency.cnpj || ""} placeholder="00.000.000/0001-00" className="border-gray-200" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">CNPJ</label>
+                <Input name="cnpj" defaultValue={agency.cnpj || ""} placeholder="00.000.000/0001-00" className="border-gray-200 dark:border-gray-700" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Website</label>
-                <Input name="website" defaultValue={agency.website || ""} placeholder="https://novarota.com.br" className="border-gray-200" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Website</label>
+                <Input name="website" defaultValue={agency.website || ""} placeholder="https://novarota.com.br" className="border-gray-200 dark:border-gray-700" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Telefone</label>
-                <Input name="phone" defaultValue={agency.phone || ""} placeholder="(11) 3333-4444" className="border-gray-200" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Telefone</label>
+                <Input name="phone" defaultValue={agency.phone || ""} placeholder="(11) 3333-4444" className="border-gray-200 dark:border-gray-700" />
               </div>
               <div className="col-span-2 flex justify-end">
                 <Button type="submit" size="sm" className="bg-orange-600 hover:bg-orange-700">Salvar</Button>
@@ -128,8 +128,8 @@ export default async function ConfiguracoesPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-orange-600" />
-                  <CardTitle className="text-base font-semibold text-gray-900">Usuários do Sistema</CardTitle>
+                  <Users className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                  <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Usuários do Sistema</CardTitle>
                 </div>
                 <NewUserDialog />
               </div>
@@ -154,7 +154,7 @@ export default async function ConfiguracoesPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <Bell className="h-4 w-4 text-orange-500" />
-              <CardTitle className="text-base font-semibold text-gray-900">Notificações</CardTitle>
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Notificações</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -166,11 +166,11 @@ export default async function ConfiguracoesPage() {
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between py-2">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{item.label}</p>
-                  <p className="text-xs text-gray-500">{item.desc}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.label}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{item.desc}</p>
                 </div>
                 <div className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${item.enabled ? "bg-orange-600" : "bg-gray-200"} cursor-pointer`}>
-                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform mt-0.5 ${item.enabled ? "translate-x-4" : "translate-x-0.5"}`} />
+                  <span className={`inline-block h-4 w-4 rounded-full bg-white dark:bg-gray-900 shadow transform transition-transform mt-0.5 ${item.enabled ? "translate-x-4" : "translate-x-0.5"}`} />
                 </div>
               </div>
             ))}
@@ -181,24 +181,24 @@ export default async function ConfiguracoesPage() {
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-green-600" />
-              <CardTitle className="text-base font-semibold text-gray-900">Segurança</CardTitle>
+              <Shield className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Segurança</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Senha Atual</label>
-                <Input type="password" placeholder="••••••••" className="border-gray-200" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Senha Atual</label>
+                <Input type="password" placeholder="••••••••" className="border-gray-200 dark:border-gray-700" />
               </div>
               <div />
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Nova Senha</label>
-                <Input type="password" placeholder="••••••••" className="border-gray-200" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Nova Senha</label>
+                <Input type="password" placeholder="••••••••" className="border-gray-200 dark:border-gray-700" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Confirmar Senha</label>
-                <Input type="password" placeholder="••••••••" className="border-gray-200" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Confirmar Senha</label>
+                <Input type="password" placeholder="••••••••" className="border-gray-200 dark:border-gray-700" />
               </div>
             </div>
             <div className="flex justify-end">

@@ -115,7 +115,7 @@ export function EditContractDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-gray-500 hover:text-gray-700 h-7">
+        <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 h-7">
           <Pencil className="h-3.5 w-3.5" />
           Editar
         </Button>
@@ -145,17 +145,17 @@ export function EditContractDialog({
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <label className="text-xs text-gray-500 space-y-1">
+            <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
               Início
               <Input name="startDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
             </label>
-            <label className="text-xs text-gray-500 space-y-1">
+            <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
               Fim (opcional)
               <Input name="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </label>
           </div>
-          <div className="border rounded-lg p-3 space-y-3 bg-gray-50">
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Recorrência do recebimento</p>
+          <div className="border rounded-lg p-3 space-y-3 bg-gray-50 dark:bg-gray-900">
+            <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Recorrência do recebimento</p>
             <select
               name="billingFrequency"
               value={billingFrequency}
@@ -168,7 +168,7 @@ export function EditContractDialog({
             </select>
 
             {billingFrequency === "WEEKLY" && (
-              <label className="text-xs text-gray-500 space-y-1 block">
+              <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
                 Dia da semana
                 <select
                   name="billingDayOfWeek"
@@ -189,7 +189,7 @@ export function EditContractDialog({
             )}
 
             {billingFrequency === "MONTHLY" && (
-              <label className="text-xs text-gray-500 space-y-1 block">
+              <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
                 Dia do mês
                 <select
                   name="billingDayOfMonth1"
@@ -211,7 +211,7 @@ export function EditContractDialog({
 
             {billingFrequency === "BIWEEKLY" && (
               <div className="grid grid-cols-2 gap-3">
-                <label className="text-xs text-gray-500 space-y-1 block">
+                <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
                   1º dia do mês
                   <select
                     name="billingDayOfMonth1"
@@ -229,7 +229,7 @@ export function EditContractDialog({
                     ))}
                   </select>
                 </label>
-                <label className="text-xs text-gray-500 space-y-1 block">
+                <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
                   2º dia do mês
                   <select
                     name="billingDayOfMonth2"
@@ -251,11 +251,11 @@ export function EditContractDialog({
             )}
           </div>
 
-          <div className="border rounded-lg p-3 space-y-3 bg-gray-50">
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Serviços contratados</p>
+          <div className="border rounded-lg p-3 space-y-3 bg-gray-50 dark:bg-gray-900">
+            <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Serviços contratados</p>
 
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                 <input
                   type="checkbox"
                   name="includesSocialMedia"
@@ -294,7 +294,7 @@ export function EditContractDialog({
               )}
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
                 name="includesGoogleAds"
@@ -305,7 +305,7 @@ export function EditContractDialog({
             </label>
 
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                 <input
                   type="checkbox"
                   name="includesMenuMgmt"
@@ -317,7 +317,7 @@ export function EditContractDialog({
               {includesMenuMgmt && (
                 <div className="flex flex-wrap gap-3 pl-6">
                   {MENU_PLATFORMS.map((platform) => (
-                    <label key={platform} className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <label key={platform} className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
                       <input
                         type="checkbox"
                         checked={menuPlatforms.includes(platform)}
@@ -336,7 +336,7 @@ export function EditContractDialog({
             <Sparkles className="h-3.5 w-3.5" />
             Gerar Texto do Contrato Novamente
           </Button>
-          <p className="text-[11px] text-gray-400 -mt-1.5">
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 -mt-1.5">
             Isso substitui o texto abaixo pelos dados atuais (cliente, valor, prazo e serviços). Você pode editar livremente depois.
           </p>
 

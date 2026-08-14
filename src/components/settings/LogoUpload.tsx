@@ -50,11 +50,11 @@ export function LogoUpload({
   return (
     <div className="flex items-center gap-4">
       {currentUrl ? (
-        <div className="relative h-16 w-16 rounded-lg border border-gray-200 overflow-hidden bg-white">
+        <div className="relative h-16 w-16 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900">
           <Image src={currentUrl} alt="Logo" fill className="object-contain" unoptimized />
         </div>
       ) : (
-        <div className="h-16 w-16 rounded-lg border border-dashed border-gray-300 flex items-center justify-center text-gray-300">
+        <div className="h-16 w-16 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-300 dark:text-gray-600">
           <Upload className="h-5 w-5" />
         </div>
       )}
@@ -69,7 +69,7 @@ export function LogoUpload({
         >
           {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : label}
         </Button>
-        {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+        {error && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{error}</p>}
       </div>
     </div>
   );

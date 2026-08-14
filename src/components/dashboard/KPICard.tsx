@@ -15,19 +15,19 @@ interface KPICardProps {
 export function KPICard({ title, value, change, changeLabel, trend, icon, iconBg }: KPICardProps) {
   const TrendIcon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
   const trendColor =
-    trend === "up" ? "text-green-600" : trend === "down" ? "text-red-500" : "text-gray-500";
+    trend === "up" ? "text-green-600 dark:text-green-400" : trend === "down" ? "text-red-500 dark:text-red-400" : "text-gray-500 dark:text-gray-400";
   const trendBg =
-    trend === "up" ? "bg-green-50" : trend === "down" ? "bg-red-50" : "bg-gray-100";
+    trend === "up" ? "bg-green-50 dark:bg-green-500/10" : trend === "down" ? "bg-red-50 dark:bg-red-500/10" : "bg-gray-100 dark:bg-gray-800";
 
   return (
     <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{title}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
           </div>
-          <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center", iconBg || "bg-orange-50")}>
+          <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center", iconBg || "bg-orange-50 dark:bg-orange-500/10")}>
             {icon}
           </div>
         </div>
@@ -36,7 +36,7 @@ export function KPICard({ title, value, change, changeLabel, trend, icon, iconBg
             <TrendIcon className="h-3 w-3" />
             <span>{Math.abs(change)}%</span>
           </div>
-          <span className="text-xs text-gray-500">{changeLabel}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">{changeLabel}</span>
         </div>
       </CardContent>
     </Card>

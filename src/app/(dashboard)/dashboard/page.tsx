@@ -144,8 +144,8 @@ export default async function DashboardPage() {
             change={Math.round(revenueChange * 10) / 10}
             changeLabel="vs mês anterior"
             trend={revenueChange >= 0 ? "up" : "down"}
-            icon={<DollarSign className="h-5 w-5 text-orange-600" />}
-            iconBg="bg-orange-50"
+            icon={<DollarSign className="h-5 w-5 text-orange-600 dark:text-orange-400" />}
+            iconBg="bg-orange-50 dark:bg-orange-500/10"
           />
           <KPICard
             title="Custos Operacionais"
@@ -153,8 +153,8 @@ export default async function DashboardPage() {
             change={Math.round(costsChange * 10) / 10}
             changeLabel="vs mês anterior"
             trend={costsChange <= 0 ? "up" : "down"}
-            icon={<Wallet className="h-5 w-5 text-red-500" />}
-            iconBg="bg-red-50"
+            icon={<Wallet className="h-5 w-5 text-red-500 dark:text-red-400" />}
+            iconBg="bg-red-50 dark:bg-red-500/10"
           />
           <KPICard
             title="Lucro do Mês"
@@ -162,8 +162,8 @@ export default async function DashboardPage() {
             change={Math.round(profitChange * 10) / 10}
             changeLabel="vs mês anterior"
             trend={profitThisMonth >= 0 ? "up" : "down"}
-            icon={<TrendingUp className="h-5 w-5 text-emerald-600" />}
-            iconBg="bg-emerald-50"
+            icon={<TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+            iconBg="bg-emerald-50 dark:bg-emerald-500/10"
           />
           <KPICard
             title="Clientes Ativos"
@@ -171,8 +171,8 @@ export default async function DashboardPage() {
             change={newClientsThisMonth}
             changeLabel="novos este mês"
             trend="up"
-            icon={<Users className="h-5 w-5 text-emerald-600" />}
-            iconBg="bg-emerald-50"
+            icon={<Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+            iconBg="bg-emerald-50 dark:bg-emerald-500/10"
           />
           <KPICard
             title="Vendas dos Clientes"
@@ -180,8 +180,8 @@ export default async function DashboardPage() {
             change={Math.round(salesChange * 10) / 10}
             changeLabel="vs mês anterior"
             trend={salesChange >= 0 ? "up" : "down"}
-            icon={<ShoppingCart className="h-5 w-5 text-purple-600" />}
-            iconBg="bg-purple-50"
+            icon={<ShoppingCart className="h-5 w-5 text-purple-600 dark:text-purple-400" />}
+            iconBg="bg-purple-50 dark:bg-purple-500/10"
           />
           <KPICard
             title="A Receber"
@@ -189,8 +189,8 @@ export default async function DashboardPage() {
             change={overdueCount}
             changeLabel="fatura(s) atrasada(s)"
             trend={overdueCount > 0 ? "down" : "up"}
-            icon={<AlertCircle className="h-5 w-5 text-red-500" />}
-            iconBg="bg-red-50"
+            icon={<AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400" />}
+            iconBg="bg-red-50 dark:bg-red-500/10"
           />
         </div>
 
@@ -202,28 +202,28 @@ export default async function DashboardPage() {
           {/* Quick Stats */}
           <Card className="border-0 shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900">Resumo Rápido</CardTitle>
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Resumo Rápido</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-orange-50">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-orange-50 dark:bg-orange-500/10">
                 <ImageIcon className="h-5 w-5 text-orange-500 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{postsThisMonth} post(s) publicados</p>
-                  <p className="text-xs text-gray-500">Este mês</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{postsThisMonth} post(s) publicados</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Este mês</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-500/10">
                 <Clock className="h-5 w-5 text-blue-500 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{upcomingBilling} cobrança(s) nos próximos 7 dias</p>
-                  <p className="text-xs text-gray-500">Requer atenção</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{upcomingBilling} cobrança(s) nos próximos 7 dias</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Requer atenção</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50">
-                <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-500/10">
+                <AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{overdueCount} fatura(s) vencida(s)</p>
-                  <p className="text-xs text-gray-500">Total: {formatCurrency(overdueTotal)}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{overdueCount} fatura(s) vencida(s)</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Total: {formatCurrency(overdueTotal)}</p>
                 </div>
               </div>
             </CardContent>
@@ -236,13 +236,13 @@ export default async function DashboardPage() {
           <Card className="border-0 shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold text-gray-900">Contratos Recentes</CardTitle>
-                <Link href="/contratos" className="text-xs text-orange-600 hover:underline">Ver todos</Link>
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Contratos Recentes</CardTitle>
+                <Link href="/contratos" className="text-xs text-orange-600 dark:text-orange-400 hover:underline">Ver todos</Link>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
               {recentContracts.length === 0 ? (
-                <p className="text-sm text-gray-400">Nenhum contrato cadastrado ainda.</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum contrato cadastrado ainda.</p>
               ) : (
                 recentContracts.map((contract) => {
                   const status = contractStatusMap[contract.status];
@@ -250,11 +250,11 @@ export default async function DashboardPage() {
                     <Link
                       key={contract.id}
                       href={`/contratos/${contract.id}`}
-                      className="flex items-center justify-between py-2 border-b last:border-0 hover:bg-gray-50 -mx-2 px-2 rounded"
+                      className="flex items-center justify-between py-2 border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800 -mx-2 px-2 rounded"
                     >
                       <div className="flex-1 min-w-0 pr-3">
-                        <p className="text-sm font-medium text-gray-900 truncate">{contract.title}</p>
-                        <p className="text-xs text-gray-500">{contract.client.company || contract.client.name}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{contract.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{contract.client.company || contract.client.name}</p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <Badge variant={status.variant}>{status.label}</Badge>
@@ -270,14 +270,14 @@ export default async function DashboardPage() {
           <Card className="border-0 shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold text-gray-900">Últimas Faturas</CardTitle>
-                <Link href="/financeiro" className="text-xs text-orange-600 hover:underline">Ver todas</Link>
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Últimas Faturas</CardTitle>
+                <Link href="/financeiro" className="text-xs text-orange-600 dark:text-orange-400 hover:underline">Ver todas</Link>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
               {recentInvoices.length === 0 ? (
-                <p className="text-sm text-gray-400 flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-gray-300" />
+                <p className="text-sm text-gray-400 dark:text-gray-500 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-gray-300 dark:text-gray-600" />
                   Nenhuma fatura registrada ainda.
                 </p>
               ) : (
@@ -286,11 +286,11 @@ export default async function DashboardPage() {
                   return (
                     <div key={invoice.id} className="flex items-center justify-between py-2 border-b last:border-0">
                       <div className="flex-1 min-w-0 pr-3">
-                        <p className="text-sm font-medium text-gray-900">{invoice.number}</p>
-                        <p className="text-xs text-gray-500">{invoice.client.company || invoice.client.name} · Vence {formatDate(invoice.dueDate)}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{invoice.number}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{invoice.client.company || invoice.client.name} · Vence {formatDate(invoice.dueDate)}</p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-sm font-semibold text-gray-900">{formatCurrency(invoice.total)}</span>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.total)}</span>
                         <Badge variant={status.variant}>{status.label}</Badge>
                       </div>
                     </div>

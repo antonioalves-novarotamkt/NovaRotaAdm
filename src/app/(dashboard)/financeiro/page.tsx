@@ -107,7 +107,7 @@ export default async function FinanceiroPage() {
       <Header title="Financeiro" subtitle="Gerencie faturamento, cobranças e relatórios financeiros" />
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-400 dark:text-gray-500">
             Lembretes automáticos são enviados 1x/dia: aviso de vencimento próximo e cobrança de faturas em atraso.
           </p>
           <SendRemindersButton />
@@ -118,52 +118,52 @@ export default async function FinanceiroPage() {
           <Card className="border-0 shadow-sm">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-gray-500">Faturamento Total</p>
-                <div className="h-8 w-8 rounded-lg bg-green-50 flex items-center justify-center">
-                  <DollarSign className="h-4 w-4 text-green-600" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">Faturamento Total</p>
+                <div className="h-8 w-8 rounded-lg bg-green-50 dark:bg-green-500/10 flex items-center justify-center">
+                  <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(total)}</p>
-              <p className="text-xs text-gray-400 mt-1">{invoices.length} recebimento(s)</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(total)}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{invoices.length} recebimento(s)</p>
             </CardContent>
           </Card>
 
           <Card className="border-0 shadow-sm">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-gray-500">Recebido</p>
-                <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center">
-                  <TrendingUp className="h-4 w-4 text-orange-600" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">Recebido</p>
+                <div className="h-8 w-8 rounded-lg bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-green-600">{formatCurrency(paid)}</p>
-              <p className="text-xs text-gray-400 mt-1">{invoices.filter((i) => i.status === "PAID").length} recebido(s)</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(paid)}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{invoices.filter((i) => i.status === "PAID").length} recebido(s)</p>
             </CardContent>
           </Card>
 
           <Card className="border-0 shadow-sm">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-gray-500">A Receber</p>
-                <div className="h-8 w-8 rounded-lg bg-yellow-50 flex items-center justify-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400">A Receber</p>
+                <div className="h-8 w-8 rounded-lg bg-yellow-50 dark:bg-yellow-500/10 flex items-center justify-center">
                   <TrendingDown className="h-4 w-4 text-yellow-500" />
                 </div>
               </div>
               <p className="text-2xl font-bold text-yellow-600">{formatCurrency(pending)}</p>
-              <p className="text-xs text-gray-400 mt-1">{invoices.filter((i) => i.status === "PENDING").length} programado(s)</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{invoices.filter((i) => i.status === "PENDING").length} programado(s)</p>
             </CardContent>
           </Card>
 
           <Card className="border-0 shadow-sm">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-gray-500">Em Atraso</p>
-                <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">Em Atraso</p>
+                <div className="h-8 w-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center">
+                  <AlertCircle className="h-4 w-4 text-red-500 dark:text-red-400" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-red-500">{formatCurrency(overdue)}</p>
-              <p className="text-xs text-gray-400 mt-1">{invoices.filter((i) => i.status === "OVERDUE").length} atrasado(s)</p>
+              <p className="text-2xl font-bold text-red-500 dark:text-red-400">{formatCurrency(overdue)}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{invoices.filter((i) => i.status === "OVERDUE").length} atrasado(s)</p>
             </CardContent>
           </Card>
         </div>
@@ -171,8 +171,8 @@ export default async function FinanceiroPage() {
         {/* Chart */}
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-gray-900">Receita: Histórico e Previsão</CardTitle>
-            <p className="text-xs text-gray-500">
+            <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Receita: Histórico e Previsão</CardTitle>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {MONTHS_BACK} meses atrás até {MONTHS_AHEAD} meses à frente — recebido (real) e previsto (com base na recorrência de cada cliente ativo)
             </p>
           </CardHeader>
@@ -185,25 +185,25 @@ export default async function FinanceiroPage() {
         {scheduledClients.length > 0 && (
           <Card className="border-0 shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900">Recebimentos Programados</CardTitle>
-              <p className="text-xs text-gray-500">Previsão com base na frequência configurada em cada cliente</p>
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Recebimentos Programados</CardTitle>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Previsão com base na frequência configurada em cada cliente</p>
             </CardHeader>
             <CardContent className="space-y-2">
               {scheduledClients.map((client) => {
                 const overdue = client.nextBillingDate && client.nextBillingDate < new Date();
                 return (
-                  <div key={client.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100">
+                  <div key={client.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
                     <div>
-                      <Link href={`/clientes/${client.id}`} className="text-sm font-medium text-gray-900 hover:text-orange-600">
+                      <Link href={`/clientes/${client.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-orange-600">
                         {client.company || client.name}
                       </Link>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {frequencyLabel[client.billingFrequency]} · vence {client.nextBillingDate && formatDate(client.nextBillingDate)}
-                        {overdue && <span className="text-red-500 font-medium"> · atrasado</span>}
+                        {overdue && <span className="text-red-500 dark:text-red-400 font-medium"> · atrasado</span>}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-gray-900">
+                      <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
                         {client.contractValue ? formatCurrency(client.contractValue) : "—"}
                       </span>
                       <RegisterPaymentButton clientId={client.id} />
@@ -220,23 +220,23 @@ export default async function FinanceiroPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-semibold text-gray-900">Outros Recebimentos</CardTitle>
-                <p className="text-xs text-gray-500">Custos extras do cliente lançados na mão, com a data em que o valor foi recebido</p>
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Outros Recebimentos</CardTitle>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Custos extras do cliente lançados na mão, com a data em que o valor foi recebido</p>
               </div>
               <NewExtraChargeDialog clients={clients} />
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
             {extraCharges.length === 0 ? (
-              <p className="text-sm text-gray-400">Nenhum recebimento extra lançado ainda.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum recebimento extra lançado ainda.</p>
             ) : (
               extraCharges.map((invoice) => (
-                <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100">
+                <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
                   <div>
-                    <Link href={`/clientes/${invoice.client.id}`} className="text-sm font-medium text-gray-900 hover:text-orange-600">
+                    <Link href={`/clientes/${invoice.client.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-orange-600">
                       {invoice.client.company || invoice.client.name}
                     </Link>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {invoice.description}
                       {" · "}
                       {invoice.status === "PAID" && invoice.paidAt
@@ -245,7 +245,7 @@ export default async function FinanceiroPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-gray-900">{formatCurrency(invoice.total)}</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.total)}</span>
                     {invoice.status !== "PAID" && <MarkExtraChargePaidButton id={invoice.id} />}
                     {invoice.status === "PAID" && invoice.paidAt && (
                       <>
@@ -269,27 +269,27 @@ export default async function FinanceiroPage() {
         {/* Payment history — correct the date of anything already given baixa */}
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">Histórico de Recebimentos</CardTitle>
-            <p className="text-xs text-gray-500">Últimos recebimentos confirmados — corrija a data se precisar</p>
+            <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Histórico de Recebimentos</CardTitle>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Últimos recebimentos confirmados — corrija a data se precisar</p>
           </CardHeader>
           <CardContent className="space-y-2">
             {recentlyPaid.length === 0 ? (
-              <p className="text-sm text-gray-400">Nenhum recebimento confirmado ainda.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum recebimento confirmado ainda.</p>
             ) : (
               recentlyPaid.map((invoice) => (
-                <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100">
+                <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
                   <div>
-                    <Link href={`/clientes/${invoice.client.id}`} className="text-sm font-medium text-gray-900 hover:text-orange-600">
+                    <Link href={`/clientes/${invoice.client.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-orange-600">
                       {invoice.client.company || invoice.client.name}
                     </Link>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {invoice.description || "Recebimento"}
                       {" · recebido em "}
                       {formatDate(invoice.paidAt as Date)}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-gray-900">{formatCurrency(invoice.total)}</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.total)}</span>
                     <EditPaidDateButton id={invoice.id} currentDate={(invoice.paidAt as Date).toISOString().slice(0, 10)} />
                     <Link href={`/recibo/${invoice.id}`}>
                       <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs">

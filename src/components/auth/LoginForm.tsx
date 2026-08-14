@@ -50,11 +50,11 @@ function LoginFormInner({ logoUrl }: { logoUrl?: string | null }) {
       <CardContent className="p-8">
         <div className="flex flex-col items-center gap-2 mb-6">
           <BrandLogo logoUrl={logoUrl} size={140} />
-          <p className="text-xs text-gray-500">Entre para gerenciar sua agência</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Entre para gerenciar sua agência</p>
         </div>
 
         {resetSuccess && (
-          <p className="mb-3 text-xs text-green-600 bg-green-50 rounded-md px-3 py-2 text-center">
+          <p className="mb-3 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 rounded-md px-3 py-2 text-center">
             Senha redefinida com sucesso. Entre com sua nova senha.
           </p>
         )}
@@ -74,7 +74,7 @@ function LoginFormInner({ logoUrl }: { logoUrl?: string | null }) {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          {error && <p className="text-xs text-red-500">{error}</p>}
+          {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
           <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar"}
           </Button>
@@ -82,7 +82,7 @@ function LoginFormInner({ logoUrl }: { logoUrl?: string | null }) {
 
         <Link
           href="/esqueci-senha"
-          className="mt-4 block text-center text-xs text-gray-500 hover:text-gray-700"
+          className="mt-4 block text-center text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
         >
           Esqueci minha senha
         </Link>

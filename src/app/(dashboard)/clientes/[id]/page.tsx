@@ -80,7 +80,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <Link href="/clientes">
-            <Button variant="ghost" size="sm" className="gap-2 text-gray-600">
+            <Button variant="ghost" size="sm" className="gap-2 text-gray-600 dark:text-gray-300">
               <ArrowLeft className="h-4 w-4" />
               Voltar para Clientes
             </Button>
@@ -97,7 +97,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                     <img
                       src={client.logoUrl}
                       alt={client.name}
-                      className="h-16 w-16 rounded-2xl object-contain bg-white border border-gray-100"
+                      className="h-16 w-16 rounded-2xl object-contain bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800"
                     />
                   ) : (
                     <div className="h-16 w-16 rounded-2xl bg-orange-500 flex items-center justify-center text-white text-xl font-bold">
@@ -106,7 +106,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                   )}
                   <div className="flex-1 flex items-start justify-between gap-2">
                     <div>
-                      <h2 className="text-lg font-bold text-gray-900">{client.name}</h2>
+                      <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{client.name}</h2>
                       <Badge variant={status.variant}>{status.label}</Badge>
                     </div>
                     <EditClientDialog client={client} />
@@ -118,38 +118,38 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                 </div>
                 <div className="space-y-3">
                   {client.company && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Building2 className="h-4 w-4 text-gray-400" />
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                      <Building2 className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                       {client.company}
                     </div>
                   )}
-                  <a href={`mailto:${client.email}`} className="flex items-center gap-2 text-sm text-orange-600 hover:underline">
-                    <Mail className="h-4 w-4 text-gray-400" />
+                  <a href={`mailto:${client.email}`} className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400 hover:underline">
+                    <Mail className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                     {client.email}
                   </a>
                   {client.phone && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Phone className="h-4 w-4 text-gray-400" />
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                      <Phone className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                       {client.phone}
                     </div>
                   )}
                   {client.website && (
-                    <a href={client.website} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-orange-600 hover:underline">
-                      <Globe className="h-4 w-4 text-gray-400" />
+                    <a href={client.website} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400 hover:underline">
+                      <Globe className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                       {client.website}
                     </a>
                   )}
                   {(client.address || client.city) && (
-                    <div className="flex items-start gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
+                    <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                      <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5" />
                       <span>
                         {client.address && <>{client.address}<br /></>}
                         {client.city}, {client.state} – {client.country}
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Calendar className="h-4 w-4 text-gray-400" />
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                     Cliente desde {formatDate(client.clientSince || client.createdAt)}
                   </div>
                 </div>
@@ -159,12 +159,12 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             {(client.includesSocialMedia || client.includesGoogleAds || client.includesMenuMgmt || client.includesWebsiteCreation) && (
               <Card className="border-0 shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                     <Package className="h-4 w-4 text-purple-500" />
                     Produtos Contratados
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2 text-sm text-gray-600">
+                <CardContent className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
                   {client.includesSocialMedia && (
                     <p>
                       Social Media
@@ -188,7 +188,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
 
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-green-500" />
                   Recebimento
                 </CardTitle>
@@ -209,10 +209,10 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             {client.notes && (
               <Card className="border-0 shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold text-gray-700">Observações</CardTitle>
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">Observações</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-600 leading-relaxed">{client.notes}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{client.notes}</p>
                 </CardContent>
               </Card>
             )}
@@ -223,12 +223,12 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                    <Users2 className="h-4 w-4 text-gray-400" />
+                  <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <Users2 className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                     Redes Sociais ({client.socialAccounts.length})
                   </CardTitle>
                   <div className="flex items-center gap-2">
-                    <Link href={`/analises?cliente=${client.id}`} className="text-xs text-orange-600 hover:underline">
+                    <Link href={`/analises?cliente=${client.id}`} className="text-xs text-orange-600 dark:text-orange-400 hover:underline">
                       Ver Análises
                     </Link>
                     <NewSocialAccountDialog clientId={client.id} />
@@ -237,27 +237,27 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
               </CardHeader>
               <CardContent className="space-y-3">
                 {client.socialAccounts.length === 0 && (
-                  <p className="text-sm text-gray-400">Nenhuma rede social cadastrada.</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma rede social cadastrada.</p>
                 )}
                 {client.socialAccounts.map((account) => {
                   const latest = account.metrics[0];
                   return (
-                    <div key={account.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors">
+                    <div key={account.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-gray-200 transition-colors">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {platformLabel[account.platform] || account.platform} · {account.handle}
                         </p>
                         {latest ? (
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
                             {formatDate(latest.month, { month: "long", year: "numeric", day: undefined })} · {latest.followers.toLocaleString("pt-BR")} seguidores
                             {latest.engagementRate != null && ` · ${latest.engagementRate}% engajamento`}
                           </p>
                         ) : (
-                          <p className="text-xs text-gray-400">Nenhuma métrica registrada ainda</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Nenhuma métrica registrada ainda</p>
                         )}
                       </div>
                       {latest && (
-                        <span className="text-sm font-bold text-gray-900">{latest.followers.toLocaleString("pt-BR")}</span>
+                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{latest.followers.toLocaleString("pt-BR")}</span>
                       )}
                     </div>
                   );
@@ -269,11 +269,11 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
               <Card className="border-0 shadow-sm">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                      <LineChart className="h-4 w-4 text-gray-400" />
+                    <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                      <LineChart className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                       Site
                     </CardTitle>
-                    <Link href={`/analises?cliente=${client.id}`} className="text-xs text-orange-600 hover:underline">
+                    <Link href={`/analises?cliente=${client.id}`} className="text-xs text-orange-600 dark:text-orange-400 hover:underline">
                       Ver Análises
                     </Link>
                   </div>
@@ -282,11 +282,11 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                   {(() => {
                     const latest = client.websiteMetrics[0];
                     return (
-                      <div className="flex items-center justify-between p-3 rounded-lg border border-gray-100">
-                        <span className="text-xs text-gray-500">
+                      <div className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {formatDate(latest.month, { month: "long", year: "numeric", day: undefined })}
                         </span>
-                        <p className="text-sm text-gray-700">
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
                           {latest.pageViews != null && `${latest.pageViews.toLocaleString("pt-BR")} visualizações`}
                           {latest.totalUsers != null && ` · ${latest.totalUsers.toLocaleString("pt-BR")} usuários`}
                           {latest.newUsers != null && ` · ${latest.newUsers.toLocaleString("pt-BR")} novos usuários`}
@@ -301,12 +301,12 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                    <ClipboardList className="h-4 w-4 text-gray-400" />
+                  <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <ClipboardList className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                     Atividades ({client.activities.length})
                   </CardTitle>
                   <div className="flex items-center gap-2">
-                    <Link href={`/atividades?cliente=${client.id}`} className="text-xs text-orange-600 hover:underline">
+                    <Link href={`/atividades?cliente=${client.id}`} className="text-xs text-orange-600 dark:text-orange-400 hover:underline">
                       Ver todas
                     </Link>
                     <NewActivityDialog clientId={client.id} />
@@ -315,12 +315,12 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
               </CardHeader>
               <CardContent className="space-y-3">
                 {client.activities.length === 0 && (
-                  <p className="text-sm text-gray-400">Nenhuma atividade registrada ainda.</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma atividade registrada ainda.</p>
                 )}
                 {client.activities.slice(0, 5).map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-100">
-                    <span className="text-xs text-gray-400 whitespace-nowrap pt-0.5">{formatDate(activity.date)}</span>
-                    <p className="text-sm text-gray-700 flex-1">{activity.description}</p>
+                  <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-100 dark:border-gray-800">
+                    <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap pt-0.5">{formatDate(activity.date)}</span>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 flex-1">{activity.description}</p>
                   </div>
                 ))}
               </CardContent>
@@ -330,15 +330,15 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
               <Link href={`/projetos?cliente=${client.id}`} className="block">
                 <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full">
                   <CardContent className="p-4 flex items-center gap-3">
-                    <ImageIcon className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-700">Ver posts do mês</span>
+                    <ImageIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Ver posts do mês</span>
                   </CardContent>
                 </Card>
               </Link>
               <Link href={`/clientes/${client.id}/relatorio`} className="block">
-                <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full bg-orange-50">
+                <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full bg-orange-50 dark:bg-orange-500/10">
                   <CardContent className="p-4 flex items-center gap-3">
-                    <FileText className="h-4 w-4 text-orange-600" />
+                    <FileText className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                     <span className="text-sm font-medium text-orange-700">Gerar Relatório Mensal</span>
                   </CardContent>
                 </Card>
@@ -347,30 +347,30 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
 
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-gray-900">
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
                   Contratos ({client.contracts.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {client.contracts.length === 0 && (
-                  <p className="text-sm text-gray-400">Nenhum contrato cadastrado.</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum contrato cadastrado.</p>
                 )}
                 {client.contracts.map((contract) => {
                   const cStatus = contractStatusMap[contract.status];
                   return (
-                    <div key={contract.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors">
+                    <div key={contract.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-gray-200 transition-colors">
                       <div className="flex items-center gap-3">
-                        <FileText className="h-4 w-4 text-gray-400" />
+                        <FileText className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{contract.title}</p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{contract.title}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
                             Início: {formatDate(contract.startDate)}
                             {contract.endDate && ` · Fim: ${formatDate(contract.endDate)}`}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-900">{formatCurrency(contract.value)}</span>
+                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(contract.value)}</span>
                         <Badge variant={cStatus.variant}>{cStatus.label}</Badge>
                       </div>
                     </div>
@@ -381,21 +381,21 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
 
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-gray-900">
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
                   Projetos ({client.projects.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {client.projects.length === 0 && (
-                  <p className="text-sm text-gray-400">Nenhum projeto cadastrado.</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum projeto cadastrado.</p>
                 )}
                 {client.projects.map((project) => {
                   const pStatus = projectStatusMap[project.status];
                   return (
-                    <div key={project.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors">
+                    <div key={project.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-gray-200 transition-colors">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{project.name}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{project.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {project.endDate ? `Prazo: ${formatDate(project.endDate)}` : "Sem prazo definido"}
                           {project.budget != null && ` · ${formatCurrency(project.budget)}`}
                         </p>
@@ -409,31 +409,31 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
 
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-gray-900">
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
                   Faturas ({client.invoices.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {client.invoices.length === 0 && (
-                  <p className="text-sm text-gray-400">Nenhuma fatura cadastrada.</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma fatura cadastrada.</p>
                 )}
                 {client.invoices.map((invoice) => {
                   const iStatus = invoiceStatusMap[invoice.status];
                   return (
-                    <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors">
+                    <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-gray-200 transition-colors">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{invoice.number}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{invoice.number}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           Vence: {formatDate(invoice.dueDate)}
                           {invoice.paidAt && ` · Pago em ${formatDate(invoice.paidAt)}`}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-900">{formatCurrency(invoice.total)}</span>
+                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.total)}</span>
                         <Badge variant={iStatus.variant}>{iStatus.label}</Badge>
                         {invoice.status === "PAID" && (
                           <Link href={`/recibo/${invoice.id}`}>
-                            <Button variant="ghost" size="sm" className="text-xs text-orange-600 hover:text-orange-700 h-7">
+                            <Button variant="ghost" size="sm" className="text-xs text-orange-600 dark:text-orange-400 hover:text-orange-700 h-7">
                               Recibo
                             </Button>
                           </Link>

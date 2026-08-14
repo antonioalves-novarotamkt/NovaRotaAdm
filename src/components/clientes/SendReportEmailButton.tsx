@@ -24,7 +24,7 @@ export function SendReportEmailButton({ clientId, month }: { clientId: string; m
 
   return (
     <div className="flex items-center gap-2">
-      {result && <span className="text-xs text-gray-500">{result}</span>}
+      {result && <span className="text-xs text-gray-500 dark:text-gray-400">{result}</span>}
       <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={handleClick} disabled={loading}>
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
         Enviar por Email

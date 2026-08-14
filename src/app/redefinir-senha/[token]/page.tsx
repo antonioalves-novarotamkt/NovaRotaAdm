@@ -36,12 +36,12 @@ export default async function RedefinirSenhaPage({
             <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-orange-500">
               <Zap className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-lg font-bold text-gray-900">Redefinir senha</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">Redefinir senha</h1>
           </div>
 
           {!isValid ? (
             <div className="text-center space-y-4">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Esse link é inválido ou expirou. Solicite um novo link de redefinição.
               </p>
               <Link href="/esqueci-senha">
@@ -52,14 +52,14 @@ export default async function RedefinirSenhaPage({
             <form action={resetPassword} className="space-y-3">
               <input type="hidden" name="token" value={params.token} />
               <div className="relative">
-                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                 <Input type="password" name="password" placeholder="Nova senha" className="pl-9" required minLength={6} />
               </div>
               <div className="relative">
-                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                 <Input type="password" name="confirmPassword" placeholder="Confirmar nova senha" className="pl-9" required minLength={6} />
               </div>
-              {errorMessage && <p className="text-xs text-red-500">{errorMessage}</p>}
+              {errorMessage && <p className="text-xs text-red-500 dark:text-red-400">{errorMessage}</p>}
               <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
                 Redefinir senha
               </Button>

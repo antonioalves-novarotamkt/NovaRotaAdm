@@ -100,7 +100,7 @@ export function EditClientDialog({ client }: { client: ClientData }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input name="contractValue" type="number" step="0.01" placeholder="Valor contrato (R$)" defaultValue={client.contractValue ?? ""} />
-            <label className="text-xs text-gray-500 space-y-1">
+            <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
               Cliente desde
               <Input name="clientSince" type="date" defaultValue={clientSinceValue} />
             </label>
@@ -113,11 +113,11 @@ export function EditClientDialog({ client }: { client: ClientData }) {
             className={inputClass + " resize-none"}
           />
 
-          <div className="border rounded-lg p-3 space-y-3 bg-gray-50">
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Produtos Contratados</p>
+          <div className="border rounded-lg p-3 space-y-3 bg-gray-50 dark:bg-gray-900">
+            <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">Produtos Contratados</p>
 
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                 <input
                   type="checkbox"
                   name="includesSocialMedia"
@@ -160,7 +160,7 @@ export function EditClientDialog({ client }: { client: ClientData }) {
               )}
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
                 name="includesGoogleAds"
@@ -171,7 +171,7 @@ export function EditClientDialog({ client }: { client: ClientData }) {
             </label>
 
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                 <input
                   type="checkbox"
                   name="includesMenuMgmt"
@@ -183,7 +183,7 @@ export function EditClientDialog({ client }: { client: ClientData }) {
               {includesMenuMgmt && (
                 <div className="flex flex-wrap gap-3 pl-6">
                   {MENU_PLATFORMS.map((platform) => (
-                    <label key={platform} className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <label key={platform} className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
                       <input
                         type="checkbox"
                         checked={menuPlatforms.includes(platform)}
@@ -197,7 +197,7 @@ export function EditClientDialog({ client }: { client: ClientData }) {
               )}
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
                 name="includesWebsiteCreation"

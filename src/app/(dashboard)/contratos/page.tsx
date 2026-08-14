@@ -50,26 +50,26 @@ export default async function ContratosPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
-              <p className="text-xs text-gray-500 mb-1">Total de Contratos</p>
-              <p className="text-xl font-bold text-orange-600">{contracts.length}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total de Contratos</p>
+              <p className="text-xl font-bold text-orange-600 dark:text-orange-400">{contracts.length}</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
-              <p className="text-xs text-gray-500 mb-1">Ativos</p>
-              <p className="text-xl font-bold text-green-600">{activeCount}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Ativos</p>
+              <p className="text-xl font-bold text-green-600 dark:text-green-400">{activeCount}</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
-              <p className="text-xs text-gray-500 mb-1">Valor Total Ativo</p>
-              <p className="text-xl font-bold text-purple-600">{formatCurrency(totalValue)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Valor Total Ativo</p>
+              <p className="text-xl font-bold text-purple-600 dark:text-purple-400">{formatCurrency(totalValue)}</p>
             </CardContent>
           </Card>
         </div>
 
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {clients.length === 0
               ? "Cadastre um cliente antes de criar um contrato."
               : `${contracts.length} contrato(s) cadastrado(s)`}
@@ -79,7 +79,7 @@ export default async function ContratosPage() {
 
         {contracts.length === 0 ? (
           <Card className="border-0 shadow-sm">
-            <CardContent className="p-10 text-center text-sm text-gray-500">
+            <CardContent className="p-10 text-center text-sm text-gray-500 dark:text-gray-400">
               Nenhum contrato cadastrado ainda.
             </CardContent>
           </Card>
@@ -91,12 +91,12 @@ export default async function ContratosPage() {
                 <Card key={contract.id} className="border-0 shadow-sm">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-orange-50 flex items-center justify-center">
-                        <FileText className="h-5 w-5 text-orange-600" />
+                      <div className="h-10 w-10 rounded-lg bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">{contract.title}</p>
-                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{contract.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                           <Building2 className="h-3 w-3" />
                           {contract.client.company || contract.client.name}
                         </p>
@@ -104,13 +104,13 @@ export default async function ContratosPage() {
                     </div>
                     <div className="flex items-center gap-6">
                       <div className="text-right">
-                        <p className="text-xs text-gray-400">Início</p>
-                        <p className="text-sm text-gray-700">{formatDate(contract.startDate)}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Início</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">{formatDate(contract.startDate)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-400">Valor</p>
-                        <p className="text-sm font-bold text-gray-900">{formatCurrency(contract.value)}</p>
-                        <p className="text-[11px] text-gray-400">{frequencyLabel[contract.billingFrequency]}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Valor</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(contract.value)}</p>
+                        <p className="text-[11px] text-gray-400 dark:text-gray-500">{frequencyLabel[contract.billingFrequency]}</p>
                       </div>
                       <Badge variant={status.variant}>{status.label}</Badge>
                       <EditContractDialog
@@ -120,7 +120,7 @@ export default async function ContratosPage() {
                       />
                       {contract.content && (
                         <Link href={`/contratos/${contract.id}`}>
-                          <Button variant="ghost" size="sm" className="text-xs text-orange-600 hover:text-orange-700 h-7">
+                          <Button variant="ghost" size="sm" className="text-xs text-orange-600 dark:text-orange-400 hover:text-orange-700 h-7">
                             Ver
                           </Button>
                         </Link>

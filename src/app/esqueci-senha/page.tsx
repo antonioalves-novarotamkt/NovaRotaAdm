@@ -14,8 +14,8 @@ export default function EsqueciSenhaPage() {
             <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-orange-500">
               <Zap className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-lg font-bold text-gray-900">Esqueceu sua senha?</h1>
-            <p className="text-xs text-gray-500 text-center">
+            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">Esqueceu sua senha?</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
               Digite seu email e enviaremos um link para redefinir sua senha.
             </p>
           </div>
@@ -29,7 +29,7 @@ export default function EsqueciSenhaPage() {
 
           <Link
             href="/login"
-            className="mt-4 flex items-center justify-center gap-1.5 text-xs text-gray-500 hover:text-gray-700"
+            className="mt-4 flex items-center justify-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Voltar para o login

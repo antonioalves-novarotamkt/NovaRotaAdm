@@ -43,46 +43,46 @@ export default async function FunilPage() {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs text-gray-500">Leads Ativos</p>
-                  <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center">
-                    <Users className="h-4 w-4 text-orange-600" />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Leads Ativos</p>
+                  <div className="h-8 w-8 rounded-lg bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center">
+                    <Users className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
-                <p className="text-xl font-bold text-gray-900">{openLeads.length}</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{openLeads.length}</p>
               </CardContent>
             </Card>
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs text-gray-500">Valor em Negociação</p>
-                  <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                    <TrendingUp className="h-4 w-4 text-emerald-600" />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Valor em Negociação</p>
+                  <div className="h-8 w-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
+                    <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
                 </div>
-                <p className="text-xl font-bold text-gray-900">{formatCurrency(pipelineValue)}</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(pipelineValue)}</p>
               </CardContent>
             </Card>
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs text-gray-500">Taxa de Conversão</p>
-                  <div className="h-8 w-8 rounded-lg bg-purple-50 flex items-center justify-center">
-                    <Percent className="h-4 w-4 text-purple-600" />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Taxa de Conversão</p>
+                  <div className="h-8 w-8 rounded-lg bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center">
+                    <Percent className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   </div>
                 </div>
-                <p className="text-xl font-bold text-gray-900">{conversionRate.toFixed(0)}%</p>
-                <p className="text-xs text-gray-400 mt-0.5">{won} de {decided.length} decididos</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{conversionRate.toFixed(0)}%</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{won} de {decided.length} decididos</p>
               </CardContent>
             </Card>
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs text-gray-500">Total de Leads</p>
-                  <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                    <Target className="h-4 w-4 text-blue-600" />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Total de Leads</p>
+                  <div className="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
+                    <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
-                <p className="text-xl font-bold text-gray-900">{leads.length}</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{leads.length}</p>
               </CardContent>
             </Card>
           </div>
@@ -97,15 +97,15 @@ export default async function FunilPage() {
             return (
               <div key={stage.key} className="space-y-3">
                 <div className="flex items-center justify-between px-1">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{stage.label}</p>
-                  <span className="text-xs text-gray-400">{stageLeads.length}</span>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{stage.label}</p>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{stageLeads.length}</span>
                 </div>
                 {stageValue > 0 && (
-                  <p className="text-xs text-gray-400 px-1 -mt-2">{formatCurrency(stageValue)}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 px-1 -mt-2">{formatCurrency(stageValue)}</p>
                 )}
                 <div className="space-y-2 min-h-[60px]">
                   {stageLeads.length === 0 ? (
-                    <p className="text-xs text-gray-300 px-1">Nenhum lead</p>
+                    <p className="text-xs text-gray-300 dark:text-gray-600 px-1">Nenhum lead</p>
                   ) : (
                     stageLeads.map((lead) => <LeadCard key={lead.id} lead={lead} />)
                   )}

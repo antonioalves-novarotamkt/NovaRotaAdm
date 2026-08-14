@@ -112,7 +112,7 @@ export function UploadPostForm({ clients, defaultClientId }: { clients: ClientOp
           <Input name="postDate" type="date" defaultValue={today} placeholder="Data do post" />
           <input ref={fileInputRef} type="file" name="file" accept="image/*" required className="text-sm" />
           <Input name="caption" placeholder="Legenda / descrição (opcional)" />
-          {error && <p className="text-xs text-red-500">{error}</p>}
+          {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
           <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700" disabled={uploading}>
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar"}
           </Button>

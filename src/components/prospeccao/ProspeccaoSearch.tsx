@@ -58,13 +58,13 @@ export function ProspeccaoSearch() {
       </Card>
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">{error}</p>
+        <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-100 rounded-lg px-4 py-3">{error}</p>
       )}
 
       {results && (
         <>
-          <p className="text-sm text-gray-600">
-            {results.length} empresa(s) encontrada(s) · <strong className="text-orange-600">{imported} nova(s) adicionada(s) como Lead</strong> no{" "}
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            {results.length} empresa(s) encontrada(s) · <strong className="text-orange-600 dark:text-orange-400">{imported} nova(s) adicionada(s) como Lead</strong> no{" "}
             <Link href="/funil" className="underline hover:text-orange-600">
               Funil de Vendas
             </Link>
@@ -72,47 +72,47 @@ export function ProspeccaoSearch() {
           </p>
 
           {results.length === 0 ? (
-            <p className="text-sm text-gray-400 py-10 text-center">Nenhuma empresa encontrada para essa busca.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 py-10 text-center">Nenhuma empresa encontrada para essa busca.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {results.map((r) => (
                 <Card key={r.id} className="border-0 shadow-sm">
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-semibold text-gray-900">{r.name}</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{r.name}</p>
                       {r.alreadyLead ? (
                         <span title="Já era um lead" className="shrink-0">
-                          <CheckCircle2 className="h-4 w-4 text-gray-300" />
+                          <CheckCircle2 className="h-4 w-4 text-gray-300 dark:text-gray-600" />
                         </span>
                       ) : (
                         <span title="Adicionado como novo lead" className="shrink-0">
-                          <CheckCircle2 className="h-4 w-4 text-orange-600" />
+                          <CheckCircle2 className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                         </span>
                       )}
                     </div>
                     {!r.website && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 rounded-full px-2 py-0.5">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 dark:bg-amber-500/10 rounded-full px-2 py-0.5">
                         <AlertCircle className="h-3 w-3" />
                         Sem site — alta prioridade
                       </span>
                     )}
                     {r.address && (
-                      <p className="text-xs text-gray-500 flex items-start gap-1.5">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1.5">
                         <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" /> {r.address}
                       </p>
                     )}
                     {r.phone && (
-                      <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                         <Phone className="h-3.5 w-3.5 shrink-0" /> {r.phone}
                       </p>
                     )}
                     {r.website && (
-                      <p className="text-xs text-gray-500 flex items-center gap-1.5 truncate">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 truncate">
                         <Globe className="h-3.5 w-3.5 shrink-0" /> {r.website}
                       </p>
                     )}
                     {r.rating != null && (
-                      <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                         <Star className="h-3.5 w-3.5 shrink-0" /> {r.rating.toLocaleString("pt-BR")} ({r.ratingCount || 0} avaliações)
                       </p>
                     )}
