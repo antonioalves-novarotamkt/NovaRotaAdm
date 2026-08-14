@@ -1,13 +1,12 @@
 import Link from "next/link";
-import { Search, Filter, Mail, Phone, Globe, Building2 } from "lucide-react";
+import { Search, Mail, Phone, Globe, Building2 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { NewClientDialog } from "@/components/clients/NewClientDialog";
-import { formatCurrency, getInitials } from "@/lib/utils";
+import { formatCurrency, getInitials, cn } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
+import type { ClientStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -20,16 +19,46 @@ const statusMap: Record<string, { label: string; variant: "success" | "warning" 
 
 const colors = ["bg-orange-500", "bg-purple-500", "bg-emerald-500", "bg-orange-500", "bg-pink-500", "bg-indigo-500", "bg-teal-500", "bg-rose-500"];
 
-export default async function ClientesPage() {
-  const clients = await prisma.client.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { _count: { select: { projects: true } } },
-  });
+export default async function ClientesPage({
+  searchParams,
+}: {
+  searchParams: { status?: string; q?: string };
+}) {
+  const selectedStatus = searchParams.status || "";
+  const q = searchParams.q || "";
 
-  const activeCount = clients.filter((c) => c.status === "ACTIVE").length;
-  const totalMRR = clients
+  const [clients, allClients] = await Promise.all([
+    prisma.client.findMany({
+      where: {
+        ...(selectedStatus ? { status: selectedStatus as ClientStatus } : {}),
+        ...(q
+          ? {
+              OR: [
+                { name: { contains: q, mode: "insensitive" } },
+                { company: { contains: q, mode: "insensitive" } },
+                { email: { contains: q, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      include: { _count: { select: { projects: true } } },
+    }),
+    prisma.client.findMany({ select: { status: true, contractValue: true } }),
+  ]);
+
+  const activeCount = allClients.filter((c) => c.status === "ACTIVE").length;
+  const prospectCount = allClients.filter((c) => c.status === "PROSPECT").length;
+  const totalMRR = allClients
     .filter((c) => c.status === "ACTIVE")
     .reduce((sum, c) => sum + (c.contractValue ?? 0), 0);
+
+  const stats = [
+    { label: "Total de Clientes", value: allClients.length, color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-500/10", href: "/clientes" },
+    { label: "Ativos", value: activeCount, color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-500/10", href: "/clientes?status=ACTIVE" },
+    { label: "Prospects", value: prospectCount, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-500/10", href: "/clientes?status=PROSPECT" },
+    { label: "MRR Total", value: formatCurrency(totalMRR), color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-500/10", href: "/financeiro" },
+  ];
 
   return (
     <div>
@@ -37,33 +66,49 @@ export default async function ClientesPage() {
       <div className="p-6 space-y-6">
         {/* Stats Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[
-            { label: "Total de Clientes", value: clients.length, color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-500/10" },
-            { label: "Ativos", value: activeCount, color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-500/10" },
-            { label: "Prospects", value: clients.filter((c) => c.status === "PROSPECT").length, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-500/10" },
-            { label: "MRR Total", value: formatCurrency(totalMRR), color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-500/10" },
-          ].map((stat) => (
-            <Card key={stat.label} className="border-0 shadow-sm">
-              <CardContent className="p-4">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{stat.label}</p>
-                <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
-              </CardContent>
-            </Card>
-          ))}
+          {stats.map((stat) => {
+            const isActive = stat.href === `/clientes${selectedStatus ? `?status=${selectedStatus}` : ""}` && stat.href.startsWith("/clientes");
+            return (
+              <Link key={stat.label} href={stat.href}>
+                <Card className={cn("border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer", isActive && "ring-2 ring-orange-500")}>
+                  <CardContent className="p-4">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{stat.label}</p>
+                    <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
 
         {/* Toolbar */}
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <form method="get" className="flex items-center gap-2 w-full sm:w-auto">
             <div className="relative flex-1 sm:w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
-              <Input placeholder="Buscar cliente, empresa..." className="pl-9 h-9 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700" />
+              <input
+                type="text"
+                name="q"
+                defaultValue={q}
+                placeholder="Buscar cliente, empresa..."
+                className="pl-9 h-9 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm px-3"
+              />
             </div>
-            <Button variant="outline" size="sm" className="h-9 gap-1.5">
-              <Filter className="h-4 w-4" />
-              Filtros
-            </Button>
-          </div>
+            <select
+              name="status"
+              defaultValue={selectedStatus}
+              className="h-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm"
+            >
+              <option value="">Todos os status</option>
+              <option value="ACTIVE">Ativo</option>
+              <option value="PROSPECT">Prospect</option>
+              <option value="INACTIVE">Inativo</option>
+              <option value="CHURNED">Perdido</option>
+            </select>
+            <button type="submit" className="h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+              Filtrar
+            </button>
+          </form>
           <NewClientDialog />
         </div>
 
@@ -71,7 +116,9 @@ export default async function ClientesPage() {
         {clients.length === 0 ? (
           <Card className="border-0 shadow-sm">
             <CardContent className="p-10 text-center text-sm text-gray-500 dark:text-gray-400">
-              Nenhum cliente cadastrado ainda. Clique em &quot;Novo Cliente&quot; para começar.
+              {selectedStatus || q
+                ? "Nenhum cliente encontrado para esse filtro."
+                : 'Nenhum cliente cadastrado ainda. Clique em "Novo Cliente" para começar.'}
             </CardContent>
           </Card>
         ) : (

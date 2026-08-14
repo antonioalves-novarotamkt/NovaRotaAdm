@@ -146,6 +146,7 @@ export default async function DashboardPage() {
             trend={revenueChange >= 0 ? "up" : "down"}
             icon={<DollarSign className="h-5 w-5 text-orange-600 dark:text-orange-400" />}
             iconBg="bg-orange-50 dark:bg-orange-500/10"
+            href="/financeiro"
           />
           <KPICard
             title="Custos Operacionais"
@@ -155,6 +156,7 @@ export default async function DashboardPage() {
             trend={costsChange <= 0 ? "up" : "down"}
             icon={<Wallet className="h-5 w-5 text-red-500 dark:text-red-400" />}
             iconBg="bg-red-50 dark:bg-red-500/10"
+            href="/custos"
           />
           <KPICard
             title="Lucro do Mês"
@@ -164,6 +166,7 @@ export default async function DashboardPage() {
             trend={profitThisMonth >= 0 ? "up" : "down"}
             icon={<TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
             iconBg="bg-emerald-50 dark:bg-emerald-500/10"
+            href="/financeiro"
           />
           <KPICard
             title="Clientes Ativos"
@@ -173,6 +176,7 @@ export default async function DashboardPage() {
             trend="up"
             icon={<Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
             iconBg="bg-emerald-50 dark:bg-emerald-500/10"
+            href="/clientes?status=ACTIVE"
           />
           <KPICard
             title="Vendas dos Clientes"
@@ -182,6 +186,7 @@ export default async function DashboardPage() {
             trend={salesChange >= 0 ? "up" : "down"}
             icon={<ShoppingCart className="h-5 w-5 text-purple-600 dark:text-purple-400" />}
             iconBg="bg-purple-50 dark:bg-purple-500/10"
+            href="/vendas"
           />
           <KPICard
             title="A Receber"
@@ -191,6 +196,7 @@ export default async function DashboardPage() {
             trend={overdueCount > 0 ? "down" : "up"}
             icon={<AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400" />}
             iconBg="bg-red-50 dark:bg-red-500/10"
+            href="/financeiro"
           />
         </div>
 
@@ -205,27 +211,36 @@ export default async function DashboardPage() {
               <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Resumo Rápido</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-orange-50 dark:bg-orange-500/10">
+              <Link
+                href="/projetos"
+                className="flex items-center gap-3 p-3 rounded-lg bg-orange-50 dark:bg-orange-500/10 hover:opacity-80 transition-opacity"
+              >
                 <ImageIcon className="h-5 w-5 text-orange-500 shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{postsThisMonth} post(s) publicados</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">Este mês</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-500/10">
+              </Link>
+              <Link
+                href="/financeiro"
+                className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-500/10 hover:opacity-80 transition-opacity"
+              >
                 <Clock className="h-5 w-5 text-blue-500 shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{upcomingBilling} cobrança(s) nos próximos 7 dias</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">Requer atenção</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-500/10">
+              </Link>
+              <Link
+                href="/financeiro"
+                className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-500/10 hover:opacity-80 transition-opacity"
+              >
                 <AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400 shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{overdueCount} fatura(s) vencida(s)</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">Total: {formatCurrency(overdueTotal)}</p>
                 </div>
-              </div>
+              </Link>
             </CardContent>
           </Card>
         </div>
