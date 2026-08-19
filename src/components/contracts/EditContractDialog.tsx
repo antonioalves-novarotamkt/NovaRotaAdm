@@ -144,6 +144,24 @@ export function EditContractDialog({
               <option value="CANCELLED">Cancelado</option>
             </select>
           </div>
+
+          {Number(value) !== contract.value && !Number.isNaN(Number(value)) && (
+            <div className="rounded-md bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-3 py-2 space-y-2">
+              <p className="text-xs text-gray-600 dark:text-gray-300">
+                {Number(value) > contract.value ? "Aumento" : "Redução"} de{" "}
+                <strong className={Number(value) > contract.value ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+                  {formatCurrency(Math.abs(Number(value) - contract.value))}
+                </strong>{" "}
+                em relação ao valor atual ({formatCurrency(contract.value)}).
+              </p>
+              <Input
+                name="adjustmentReason"
+                placeholder="Motivo do ajuste (ex: adicionado Google Ads, cliente reduziu escopo)"
+                className="text-xs h-8"
+              />
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
               Início

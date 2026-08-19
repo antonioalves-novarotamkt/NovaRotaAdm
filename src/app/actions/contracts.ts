@@ -75,6 +75,7 @@ export async function updateContract(formData: FormData) {
   const status = String(formData.get("status") || "ACTIVE") as ContractStatus;
   const notes = String(formData.get("notes") || "").trim();
   const content = String(formData.get("content") || "").trim();
+  const adjustmentReason = String(formData.get("adjustmentReason") || "").trim();
 
   const includesSocialMedia = formData.get("includesSocialMedia") === "on";
   const postsPerWeekRaw = String(formData.get("postsPerWeek") || "");
@@ -87,6 +88,8 @@ export async function updateContract(formData: FormData) {
   if (!id || !title || !startDate) {
     throw new Error("Título e data de início são obrigatórios.");
   }
+
+  const existing = await prisma.contract.findUnique({ where: { id }, select: { value: true } });
 
   await prisma.contract.update({
     where: { id },
@@ -109,5 +112,17 @@ export async function updateContract(formData: FormData) {
     },
   });
 
+  if (existing && existing.value !== value) {
+    await prisma.contractAdjustment.create({
+      data: {
+        contractId: id,
+        previousValue: existing.value,
+        newValue: value,
+        reason: adjustmentReason || null,
+      },
+    });
+  }
+
   revalidatePath("/contratos");
+  revalidatePath(`/contratos/${id}`);
 }

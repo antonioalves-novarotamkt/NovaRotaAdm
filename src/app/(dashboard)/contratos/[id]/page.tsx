@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
 import { Header } from "@/components/layout/Header";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PrintButton } from "@/components/contracts/PrintButton";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { getAgencySettings } from "@/app/actions/agency";
 
@@ -14,7 +15,7 @@ export default async function ContractViewPage({ params }: { params: { id: strin
   const [contract, agency] = await Promise.all([
     prisma.contract.findUnique({
       where: { id: params.id },
-      include: { client: true },
+      include: { client: true, adjustments: { orderBy: { createdAt: "desc" } } },
     }),
     getAgencySettings(),
   ]);
@@ -58,6 +59,44 @@ export default async function ContractViewPage({ params }: { params: { id: strin
             </pre>
           </CardContent>
         </Card>
+
+        {contract.adjustments.length > 0 && (
+          <Card className="border-0 shadow-sm print:hidden">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                Histórico de Ajustes de Valor
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {contract.adjustments.map((adj) => {
+                const increased = adj.newValue > adj.previousValue;
+                const delta = Math.abs(adj.newValue - adj.previousValue);
+                return (
+                  <div key={adj.id} className="flex items-start justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
+                    <div>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">
+                        {formatCurrency(adj.previousValue)} → <strong>{formatCurrency(adj.newValue)}</strong>
+                      </p>
+                      {adj.reason && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{adj.reason}</p>}
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatDate(adj.createdAt)}</p>
+                    </div>
+                    <div
+                      className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full shrink-0 ${
+                        increased
+                          ? "bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400"
+                          : "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400"
+                      }`}
+                    >
+                      {increased ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                      {increased ? "+" : "-"}
+                      {formatCurrency(delta)}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
