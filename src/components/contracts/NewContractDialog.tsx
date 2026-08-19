@@ -44,11 +44,13 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
 
   const [includesSocialMedia, setIncludesSocialMedia] = useState(true);
   const [postsPerWeek, setPostsPerWeek] = useState("");
+  const [storiesPerWeek, setStoriesPerWeek] = useState("");
   const [reelsPerWeek, setReelsPerWeek] = useState("");
   const [socialNetworksCount, setSocialNetworksCount] = useState("");
   const [includesGoogleAds, setIncludesGoogleAds] = useState(false);
   const [includesMenuMgmt, setIncludesMenuMgmt] = useState(false);
   const [menuPlatforms, setMenuPlatforms] = useState<string[]>([]);
+  const [includesWebsiteCreation, setIncludesWebsiteCreation] = useState(false);
 
   function toggleMenuPlatform(platform: string) {
     setMenuPlatforms((prev) =>
@@ -79,11 +81,13 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
         services: {
           includesSocialMedia,
           postsPerWeek: postsPerWeek ? Number(postsPerWeek) : undefined,
+          storiesPerWeek: storiesPerWeek ? Number(storiesPerWeek) : undefined,
           reelsPerWeek: reelsPerWeek ? Number(reelsPerWeek) : undefined,
           socialNetworksCount: socialNetworksCount ? Number(socialNetworksCount) : undefined,
           includesGoogleAds,
           includesMenuMgmt,
           menuPlatforms,
+          includesWebsiteCreation,
         },
       })
     );
@@ -97,7 +101,7 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
           Novo Contrato
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl lg:max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo Contrato</DialogTitle>
         </DialogHeader>
@@ -258,7 +262,7 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
                 Social Media (posts, stories e reels)
               </label>
               {includesSocialMedia && (
-                <div className="grid grid-cols-3 gap-2 pl-6">
+                <div className="grid grid-cols-2 gap-2 pl-6">
                   <Input
                     name="socialNetworksCount"
                     type="number"
@@ -274,6 +278,14 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
                     placeholder="Posts/semana"
                     value={postsPerWeek}
                     onChange={(e) => setPostsPerWeek(e.target.value)}
+                  />
+                  <Input
+                    name="storiesPerWeek"
+                    type="number"
+                    min={0}
+                    placeholder="Stories/semana"
+                    value={storiesPerWeek}
+                    onChange={(e) => setStoriesPerWeek(e.target.value)}
                   />
                   <Input
                     name="reelsPerWeek"
@@ -295,6 +307,16 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
                 onChange={(e) => setIncludesGoogleAds(e.target.checked)}
               />
               Google Ads
+            </label>
+
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                name="includesWebsiteCreation"
+                checked={includesWebsiteCreation}
+                onChange={(e) => setIncludesWebsiteCreation(e.target.checked)}
+              />
+              Criação/Atualização de Site
             </label>
 
             <div className="space-y-2">
@@ -330,14 +352,24 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
             Gerar Texto do Contrato
           </Button>
 
-          <textarea
-            name="content"
-            placeholder="O texto do contrato aparece aqui — você pode editar livremente antes de salvar"
-            rows={8}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className={inputClass + " resize-y font-mono text-xs leading-relaxed"}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+            <textarea
+              name="content"
+              placeholder="O texto do contrato aparece aqui — você pode editar livremente antes de salvar"
+              rows={16}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className={inputClass + " resize-y font-mono text-xs leading-relaxed h-auto"}
+            />
+            <div className="hidden lg:flex flex-col border rounded-lg bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-700 overflow-hidden">
+              <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide px-3 py-2 border-b border-gray-100 dark:border-gray-800">
+                Pré-visualização
+              </p>
+              <div className="p-3 overflow-y-auto max-h-[24rem] whitespace-pre-wrap font-sans text-xs leading-relaxed text-gray-700 dark:text-gray-300">
+                {content || "O texto gerado aparecerá aqui."}
+              </div>
+            </div>
+          </div>
 
           <textarea
             name="notes"
