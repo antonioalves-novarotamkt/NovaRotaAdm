@@ -31,11 +31,13 @@ export async function createContract(formData: FormData) {
 
   const includesSocialMedia = formData.get("includesSocialMedia") === "on";
   const postsPerWeekRaw = String(formData.get("postsPerWeek") || "");
+  const storiesPerWeekRaw = String(formData.get("storiesPerWeek") || "");
   const reelsPerWeekRaw = String(formData.get("reelsPerWeek") || "");
   const socialNetworksCountRaw = String(formData.get("socialNetworksCount") || "");
   const includesGoogleAds = formData.get("includesGoogleAds") === "on";
   const includesMenuMgmt = formData.get("includesMenuMgmt") === "on";
   const menuPlatformsRaw = String(formData.get("menuPlatforms") || "");
+  const includesWebsiteCreation = formData.get("includesWebsiteCreation") === "on";
 
   if (!title || !clientId || !startDate) {
     throw new Error("Título, cliente e data de início são obrigatórios.");
@@ -54,11 +56,13 @@ export async function createContract(formData: FormData) {
       ...readBillingFields(formData),
       includesSocialMedia,
       postsPerWeek: postsPerWeekRaw ? Number(postsPerWeekRaw) : null,
+      storiesPerWeek: storiesPerWeekRaw ? Number(storiesPerWeekRaw) : null,
       reelsPerWeek: reelsPerWeekRaw ? Number(reelsPerWeekRaw) : null,
       socialNetworksCount: socialNetworksCountRaw ? Number(socialNetworksCountRaw) : null,
       includesGoogleAds,
       includesMenuMgmt,
       menuPlatforms: menuPlatformsRaw || null,
+      includesWebsiteCreation,
     },
   });
 
@@ -79,11 +83,13 @@ export async function updateContract(formData: FormData) {
 
   const includesSocialMedia = formData.get("includesSocialMedia") === "on";
   const postsPerWeekRaw = String(formData.get("postsPerWeek") || "");
+  const storiesPerWeekRaw = String(formData.get("storiesPerWeek") || "");
   const reelsPerWeekRaw = String(formData.get("reelsPerWeek") || "");
   const socialNetworksCountRaw = String(formData.get("socialNetworksCount") || "");
   const includesGoogleAds = formData.get("includesGoogleAds") === "on";
   const includesMenuMgmt = formData.get("includesMenuMgmt") === "on";
   const menuPlatformsRaw = String(formData.get("menuPlatforms") || "");
+  const includesWebsiteCreation = formData.get("includesWebsiteCreation") === "on";
 
   if (!id || !title || !startDate) {
     throw new Error("Título e data de início são obrigatórios.");
@@ -104,11 +110,13 @@ export async function updateContract(formData: FormData) {
       ...readBillingFields(formData),
       includesSocialMedia,
       postsPerWeek: postsPerWeekRaw ? Number(postsPerWeekRaw) : null,
+      storiesPerWeek: storiesPerWeekRaw ? Number(storiesPerWeekRaw) : null,
       reelsPerWeek: reelsPerWeekRaw ? Number(reelsPerWeekRaw) : null,
       socialNetworksCount: socialNetworksCountRaw ? Number(socialNetworksCountRaw) : null,
       includesGoogleAds,
       includesMenuMgmt,
       menuPlatforms: menuPlatformsRaw || null,
+      includesWebsiteCreation,
     },
   });
 

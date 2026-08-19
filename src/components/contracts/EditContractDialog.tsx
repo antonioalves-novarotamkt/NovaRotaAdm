@@ -39,11 +39,13 @@ interface ContractData {
   billingDayOfMonth2: number | null;
   includesSocialMedia: boolean;
   postsPerWeek: number | null;
+  storiesPerWeek: number | null;
   reelsPerWeek: number | null;
   socialNetworksCount: number | null;
   includesGoogleAds: boolean;
   includesMenuMgmt: boolean;
   menuPlatforms: string | null;
+  includesWebsiteCreation: boolean;
 }
 
 export function EditContractDialog({
@@ -65,6 +67,7 @@ export function EditContractDialog({
   const [billingDayOfMonth2, setBillingDayOfMonth2] = useState(contract.billingDayOfMonth2?.toString() ?? "");
   const [includesSocialMedia, setIncludesSocialMedia] = useState(contract.includesSocialMedia);
   const [postsPerWeek, setPostsPerWeek] = useState(contract.postsPerWeek?.toString() ?? "");
+  const [storiesPerWeek, setStoriesPerWeek] = useState(contract.storiesPerWeek?.toString() ?? "");
   const [reelsPerWeek, setReelsPerWeek] = useState(contract.reelsPerWeek?.toString() ?? "");
   const [socialNetworksCount, setSocialNetworksCount] = useState(contract.socialNetworksCount?.toString() ?? "");
   const [includesGoogleAds, setIncludesGoogleAds] = useState(contract.includesGoogleAds);
@@ -72,6 +75,7 @@ export function EditContractDialog({
   const [menuPlatforms, setMenuPlatforms] = useState<string[]>(
     contract.menuPlatforms ? contract.menuPlatforms.split(",").filter(Boolean) : []
   );
+  const [includesWebsiteCreation, setIncludesWebsiteCreation] = useState(contract.includesWebsiteCreation);
   const [content, setContent] = useState(contract.content || "");
 
   function toggleMenuPlatform(platform: string) {
@@ -102,11 +106,13 @@ export function EditContractDialog({
         services: {
           includesSocialMedia,
           postsPerWeek: postsPerWeek ? Number(postsPerWeek) : undefined,
+          storiesPerWeek: storiesPerWeek ? Number(storiesPerWeek) : undefined,
           reelsPerWeek: reelsPerWeek ? Number(reelsPerWeek) : undefined,
           socialNetworksCount: socialNetworksCount ? Number(socialNetworksCount) : undefined,
           includesGoogleAds,
           includesMenuMgmt,
           menuPlatforms,
+          includesWebsiteCreation,
         },
       })
     );
@@ -120,7 +126,7 @@ export function EditContractDialog({
           Editar
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl lg:max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Contrato — {clientName}</DialogTitle>
         </DialogHeader>
@@ -283,7 +289,7 @@ export function EditContractDialog({
                 Social Media (posts, stories e reels)
               </label>
               {includesSocialMedia && (
-                <div className="grid grid-cols-3 gap-2 pl-6">
+                <div className="grid grid-cols-2 gap-2 pl-6">
                   <Input
                     name="socialNetworksCount"
                     type="number"
@@ -299,6 +305,14 @@ export function EditContractDialog({
                     placeholder="Posts/semana"
                     value={postsPerWeek}
                     onChange={(e) => setPostsPerWeek(e.target.value)}
+                  />
+                  <Input
+                    name="storiesPerWeek"
+                    type="number"
+                    min={0}
+                    placeholder="Stories/semana"
+                    value={storiesPerWeek}
+                    onChange={(e) => setStoriesPerWeek(e.target.value)}
                   />
                   <Input
                     name="reelsPerWeek"
@@ -320,6 +334,16 @@ export function EditContractDialog({
                 onChange={(e) => setIncludesGoogleAds(e.target.checked)}
               />
               Google Ads
+            </label>
+
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                name="includesWebsiteCreation"
+                checked={includesWebsiteCreation}
+                onChange={(e) => setIncludesWebsiteCreation(e.target.checked)}
+              />
+              Criação/Atualização de Site
             </label>
 
             <div className="space-y-2">
@@ -358,14 +382,24 @@ export function EditContractDialog({
             Isso substitui o texto abaixo pelos dados atuais (cliente, valor, prazo e serviços). Você pode editar livremente depois.
           </p>
 
-          <textarea
-            name="content"
-            placeholder="O texto do contrato aparece aqui — você pode editar livremente antes de salvar"
-            rows={8}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className={inputClass + " resize-y font-mono text-xs leading-relaxed"}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+            <textarea
+              name="content"
+              placeholder="O texto do contrato aparece aqui — você pode editar livremente antes de salvar"
+              rows={16}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className={inputClass + " resize-y font-mono text-xs leading-relaxed h-auto"}
+            />
+            <div className="hidden lg:flex flex-col border rounded-lg bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-700 overflow-hidden">
+              <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide px-3 py-2 border-b border-gray-100 dark:border-gray-800">
+                Pré-visualização
+              </p>
+              <div className="p-3 overflow-y-auto max-h-[24rem] whitespace-pre-wrap font-sans text-xs leading-relaxed text-gray-700 dark:text-gray-300">
+                {content || "O texto gerado aparecerá aqui."}
+              </div>
+            </div>
+          </div>
 
           <textarea
             name="notes"

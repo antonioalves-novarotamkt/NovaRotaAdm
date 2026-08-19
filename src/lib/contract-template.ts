@@ -1,11 +1,13 @@
 export interface ContractServiceConfig {
   includesSocialMedia: boolean;
   postsPerWeek?: number;
+  storiesPerWeek?: number;
   reelsPerWeek?: number;
   socialNetworksCount?: number;
   includesGoogleAds: boolean;
   includesMenuMgmt: boolean;
   menuPlatforms?: string[];
+  includesWebsiteCreation: boolean;
 }
 
 export interface ContractVars {
@@ -77,10 +79,12 @@ export function generateContractText(vars: ContractVars): string {
 
     if (services.includesSocialMedia) {
       const postsPart = services.postsPerWeek ? ` (${services.postsPerWeek} por semana)` : "";
+      const storiesPart = services.storiesPerWeek ? ` (${services.storiesPerWeek} por semana)` : "";
       const reelsPart = services.reelsPerWeek ? ` (${services.reelsPerWeek} por semana)` : "";
       const networksPart = services.socialNetworksCount ? ` em ${services.socialNetworksCount} rede(s) social(is)` : "";
       item(nextLetter(), `Elaboração de calendário editorial e criação de posts para redes sociais${postsPart}${networksPart};`);
-      item(nextLetter(), `Produção de stories e reels para redes sociais${reelsPart};`);
+      item(nextLetter(), `Produção de stories para redes sociais${storiesPart};`);
+      item(nextLetter(), `Produção de reels para redes sociais${reelsPart};`);
       item(nextLetter(), "Gestão e resposta de comentários e mensagens nas redes sociais;");
     }
 
@@ -92,6 +96,10 @@ export function generateContractText(vars: ContractVars): string {
     if (services.includesMenuMgmt) {
       const platforms = services.menuPlatforms && services.menuPlatforms.length > 0 ? services.menuPlatforms.join(", ") : "a definir";
       item(nextLetter(), `Gerenciamento do cardápio digital nas plataformas: ${platforms};`);
+    }
+
+    if (services.includesWebsiteCreation) {
+      item(nextLetter(), "Criação e/ou manutenção do site institucional da CONTRATANTE;");
     }
 
     item(nextLetter(), "Apresentação de relatório mensal de desempenho com as principais métricas dos serviços prestados.");
