@@ -8,7 +8,7 @@ export default function ProspeccaoPage() {
     <div>
       <Header
         title="Prospecção"
-        subtitle="Busque empresas no Google por categoria e cidade — os resultados entram automaticamente como Leads no Funil de Vendas"
+        subtitle="Busque empresas por categoria e cidade no Google Maps, Instagram e LinkedIn — os resultados entram automaticamente como Leads no Funil de Vendas"
       />
       <div className="p-6">
         <ProspeccaoSearch />
