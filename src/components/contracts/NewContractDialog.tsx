@@ -247,30 +247,36 @@ export function NewContractDialog({ clients, agencyName }: { clients: ClientOpti
               </label>
               {includesSocialMedia && (
                 <div className="grid grid-cols-3 gap-2 pl-6">
-                  <Input
-                    name="socialNetworksCount"
-                    type="number"
-                    min={0}
-                    placeholder="Nº redes"
-                    value={socialNetworksCount}
-                    onChange={(e) => setSocialNetworksCount(e.target.value)}
-                  />
-                  <Input
-                    name="postsPerWeek"
-                    type="number"
-                    min={0}
-                    placeholder="Posts/semana"
-                    value={postsPerWeek}
-                    onChange={(e) => setPostsPerWeek(e.target.value)}
-                  />
-                  <Input
-                    name="reelsPerWeek"
-                    type="number"
-                    min={0}
-                    placeholder="Reels/semana"
-                    value={reelsPerWeek}
-                    onChange={(e) => setReelsPerWeek(e.target.value)}
-                  />
+                  <label className="text-[11px] text-gray-500 space-y-1">
+                    Nº redes
+                    <Input
+                      name="socialNetworksCount"
+                      type="number"
+                      min={0}
+                      value={socialNetworksCount}
+                      onChange={(e) => setSocialNetworksCount(e.target.value)}
+                    />
+                  </label>
+                  <label className="text-[11px] text-gray-500 space-y-1">
+                    Posts/semana
+                    <Input
+                      name="postsPerWeek"
+                      type="number"
+                      min={0}
+                      value={postsPerWeek}
+                      onChange={(e) => setPostsPerWeek(e.target.value)}
+                    />
+                  </label>
+                  <label className="text-[11px] text-gray-500 space-y-1">
+                    Reels/semana
+                    <Input
+                      name="reelsPerWeek"
+                      type="number"
+                      min={0}
+                      value={reelsPerWeek}
+                      onChange={(e) => setReelsPerWeek(e.target.value)}
+                    />
+                  </label>
                 </div>
               )}
             </div>
