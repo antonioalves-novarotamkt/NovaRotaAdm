@@ -109,18 +109,26 @@ export async function searchAndImportLeadsAisa(
     apiKey,
   });
 
+  // Todo lead ja cadastrado entra no dedup, independente do estagio no funil —
+  // um lead marcado "Perdido"/"Não apto" continua contando como ja prospectado
+  // e nao volta a aparecer como novo em buscas futuras.
   const existingLeads = await prisma.lead.findMany({
-    where: { phone: { not: null } },
-    select: { phone: true },
+    select: { phone: true, name: true, company: true },
   });
   const existingPhones = new Set(existingLeads.map((l) => (l.phone || "").replace(/\D/g, "")).filter(Boolean));
+  const normalizeName = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+  const existingNames = new Set(
+    existingLeads.map((l) => normalizeName(l.company || l.name)).filter(Boolean)
+  );
 
   let imported = 0;
   const results: AisaProspectResult[] = [];
 
   for (const lead of leads) {
     const phoneDigits = lead.telefone.replace(/\D/g, "");
-    const alreadyLead = Boolean(phoneDigits) && existingPhones.has(phoneDigits);
+    const nomeNormalizado = normalizeName(lead.nome);
+    const alreadyLead =
+      (Boolean(phoneDigits) && existingPhones.has(phoneDigits)) || existingNames.has(nomeNormalizado);
 
     if (!alreadyLead) {
       await prisma.lead.create({
@@ -134,6 +142,7 @@ export async function searchAndImportLeadsAisa(
       });
       imported++;
       if (phoneDigits) existingPhones.add(phoneDigits);
+      existingNames.add(nomeNormalizado);
     }
 
     results.push({ ...lead, alreadyLead });

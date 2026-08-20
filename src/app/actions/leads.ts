@@ -36,11 +36,17 @@ export async function createLead(formData: FormData) {
 export async function updateLeadStage(formData: FormData) {
   const id = String(formData.get("id") || "");
   const stage = String(formData.get("stage") || "") as LeadStage;
+  const lostReasonRaw = formData.get("lostReason");
   if (!id || !stage) return;
 
   await prisma.lead.update({
     where: { id },
-    data: { stage },
+    data: {
+      stage,
+      // So sobrescreve o motivo quando o campo veio no formulario (ex: ao mover
+      // para "Perdido"); mudar para outro estagio nao apaga um motivo anterior.
+      ...(lostReasonRaw != null ? { lostReason: String(lostReasonRaw).trim() || null } : {}),
+    },
   });
 
   revalidatePath("/funil");
