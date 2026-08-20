@@ -2,7 +2,19 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Trash2, ArrowRight, Loader2, MessageCircle, ChevronDown, ChevronUp, Ban } from "lucide-react";
+import {
+  Trash2,
+  ArrowRight,
+  Loader2,
+  MessageCircle,
+  ChevronDown,
+  ChevronUp,
+  Ban,
+  MapPin,
+  Globe,
+  Instagram,
+  Linkedin,
+} from "lucide-react";
 import { updateLeadStage, deleteLead, convertLeadToClient } from "@/app/actions/leads";
 import { formatCurrency } from "@/lib/utils";
 
@@ -36,6 +48,38 @@ function whatsappLink(phone: string): string | null {
   if (!digits) return null;
   const withCountry = digits.length === 10 || digits.length === 11 ? `55${digits}` : digits;
   return `https://wa.me/${withCountry}`;
+}
+
+interface LeadLinks {
+  googleMapsUrl: string | null;
+  siteUrl: string | null;
+  instagramUrl: string | null;
+  linkedinUrl: string | null;
+}
+
+// As notas de leads importados via prospecção guardam uma linha por
+// informação ("Chave: valor") — extrai daqui os links para exibir como
+// botões clicáveis em vez do texto corrido (que ficava com URLs enormes
+// quebrando o layout do card).
+function extractLeadLinks(notes: string | null): LeadLinks {
+  const result: LeadLinks = { googleMapsUrl: null, siteUrl: null, instagramUrl: null, linkedinUrl: null };
+  if (!notes) return result;
+  const lines = notes
+    .split(/\n|·/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  for (const line of lines) {
+    const match = line.match(/^([^:]+):\s*(.+)$/);
+    if (!match) continue;
+    const key = match[1].trim().toLowerCase();
+    const value = match[2].trim();
+    if (!/^https?:\/\//i.test(value)) continue;
+    if (key === "google maps") result.googleMapsUrl = value;
+    else if (key === "site") result.siteUrl = value;
+    else if (key === "instagram") result.instagramUrl = value;
+    else if (key === "linkedin") result.linkedinUrl = value;
+  }
+  return result;
 }
 
 export function LeadCard({ lead }: { lead: LeadCardData }) {
@@ -94,12 +138,26 @@ export function LeadCard({ lead }: { lead: LeadCardData }) {
   const currentIdx = stageOrder.indexOf(lead.stage);
   const nextStage = currentIdx >= 0 && currentIdx < 3 ? stageOrder[currentIdx + 1] : null;
   const waLink = lead.phone ? whatsappLink(lead.phone) : null;
+  const links = extractLeadLinks(lead.notes);
+  const hasAnyLink = Boolean(links.googleMapsUrl || links.siteUrl || links.instagramUrl || links.linkedinUrl);
+  const nameHref = links.googleMapsUrl || links.siteUrl;
 
   return (
     <div className="p-3 rounded-lg border border-gray-100 bg-white space-y-2">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-gray-900 truncate">{lead.name}</p>
+          {nameHref ? (
+            <a
+              href={nameHref}
+              target="_blank"
+              rel="noreferrer"
+              className="block text-sm font-medium text-gray-900 truncate hover:text-orange-600 hover:underline"
+            >
+              {lead.name}
+            </a>
+          ) : (
+            <p className="text-sm font-medium text-gray-900 truncate">{lead.name}</p>
+          )}
           {lead.company && <p className="text-xs text-gray-500 truncate">{lead.company}</p>}
         </div>
         <button
@@ -137,21 +195,66 @@ export function LeadCard({ lead }: { lead: LeadCardData }) {
         <p className="text-xs text-red-600 bg-red-50 rounded px-2 py-1">Motivo: {lead.lostReason}</p>
       )}
 
-      {lead.notes && (
-        <div>
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
-          >
-            {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            {expanded ? "Ocultar detalhes" : "Ver detalhes"}
-          </button>
-          {expanded && (
-            <p className="text-xs text-gray-500 whitespace-pre-line mt-1 border-t border-gray-50 pt-1.5">
-              {lead.notes}
-            </p>
+      {hasAnyLink ? (
+        <div className="flex flex-wrap gap-x-3 gap-y-1 pt-0.5">
+          {links.googleMapsUrl && (
+            <a
+              href={links.googleMapsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-orange-600 hover:underline"
+            >
+              <MapPin className="h-3 w-3" /> Google Maps
+            </a>
+          )}
+          {links.siteUrl && (
+            <a
+              href={links.siteUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-orange-600 hover:underline"
+            >
+              <Globe className="h-3 w-3" /> Site
+            </a>
+          )}
+          {links.instagramUrl && (
+            <a
+              href={links.instagramUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-orange-600 hover:underline"
+            >
+              <Instagram className="h-3 w-3" /> Instagram
+            </a>
+          )}
+          {links.linkedinUrl && (
+            <a
+              href={links.linkedinUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-orange-600 hover:underline"
+            >
+              <Linkedin className="h-3 w-3" /> LinkedIn
+            </a>
           )}
         </div>
+      ) : (
+        lead.notes && (
+          <div>
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+            >
+              {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              {expanded ? "Ocultar detalhes" : "Ver detalhes"}
+            </button>
+            {expanded && (
+              <p className="text-xs text-gray-500 whitespace-pre-line mt-1 border-t border-gray-50 pt-1.5">
+                {lead.notes}
+              </p>
+            )}
+          </div>
+        )
       )}
 
       <div className="flex items-center gap-2 pt-1">

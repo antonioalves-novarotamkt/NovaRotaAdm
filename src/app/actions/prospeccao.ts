@@ -67,18 +67,21 @@ export interface AisaProspectResult extends AisaLead {
   alreadyLead: boolean;
 }
 
+// Uma linha por informação (chave: valor), para que a UI do Funil consiga
+// extrair de volta os links (Google Maps, Site, Instagram, LinkedIn) e
+// exibi-los como links clicáveis separados em vez de um texto corrido.
 function buildAisaNotes(lead: AisaLead): string {
   const parts: string[] = [];
   if (lead.categoria) parts.push(`Categoria: ${lead.categoria}`);
   if (lead.endereco) parts.push(`Endereço: ${lead.endereco}`);
-  parts.push(lead.temSiteProprio ? `Site: ${lead.siteUrl}` : lead.tipoSite);
+  parts.push(lead.temSiteProprio ? `Site: ${lead.siteUrl}` : `Site: ${lead.tipoSite}`);
   if (lead.instagramUrl) parts.push(`Instagram: ${lead.instagramUrl}`);
   if (lead.linkedinUrl) parts.push(`LinkedIn: ${lead.linkedinUrl}`);
   if (lead.nota != null) {
     parts.push(`Nota Maps: ${lead.nota}${lead.numeroAvaliacoes != null ? ` (${lead.numeroAvaliacoes} avaliações)` : ""}`);
   }
   if (lead.googleMapsUrl) parts.push(`Google Maps: ${lead.googleMapsUrl}`);
-  return parts.join(" · ");
+  return parts.join("\n");
 }
 
 export async function searchAndImportLeadsAisa(
