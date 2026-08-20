@@ -1,10 +1,5 @@
 "use server";
 
-// A busca via AIsa (Perplexity Sonar) pode levar dezenas de segundos por causa da
-// pesquisa profunda em Maps/Instagram/LinkedIn. Estende o tempo maximo da funcao
-// serverless (o padrao de 10s no plano Hobby da Vercel nao seria suficiente).
-export const maxDuration = 60;
-
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
