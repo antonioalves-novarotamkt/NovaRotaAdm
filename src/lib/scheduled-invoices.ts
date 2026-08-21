@@ -1,4 +1,48 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+
+// Baseado no maior sufixo numerico ja usado no ano corrente (nao em count()):
+// count() conta faturas de todos os anos, entao uma lacuna (fatura deletada,
+// dados de teste, virada de ano) faz count()+1 colidir com um numero que ja
+// existe de verdade — e nesse caso repetir a mesma conta não muda nada.
+async function nextInvoiceNumber(): Promise<string> {
+  const prefix = `NF-${new Date().getFullYear()}-`;
+  const existing = await prisma.invoice.findMany({
+    where: { number: { startsWith: prefix } },
+    select: { number: true },
+  });
+  let maxSeq = 0;
+  for (const invoice of existing) {
+    const match = invoice.number.slice(prefix.length).match(/^(\d+)$/);
+    if (match) maxSeq = Math.max(maxSeq, parseInt(match[1], 10));
+  }
+  return `${prefix}${String(maxSeq + 1).padStart(3, "0")}`;
+}
+
+/**
+ * Cria uma fatura gerando o numero automaticamente. Chamadas concorrentes
+ * (dois carregamentos de pagina, ou o cron de lembretes rodando junto) podem
+ * calcular o mesmo numero e colidir na constraint @unique — em vez de deixar
+ * a chamada quebrar, tenta de novo com a sequencia recalculada.
+ */
+export async function createInvoiceWithUniqueNumber(
+  data: Omit<Prisma.InvoiceUncheckedCreateInput, "number">
+) {
+  const maxAttempts = 5;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const number = await nextInvoiceNumber();
+    try {
+      return await prisma.invoice.create({ data: { ...data, number } });
+    } catch (error) {
+      const isDuplicateNumber =
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002" &&
+        (error.meta?.target as string[] | undefined)?.includes("number");
+      if (!isDuplicateNumber || attempt === maxAttempts) throw error;
+    }
+  }
+  throw new Error("Não foi possível gerar um número de fatura único.");
+}
 
 /**
  * Ensures every client on a recurring billing schedule has a PENDING (or
@@ -33,20 +77,14 @@ export async function syncScheduledInvoices() {
     });
     if (existing) continue;
 
-    const count = await prisma.invoice.count();
-    const number = `NF-${new Date().getFullYear()}-${String(count + 1).padStart(3, "0")}`;
-
-    await prisma.invoice.create({
-      data: {
-        number,
-        clientId: client.id,
-        amount: client.contractValue,
-        tax: 0,
-        total: client.contractValue,
-        status: "PENDING",
-        dueDate: client.nextBillingDate,
-        description: "Recebimento programado",
-      },
+    await createInvoiceWithUniqueNumber({
+      clientId: client.id,
+      amount: client.contractValue,
+      tax: 0,
+      total: client.contractValue,
+      status: "PENDING",
+      dueDate: client.nextBillingDate,
+      description: "Recebimento programado",
     });
     created += 1;
   }

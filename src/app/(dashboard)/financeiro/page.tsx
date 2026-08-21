@@ -29,7 +29,11 @@ const MONTHS_BACK = 2;
 const MONTHS_AHEAD = 2;
 
 export default async function FinanceiroPage() {
-  await syncInvoiceStatuses();
+  try {
+    await syncInvoiceStatuses();
+  } catch (error) {
+    console.error("syncInvoiceStatuses falhou no Financeiro:", error);
+  }
 
   const [invoices, clients, scheduledClients, projectableClients] = await Promise.all([
     prisma.invoice.findMany({
