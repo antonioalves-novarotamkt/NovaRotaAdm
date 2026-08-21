@@ -132,9 +132,18 @@ export default async function ClientesPage({
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <div className={`h-10 w-10 rounded-full ${color} flex items-center justify-center text-white text-sm font-bold shrink-0`}>
-                            {getInitials(client.name)}
-                          </div>
+                          {client.logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={client.logoUrl}
+                              alt={client.name}
+                              className="h-10 w-10 rounded-full object-cover shrink-0 border border-gray-100 dark:border-gray-800"
+                            />
+                          ) : (
+                            <div className={`h-10 w-10 rounded-full ${color} flex items-center justify-center text-white text-sm font-bold shrink-0`}>
+                              {getInitials(client.name)}
+                            </div>
+                          )}
                           <div>
                             <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{client.name}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
