@@ -9,6 +9,8 @@ import {
   AlertCircle,
   Wallet,
   TrendingUp,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { KPICard } from "@/components/dashboard/KPICard";
@@ -38,7 +40,11 @@ const invoiceStatusMap: Record<string, { label: string; variant: "success" | "wa
 
 const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { month?: string };
+}) {
   try {
     await syncInvoiceStatuses();
   } catch (error) {
@@ -46,10 +52,22 @@ export default async function DashboardPage() {
   }
 
   const now = new Date();
-  const monthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
-  const nextMonthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1));
-  const prevMonthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 1, 1));
   const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  // Mes selecionado pelo filtro (formato "YYYY-MM"); tudo que e' historico/mensal
+  // (receita, custos, vendas, novos clientes, posts) segue esse mes. Coisas ao
+  // vivo por natureza (cobrancas nos proximos 7 dias, faturas em atraso agora)
+  // continuam usando a data real de hoje, independente do filtro.
+  const monthParam = searchParams.month && /^\d{4}-\d{2}$/.test(searchParams.month) ? searchParams.month : null;
+  const selectedMonth = monthParam
+    ? new Date(Date.UTC(Number(monthParam.slice(0, 4)), Number(monthParam.slice(5, 7)) - 1, 1))
+    : new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
+  const monthStart = selectedMonth;
+  const nextMonthStart = new Date(Date.UTC(selectedMonth.getUTCFullYear(), selectedMonth.getUTCMonth() + 1, 1));
+  const prevMonthStart = new Date(Date.UTC(selectedMonth.getUTCFullYear(), selectedMonth.getUTCMonth() - 1, 1));
+  const isCurrentMonth =
+    selectedMonth.getUTCFullYear() === now.getFullYear() && selectedMonth.getUTCMonth() === now.getMonth();
+  const monthParamStr = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 
   const [
     invoices,
@@ -67,7 +85,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     prisma.invoice.findMany({ where: { status: "PAID" }, select: { total: true, paidAt: true } }),
     prisma.client.count({ where: { status: "ACTIVE" } }),
-    prisma.client.count({ where: { createdAt: { gte: monthStart } } }),
+    prisma.client.count({ where: { createdAt: { gte: monthStart, lt: nextMonthStart } } }),
     prisma.clientSale.aggregate({ where: { month: monthStart }, _sum: { grossValue: true } }),
     prisma.clientSale.aggregate({ where: { month: prevMonthStart }, _sum: { grossValue: true } }),
     prisma.invoice.findMany({ where: { status: "OVERDUE" }, select: { total: true } }),
@@ -140,6 +158,30 @@ export default async function DashboardPage() {
     <div>
       <Header title="Dashboard" subtitle="Bem-vindo ao NovaRota — visão geral do seu negócio" />
       <div className="p-6 space-y-6">
+        {/* Month Filter */}
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/dashboard?month=${monthParamStr(new Date(Date.UTC(selectedMonth.getUTCFullYear(), selectedMonth.getUTCMonth() - 1, 1)))}`}
+            className="h-8 w-8 flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Link>
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 min-w-[9rem] text-center capitalize">
+            {new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" }).format(selectedMonth)}
+          </span>
+          <Link
+            href={`/dashboard?month=${monthParamStr(new Date(Date.UTC(selectedMonth.getUTCFullYear(), selectedMonth.getUTCMonth() + 1, 1)))}`}
+            className="h-8 w-8 flex items-center justify-center rounded-md border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+          {!isCurrentMonth && (
+            <Link href="/dashboard" className="text-xs text-orange-600 dark:text-orange-400 hover:underline ml-1">
+              Voltar para o mês atual
+            </Link>
+          )}
+        </div>
+
         {/* KPI Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <KPICard

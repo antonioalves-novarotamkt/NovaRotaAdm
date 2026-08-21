@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TrendingUp, TrendingDown, DollarSign, AlertCircle, Receipt } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, AlertCircle, Receipt, X } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,58 @@ import { NewExtraChargeDialog } from "@/components/financeiro/NewExtraChargeDial
 import { DeleteExtraChargeButton } from "@/components/financeiro/DeleteExtraChargeButton";
 import { MarkExtraChargePaidButton } from "@/components/financeiro/MarkExtraChargePaidButton";
 import { EditPaidDateButton } from "@/components/financeiro/EditPaidDateButton";
+import { ClientStatementActions } from "@/components/financeiro/ClientStatementActions";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { countOccurrencesInMonth } from "@/lib/billing";
 import { syncInvoiceStatuses } from "@/lib/scheduled-invoices";
 import { prisma } from "@/lib/prisma";
+import type { Invoice } from "@prisma/client";
+
+const invoiceStatusStyle: Record<string, string> = {
+  PAID: "bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400",
+  PENDING: "bg-yellow-50 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
+  OVERDUE: "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400",
+  DRAFT: "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400",
+  CANCELLED: "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400",
+};
+
+const invoiceStatusLabel: Record<string, string> = {
+  PAID: "Pago",
+  PENDING: "Pendente",
+  OVERDUE: "Atrasado",
+  DRAFT: "Rascunho",
+  CANCELLED: "Cancelado",
+};
+
+function buildClientStatement(client: { name: string; company: string | null }, clientInvoices: Invoice[]): string {
+  const overdueInvoices = clientInvoices.filter((i) => i.status === "OVERDUE");
+  const pendingInvoices = clientInvoices.filter((i) => i.status === "PENDING");
+  const paidInvoices = clientInvoices.filter((i) => i.status === "PAID");
+
+  const lines: string[] = [`Resumo financeiro — ${client.company || client.name}`, ""];
+
+  if (overdueInvoices.length > 0) {
+    const total = overdueInvoices.reduce((s, i) => s + i.total, 0);
+    lines.push(`EM ATRASO (${overdueInvoices.length}) — ${formatCurrency(total)}`);
+    for (const inv of overdueInvoices) lines.push(`- ${inv.number} · ${formatCurrency(inv.total)} · venceu em ${formatDate(inv.dueDate)}`);
+    lines.push("");
+  }
+  if (pendingInvoices.length > 0) {
+    const total = pendingInvoices.reduce((s, i) => s + i.total, 0);
+    lines.push(`PENDENTE (${pendingInvoices.length}) — ${formatCurrency(total)}`);
+    for (const inv of pendingInvoices) lines.push(`- ${inv.number} · ${formatCurrency(inv.total)} · vence em ${formatDate(inv.dueDate)}`);
+    lines.push("");
+  }
+  if (paidInvoices.length > 0) {
+    const total = paidInvoices.reduce((s, i) => s + i.total, 0);
+    lines.push(`PAGO (${paidInvoices.length}) — ${formatCurrency(total)}`);
+    for (const inv of paidInvoices) lines.push(`- ${inv.number} · ${formatCurrency(inv.total)} · pago em ${inv.paidAt ? formatDate(inv.paidAt) : "—"}`);
+  }
+  if (overdueInvoices.length === 0 && pendingInvoices.length === 0 && paidInvoices.length === 0) {
+    lines.push("Nenhum recebimento registrado ainda.");
+  }
+  return lines.join("\n");
+}
 
 const frequencyLabel: Record<string, string> = {
   WEEKLY: "Semanal",
@@ -28,12 +76,18 @@ const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Se
 const MONTHS_BACK = 2;
 const MONTHS_AHEAD = 2;
 
-export default async function FinanceiroPage() {
+export default async function FinanceiroPage({
+  searchParams,
+}: {
+  searchParams: { client?: string };
+}) {
   try {
     await syncInvoiceStatuses();
   } catch (error) {
     console.error("syncInvoiceStatuses falhou no Financeiro:", error);
   }
+
+  const selectedClientId = searchParams.client || "";
 
   const [invoices, clients, scheduledClients, projectableClients] = await Promise.all([
     prisma.invoice.findMany({
@@ -42,7 +96,7 @@ export default async function FinanceiroPage() {
     }),
     prisma.client.findMany({
       orderBy: { name: "asc" },
-      select: { id: true, name: true, company: true },
+      select: { id: true, name: true, company: true, phone: true, logoUrl: true },
     }),
     prisma.client.findMany({
       where: { billingFrequency: { not: "NONE" }, nextBillingDate: { not: null } },
@@ -59,6 +113,10 @@ export default async function FinanceiroPage() {
       },
     }),
   ]);
+
+  const selectedClient = selectedClientId ? clients.find((c) => c.id === selectedClientId) || null : null;
+  const selectedClientInvoices = selectedClient ? invoices.filter((i) => i.clientId === selectedClient.id) : [];
+  const clientStatementText = selectedClient ? buildClientStatement(selectedClient, selectedClientInvoices) : "";
 
   const extraCharges = invoices.filter((i) => i.description !== "Recebimento programado");
   const recentlyPaid = invoices
@@ -117,6 +175,120 @@ export default async function FinanceiroPage() {
           <SendRemindersButton />
         </div>
 
+        {/* Client filter */}
+        <form method="get" className="flex items-center gap-2">
+          <select
+            name="client"
+            defaultValue={selectedClientId}
+            className="h-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm"
+          >
+            <option value="">Ver todos os clientes</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.company || c.name}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className="h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+            Ver pagamentos do cliente
+          </button>
+          {selectedClient && (
+            <Link
+              href="/financeiro"
+              className="h-9 px-3 flex items-center gap-1.5 rounded-md text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            >
+              <X className="h-3.5 w-3.5" />
+              Limpar filtro
+            </Link>
+          )}
+        </form>
+
+        {selectedClient && (
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-3">
+                  {selectedClient.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={selectedClient.logoUrl} alt={selectedClient.name} className="h-10 w-10 rounded-full object-cover border border-gray-100 dark:border-gray-800" />
+                  ) : null}
+                  <div>
+                    <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      {selectedClient.company || selectedClient.name}
+                    </CardTitle>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Resumo de pagamentos — pago, pendente e em atraso, tudo junto pra mandar pro cliente</p>
+                  </div>
+                </div>
+                <ClientStatementActions text={clientStatementText} phone={selectedClient.phone} />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                {(() => {
+                  const paidTotal = selectedClientInvoices.filter((i) => i.status === "PAID").reduce((s, i) => s + i.total, 0);
+                  const overdueTotal = selectedClientInvoices.filter((i) => i.status === "OVERDUE").reduce((s, i) => s + i.total, 0);
+                  const pendingTotal = selectedClientInvoices.filter((i) => i.status === "PENDING").reduce((s, i) => s + i.total, 0);
+                  return (
+                    <>
+                      <div className="p-3 rounded-lg bg-green-50 dark:bg-green-500/10">
+                        <p className="text-xs text-green-700 dark:text-green-400">Pago</p>
+                        <p className="text-lg font-bold text-green-700 dark:text-green-400">{formatCurrency(paidTotal)}</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-500/10">
+                        <p className="text-xs text-yellow-700 dark:text-yellow-400">Pendente</p>
+                        <p className="text-lg font-bold text-yellow-700 dark:text-yellow-400">{formatCurrency(pendingTotal)}</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-red-50 dark:bg-red-500/10">
+                        <p className="text-xs text-red-700 dark:text-red-400">Em atraso</p>
+                        <p className="text-lg font-bold text-red-700 dark:text-red-400">{formatCurrency(overdueTotal)}</p>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+              <div className="space-y-2">
+                {selectedClientInvoices.length === 0 ? (
+                  <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum recebimento registrado para esse cliente ainda.</p>
+                ) : (
+                  selectedClientInvoices.map((invoice) => (
+                    <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{invoice.number}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {invoice.description || "Recebimento"}
+                          {" · "}
+                          {invoice.status === "PAID" && invoice.paidAt
+                            ? `pago em ${formatDate(invoice.paidAt)}`
+                            : invoice.status === "OVERDUE"
+                              ? `venceu em ${formatDate(invoice.dueDate)}`
+                              : `vence em ${formatDate(invoice.dueDate)}`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.total)}</span>
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${invoiceStatusStyle[invoice.status]}`}>
+                          {invoiceStatusLabel[invoice.status]}
+                        </span>
+                        {invoice.status === "PAID" && (
+                          <Link href={`/recibo/${invoice.id}`}>
+                            <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs">
+                              <Receipt className="h-3.5 w-3.5" />
+                              Recibo
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {!selectedClient && (
+        <>
         {/* KPI Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="border-0 shadow-sm">
@@ -307,6 +479,8 @@ export default async function FinanceiroPage() {
             )}
           </CardContent>
         </Card>
+        </>
+        )}
       </div>
     </div>
   );
