@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Loader2, MapPin, Phone, Globe, Star, CheckCircle2, AlertCircle, Instagram, Linkedin } from "lucide-react";
+import { Search, Loader2, MapPin, Phone, Globe, Star, CheckCircle2, AlertCircle, Instagram, Linkedin, Facebook, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,9 +12,11 @@ import {
   type ProspectResult,
   type AisaProspectResult,
 } from "@/app/actions/prospeccao";
-import type { FiltroSite } from "@/lib/aisa-prospect";
+import { AISA_FONTE_LABELS, AISA_FONTES_PADRAO, type FiltroSite, type AisaFonte } from "@/lib/aisa-prospect";
 
 type Metodo = "aisa" | "places";
+
+const TODAS_FONTES = Object.keys(AISA_FONTE_LABELS) as AisaFonte[];
 
 export function ProspeccaoSearch() {
   const [metodo, setMetodo] = useState<Metodo>("aisa");
@@ -22,21 +24,30 @@ export function ProspeccaoSearch() {
   const [city, setCity] = useState("");
   const [bairro, setBairro] = useState("");
   const [filtroSite, setFiltroSite] = useState<FiltroSite>("todos");
+  const [fontes, setFontes] = useState<AisaFonte[]>(AISA_FONTES_PADRAO);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [placesResults, setPlacesResults] = useState<ProspectResult[] | null>(null);
   const [aisaResults, setAisaResults] = useState<AisaProspectResult[] | null>(null);
   const [imported, setImported] = useState(0);
 
+  function toggleFonte(fonte: AisaFonte) {
+    setFontes((prev) => (prev.includes(fonte) ? prev.filter((f) => f !== fonte) : [...prev, fonte]));
+  }
+
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
+    if (metodo === "aisa" && fontes.length === 0) {
+      setError("Selecione ao menos uma fonte de busca.");
+      return;
+    }
     setLoading(true);
     setError(null);
     setPlacesResults(null);
     setAisaResults(null);
     try {
       if (metodo === "aisa") {
-        const res = await searchAndImportLeadsAisa(category, city, bairro, filtroSite);
+        const res = await searchAndImportLeadsAisa(category, city, bairro, filtroSite, fontes);
         setAisaResults(res.results);
         setImported(res.imported);
       } else {
@@ -106,6 +117,31 @@ export function ProspeccaoSearch() {
                 />
               )}
             </div>
+            {metodo === "aisa" && (
+              <div className="space-y-1.5">
+                <span className="text-xs text-gray-500 dark:text-gray-400">O que buscar:</span>
+                <div className="flex flex-wrap gap-2">
+                  {TODAS_FONTES.map((fonte) => (
+                    <label
+                      key={fonte}
+                      className={`flex items-center gap-1.5 text-xs rounded-full px-2.5 py-1 cursor-pointer border ${
+                        fontes.includes(fonte)
+                          ? "border-orange-600 bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 font-medium"
+                          : "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={fontes.includes(fonte)}
+                        onChange={() => toggleFonte(fonte)}
+                        className="sr-only"
+                      />
+                      {AISA_FONTE_LABELS[fonte]}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
             {metodo === "aisa" && (
               <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                 <span>Filtrar por:</span>
@@ -194,6 +230,14 @@ export function ProspeccaoSearch() {
                         </p>
                       )
                     )}
+                    {r.email && (
+                      <a
+                        href={`mailto:${r.email}`}
+                        className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 hover:underline truncate"
+                      >
+                        <Mail className="h-3.5 w-3.5 shrink-0" /> {r.email}
+                      </a>
+                    )}
                     {r.instagramUrl && (
                       <a
                         href={r.instagramUrl}
@@ -202,6 +246,16 @@ export function ProspeccaoSearch() {
                         className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 hover:underline truncate"
                       >
                         <Instagram className="h-3.5 w-3.5 shrink-0" /> Instagram
+                      </a>
+                    )}
+                    {r.facebookUrl && (
+                      <a
+                        href={r.facebookUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 hover:underline truncate"
+                      >
+                        <Facebook className="h-3.5 w-3.5 shrink-0" /> Facebook
                       </a>
                     )}
                     {r.linkedinUrl && (
