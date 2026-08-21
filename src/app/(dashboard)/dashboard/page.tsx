@@ -39,7 +39,11 @@ const invoiceStatusMap: Record<string, { label: string; variant: "success" | "wa
 const monthLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 export default async function DashboardPage() {
-  await syncInvoiceStatuses();
+  try {
+    await syncInvoiceStatuses();
+  } catch (error) {
+    console.error("syncInvoiceStatuses falhou no Dashboard:", error);
+  }
 
   const now = new Date();
   const monthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));

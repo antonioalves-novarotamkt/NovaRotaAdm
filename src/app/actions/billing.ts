@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { BillingFrequency } from "@prisma/client";
 import { computeNextBillingDate } from "@/lib/billing";
-import { syncScheduledInvoices } from "@/lib/scheduled-invoices";
+import { syncScheduledInvoices, createInvoiceWithUniqueNumber } from "@/lib/scheduled-invoices";
 
 export async function updateClientBilling(formData: FormData) {
   const clientId = String(formData.get("clientId") || "").trim();
@@ -71,20 +71,15 @@ export async function registerScheduledPayment(formData: FormData) {
       data: { status: "PAID", paidAt },
     });
   } else {
-    const count = await prisma.invoice.count();
-    const number = `NF-${new Date().getFullYear()}-${String(count + 1).padStart(3, "0")}`;
-    await prisma.invoice.create({
-      data: {
-        number,
-        clientId,
-        amount: client.contractValue,
-        tax: 0,
-        total: client.contractValue,
-        status: "PAID",
-        dueDate: client.nextBillingDate,
-        paidAt,
-        description: "Recebimento programado",
-      },
+    await createInvoiceWithUniqueNumber({
+      clientId,
+      amount: client.contractValue,
+      tax: 0,
+      total: client.contractValue,
+      status: "PAID",
+      dueDate: client.nextBillingDate,
+      paidAt,
+      description: "Recebimento programado",
     });
   }
 

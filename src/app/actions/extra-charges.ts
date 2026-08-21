@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { createInvoiceWithUniqueNumber } from "@/lib/scheduled-invoices";
 
 export async function createExtraCharge(formData: FormData) {
   const clientId = String(formData.get("clientId") || "").trim();
@@ -14,21 +15,16 @@ export async function createExtraCharge(formData: FormData) {
   }
 
   const date = new Date(`${dateRaw}T00:00:00.000Z`);
-  const count = await prisma.invoice.count();
-  const number = `NF-${new Date().getFullYear()}-${String(count + 1).padStart(3, "0")}`;
 
-  await prisma.invoice.create({
-    data: {
-      number,
-      clientId,
-      amount,
-      tax: 0,
-      total: amount,
-      status: "PENDING",
-      issueDate: new Date(),
-      dueDate: date,
-      description,
-    },
+  await createInvoiceWithUniqueNumber({
+    clientId,
+    amount,
+    tax: 0,
+    total: amount,
+    status: "PENDING",
+    issueDate: new Date(),
+    dueDate: date,
+    description,
   });
 
   revalidatePath("/financeiro");
