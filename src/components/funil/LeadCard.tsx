@@ -13,7 +13,9 @@ import {
   MapPin,
   Globe,
   Instagram,
+  Facebook,
   Linkedin,
+  Mail,
 } from "lucide-react";
 import { updateLeadStage, deleteLead, convertLeadToClient } from "@/app/actions/leads";
 import { formatCurrency } from "@/lib/utils";
@@ -54,7 +56,9 @@ interface LeadLinks {
   googleMapsUrl: string | null;
   siteUrl: string | null;
   instagramUrl: string | null;
+  facebookUrl: string | null;
   linkedinUrl: string | null;
+  email: string | null;
 }
 
 // As notas de leads importados via prospecção guardam uma linha por
@@ -62,7 +66,14 @@ interface LeadLinks {
 // botões clicáveis em vez do texto corrido (que ficava com URLs enormes
 // quebrando o layout do card).
 function extractLeadLinks(notes: string | null): LeadLinks {
-  const result: LeadLinks = { googleMapsUrl: null, siteUrl: null, instagramUrl: null, linkedinUrl: null };
+  const result: LeadLinks = {
+    googleMapsUrl: null,
+    siteUrl: null,
+    instagramUrl: null,
+    facebookUrl: null,
+    linkedinUrl: null,
+    email: null,
+  };
   if (!notes) return result;
   const lines = notes
     .split(/\n|·/)
@@ -73,10 +84,15 @@ function extractLeadLinks(notes: string | null): LeadLinks {
     if (!match) continue;
     const key = match[1].trim().toLowerCase();
     const value = match[2].trim();
+    if (key === "email") {
+      result.email = value;
+      continue;
+    }
     if (!/^https?:\/\//i.test(value)) continue;
     if (key === "google maps") result.googleMapsUrl = value;
     else if (key === "site") result.siteUrl = value;
     else if (key === "instagram") result.instagramUrl = value;
+    else if (key === "facebook") result.facebookUrl = value;
     else if (key === "linkedin") result.linkedinUrl = value;
   }
   return result;
@@ -139,7 +155,9 @@ export function LeadCard({ lead }: { lead: LeadCardData }) {
   const nextStage = currentIdx >= 0 && currentIdx < 3 ? stageOrder[currentIdx + 1] : null;
   const waLink = lead.phone ? whatsappLink(lead.phone) : null;
   const links = extractLeadLinks(lead.notes);
-  const hasAnyLink = Boolean(links.googleMapsUrl || links.siteUrl || links.instagramUrl || links.linkedinUrl);
+  const hasAnyLink = Boolean(
+    links.googleMapsUrl || links.siteUrl || links.instagramUrl || links.facebookUrl || links.linkedinUrl || links.email
+  );
   const nameHref = links.googleMapsUrl || links.siteUrl;
 
   return (
@@ -229,6 +247,16 @@ export function LeadCard({ lead }: { lead: LeadCardData }) {
               <Instagram className="h-3 w-3" /> Instagram
             </a>
           )}
+          {links.facebookUrl && (
+            <a
+              href={links.facebookUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:underline"
+            >
+              <Facebook className="h-3 w-3" /> Facebook
+            </a>
+          )}
           {links.linkedinUrl && (
             <a
               href={links.linkedinUrl}
@@ -237,6 +265,14 @@ export function LeadCard({ lead }: { lead: LeadCardData }) {
               className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:underline"
             >
               <Linkedin className="h-3 w-3" /> LinkedIn
+            </a>
+          )}
+          {links.email && (
+            <a
+              href={`mailto:${links.email}`}
+              className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 hover:underline truncate"
+            >
+              <Mail className="h-3 w-3" /> {links.email}
             </a>
           )}
         </div>

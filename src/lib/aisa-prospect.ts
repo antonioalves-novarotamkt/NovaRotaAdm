@@ -24,6 +24,28 @@ const GENERIC_NAMES = new Set([
 
 export type FiltroSite = "todos" | "sem-site" | "com-site";
 
+export type AisaFonte = "maps" | "instagram" | "facebook" | "linkedin" | "telefone" | "email";
+
+export const AISA_FONTE_LABELS: Record<AisaFonte, string> = {
+  maps: "Google Maps",
+  instagram: "Instagram",
+  facebook: "Facebook",
+  linkedin: "LinkedIn",
+  telefone: "Telefone / WhatsApp",
+  email: "E-mail",
+};
+
+export const AISA_FONTES_PADRAO: AisaFonte[] = ["maps", "instagram", "linkedin", "telefone"];
+
+const FONTE_PLATAFORMAS: AisaFonte[] = ["maps", "instagram", "facebook", "linkedin"];
+const FONTE_CONTATOS: AisaFonte[] = ["telefone", "email"];
+const NOME_PLATAFORMA: Record<string, string> = {
+  maps: "GOOGLE MAPS",
+  instagram: "INSTAGRAM",
+  facebook: "FACEBOOK",
+  linkedin: "LINKEDIN",
+};
+
 export interface AisaLead {
   nome: string;
   categoria: string;
@@ -31,7 +53,9 @@ export interface AisaLead {
   telefone: string;
   whatsappLink: string;
   temWhatsapp: boolean;
+  email: string;
   instagramUrl: string;
+  facebookUrl: string;
   linkedinUrl: string;
   temSiteProprio: boolean;
   siteUrl: string;
@@ -47,39 +71,71 @@ interface BuscarLeadsParams {
   bairro?: string;
   quantidade?: number;
   filtroSite?: FiltroSite;
+  fontes?: AisaFonte[];
   apiKey: string;
 }
 
-function buildPrompt(nicho: string, cidade: string, bairro: string, quantidade: number): { system: string; user: string } {
+function buildPrompt(
+  nicho: string,
+  cidade: string,
+  bairro: string,
+  quantidade: number,
+  fontes: AisaFonte[]
+): { system: string; user: string } {
   const local = bairro ? `${bairro}, ${cidade}` : cidade;
   const pedirQuantidade = Math.min(Math.max(quantidade * 2, quantidade + 10), 40);
 
+  const plataformas = FONTE_PLATAFORMAS.filter((f) => fontes.includes(f));
+  const contatos = FONTE_CONTATOS.filter((f) => fontes.includes(f));
+
+  const listaFontes =
+    plataformas.length > 0
+      ? plataformas.map((f, i) => `${i + 1}. ${NOME_PLATAFORMA[f]}`).join(", ")
+      : "fontes públicas disponíveis na web (sites, diretórios, guias comerciais)";
+
+  const pedirContato: string[] = [];
+  if (contatos.includes("telefone")) pedirContato.push("telefone/celular/WhatsApp comercial com DDD");
+  if (contatos.includes("email")) pedirContato.push("e-mail de contato comercial");
+
   const system =
     "Você é um assistente sênior de inteligência comercial e prospecção de clientes locais no Brasil. " +
-    "Sua missão é pesquisar e cruzar dados de 3 fontes essenciais: 1. GOOGLE MAPS, 2. INSTAGRAM e 3. LINKEDIN.\n\n" +
-    "REQUISITO CRÍTICO DE CONTATO:\n" +
-    "- Sempre que identificar uma empresa, extraia o telefone/celular/WhatsApp comercial com DDD (do Maps, Instagram ou LinkedIn).\n" +
-    "- Extraia perfil do Instagram (@handle ou link) e o link divulgado na bio/site.\n" +
-    "- Classifique 'tem_site_proprio: false' se a empresa utilizar apenas Instagram, LinkedIn, Linktree, Bio.site, guias ou diretórios; " +
+    `Sua missão é pesquisar e cruzar dados das seguintes fontes: ${listaFontes}.\n\n` +
+    (pedirContato.length > 0
+      ? `REQUISITO CRÍTICO DE CONTATO:\n- Sempre que identificar uma empresa, extraia ${pedirContato.join(" e ")}.\n\n`
+      : "") +
+    (plataformas.includes("instagram") ? "- Extraia perfil do Instagram (@handle ou link) e o link divulgado na bio/site.\n" : "") +
+    (plataformas.includes("facebook") ? "- Extraia o link da página do Facebook, se existir.\n" : "") +
+    (plataformas.includes("linkedin") ? "- Extraia o link da página do LinkedIn, se existir.\n" : "") +
+    "- Classifique 'tem_site_proprio: false' se a empresa utilizar apenas Instagram, Facebook, LinkedIn, Linktree, Bio.site, guias ou diretórios; " +
     "e 'tem_site_proprio: true' SOMENTE se possuir domínio web próprio exclusivo.\n\n" +
     "Responda estruturando os estabelecimentos encontrados no formato de array JSON.";
 
+  const campos: Array<[string, string, boolean]> = [
+    ["nome", "Nome da Empresa", true],
+    ["categoria", nicho, true],
+    [ "endereco", `Endereço em ${cidade}`, true],
+  ];
+  if (contatos.includes("telefone")) campos.push(["telefone_whatsapp", "Telefone com DDD", true]);
+  if (contatos.includes("email")) campos.push(["email", "email@empresa.com", true]);
+  if (plataformas.includes("instagram")) campos.push(["instagram_url", "https://instagram.com/...", true]);
+  if (plataformas.includes("facebook")) campos.push(["facebook_url", "https://facebook.com/...", true]);
+  if (plataformas.includes("linkedin")) campos.push(["linkedin_url", "https://linkedin.com/...", true]);
+  campos.push(["site_url", "https://...", true]);
+  campos.push(["tem_site_proprio", "true", false]);
+  campos.push(["nota", "4.8", false]);
+  campos.push(["numero_avaliacoes", "50", false]);
+  if (plataformas.includes("maps")) campos.push(["google_maps_url", "", true]);
+
+  const jsonBody = campos.map(([chave, valor, isString]) => `    "${chave}": ${isString ? `"${valor}"` : valor}`).join(",\n");
+
+  const infoDesejada = [...pedirContato, "endereço completo com bairro", "link do site"];
+  if (plataformas.length > 0) infoDesejada.push(`links das fontes selecionadas (${plataformas.map((f) => NOME_PLATAFORMA[f]).join(", ")})`);
+
   const user =
     `Pesquise e liste de ${quantidade} a ${pedirQuantidade} empresas, corretoras, consultorias, escritórios e estabelecimentos comerciais de ${nicho} em ${local}.\n` +
-    `Para cada empresa encontrada na região de ${cidade}, inclua telefone/celular/WhatsApp comercial com DDD, endereço completo com bairro, link do site e redes sociais.\n\n` +
+    `Para cada empresa encontrada na região de ${cidade}, inclua ${infoDesejada.join(", ")}.\n\n` +
     "Estruture os estabelecimentos encontrados no seguinte formato JSON:\n" +
-    "```json\n[\n  {\n" +
-    '    "nome": "Nome da Empresa",\n' +
-    `    "categoria": "${nicho}",\n` +
-    `    "endereco": "Endereço em ${cidade}",\n` +
-    '    "telefone_whatsapp": "Telefone com DDD",\n' +
-    '    "instagram_url": "https://instagram.com/...",\n' +
-    '    "linkedin_url": "https://linkedin.com/...",\n' +
-    '    "site_url": "https://...",\n' +
-    '    "tem_site_proprio": true,\n' +
-    '    "nota": 4.8,\n' +
-    '    "numero_avaliacoes": 50,\n' +
-    '    "google_maps_url": ""\n  }\n]\n```';
+    `\`\`\`json\n[\n  {\n${jsonBody}\n  }\n]\n\`\`\``;
 
   return { system, user };
 }
@@ -312,7 +368,9 @@ function extractPhonesFromText(text: string): string[] {
 function dedupKey(lead: AisaLead): string {
   if (lead.instagramUrl) return `ig:${lead.instagramUrl.toLowerCase().replace(/\/$/, "")}`;
   if (lead.linkedinUrl) return `li:${lead.linkedinUrl.toLowerCase().replace(/\/$/, "")}`;
+  if (lead.facebookUrl) return `fb:${lead.facebookUrl.toLowerCase().replace(/\/$/, "")}`;
   if (lead.telefone) return `tel:${lead.telefone.replace(/\D/g, "")}`;
+  if (lead.email) return `email:${lead.email.toLowerCase()}`;
   return `ne:${lead.nome.toLowerCase()}:${lead.endereco.toLowerCase()}`;
 }
 
@@ -341,6 +399,13 @@ async function normalizeLead(item: Record<string, unknown>, apiKey: string): Pro
   if (rawLi && !rawLi.startsWith("http") && !rawLi.includes("/")) {
     rawLi = `https://www.linkedin.com/company/${rawLi.replace(/^@/, "")}`;
   }
+
+  let rawFb = String(item.facebook_url || item.facebook || item.perfil_facebook || "").trim();
+  if (rawFb && !rawFb.startsWith("http") && !rawFb.includes("/")) {
+    rawFb = `https://facebook.com/${rawFb.replace(/^@/, "")}`;
+  }
+
+  const email = String(item.email || item.email_contato || item.contato_email || "").trim();
 
   let rawSiteUrl = String(item.site_url || item.site || item.website || "").trim();
   const temSiteFlag = item.tem_site_proprio ?? item.tem_site;
@@ -371,7 +436,9 @@ async function normalizeLead(item: Record<string, unknown>, apiKey: string): Pro
     telefone: telefoneRaw,
     whatsappLink,
     temWhatsapp: Boolean(whatsappLink),
+    email,
     instagramUrl: rawIg,
+    facebookUrl: rawFb,
     linkedinUrl: rawLi,
     temSiteProprio,
     siteUrl,
@@ -388,14 +455,18 @@ export async function searchAisaLeads({
   bairro = "",
   quantidade = 20,
   filtroSite = "todos",
+  fontes = AISA_FONTES_PADRAO,
   apiKey,
 }: BuscarLeadsParams): Promise<AisaLead[]> {
   if (!apiKey) {
     throw new Error("AISA_API_KEY não configurada. Adicione a chave da AIsa nas variáveis de ambiente.");
   }
+  if (!fontes.length) {
+    throw new Error("Selecione ao menos uma fonte de busca.");
+  }
 
   const quantidadeFinal = Math.min(Math.max(quantidade, 1), 40);
-  const { system, user } = buildPrompt(nicho, cidade, bairro, quantidadeFinal);
+  const { system, user } = buildPrompt(nicho, cidade, bairro, quantidadeFinal, fontes);
   const content = await callAisa("sonar-pro", system, user, apiKey);
   const rawItems = extractJsonArray(content);
 
@@ -409,10 +480,12 @@ export async function searchAisaLeads({
     (item) => item.nome && !isGenericName(String(item.nome), String(item.categoria || ""), nicho)
   );
 
-  for (const item of comNomeReal) {
-    if (!item.google_maps_url) {
-      const query = `${item.nome || ""} ${item.endereco || ""} ${cidade}`.trim();
-      item.google_maps_url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+  if (fontes.includes("maps")) {
+    for (const item of comNomeReal) {
+      if (!item.google_maps_url) {
+        const query = `${item.nome || ""} ${item.endereco || ""} ${cidade}`.trim();
+        item.google_maps_url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+      }
     }
   }
 

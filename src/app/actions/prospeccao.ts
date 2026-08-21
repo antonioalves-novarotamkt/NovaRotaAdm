@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { searchPlaces, type PlaceResult } from "@/lib/google-places";
-import { searchAisaLeads, type AisaLead, type FiltroSite } from "@/lib/aisa-prospect";
+import { searchAisaLeads, type AisaLead, type FiltroSite, type AisaFonte, AISA_FONTES_PADRAO } from "@/lib/aisa-prospect";
 
 export interface ProspectResult extends PlaceResult {
   alreadyLead: boolean;
@@ -75,7 +75,9 @@ function buildAisaNotes(lead: AisaLead): string {
   if (lead.categoria) parts.push(`Categoria: ${lead.categoria}`);
   if (lead.endereco) parts.push(`Endereço: ${lead.endereco}`);
   parts.push(lead.temSiteProprio ? `Site: ${lead.siteUrl}` : `Site: ${lead.tipoSite}`);
+  if (lead.email) parts.push(`Email: ${lead.email}`);
   if (lead.instagramUrl) parts.push(`Instagram: ${lead.instagramUrl}`);
+  if (lead.facebookUrl) parts.push(`Facebook: ${lead.facebookUrl}`);
   if (lead.linkedinUrl) parts.push(`LinkedIn: ${lead.linkedinUrl}`);
   if (lead.nota != null) {
     parts.push(`Nota Maps: ${lead.nota}${lead.numeroAvaliacoes != null ? ` (${lead.numeroAvaliacoes} avaliações)` : ""}`);
@@ -88,13 +90,17 @@ export async function searchAndImportLeadsAisa(
   nicho: string,
   cidade: string,
   bairro: string,
-  filtroSite: FiltroSite
+  filtroSite: FiltroSite,
+  fontes: AisaFonte[] = AISA_FONTES_PADRAO
 ) {
   const session = await getServerSession(authOptions);
   if (!session) throw new Error("Não autenticado.");
 
   if (!nicho.trim() || !cidade.trim()) {
     throw new Error("Nicho e cidade são obrigatórios.");
+  }
+  if (!fontes.length) {
+    throw new Error("Selecione ao menos uma fonte de busca.");
   }
 
   const apiKey = process.env.AISA_API_KEY;
@@ -109,6 +115,7 @@ export async function searchAndImportLeadsAisa(
     cidade: cidade.trim(),
     bairro: bairro.trim(),
     filtroSite,
+    fontes,
     apiKey,
   });
 
