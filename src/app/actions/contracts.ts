@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import type { ContractStatus, BillingFrequency } from "@prisma/client";
+import { computeNextBillingDate } from "@/lib/billing";
+import { syncScheduledInvoices } from "@/lib/scheduled-invoices";
 
 function readBillingFields(formData: FormData) {
   const billingFrequency = String(formData.get("billingFrequency") || "MONTHLY") as BillingFrequency;
@@ -17,6 +19,59 @@ function readBillingFields(formData: FormData) {
     billingDayOfMonth1: billingDayOfMonth1Raw ? Number(billingDayOfMonth1Raw) : null,
     billingDayOfMonth2: billingDayOfMonth2Raw ? Number(billingDayOfMonth2Raw) : null,
   };
+}
+
+// O dia/frequência de cobrança do contrato so' controlava o texto do contrato —
+// quem realmente gera as faturas e' a configuração de cobrança do Cliente, editada
+// em uma tela separada. Sem essa sincronização, mudar o vencimento no contrato não
+// tinha efeito nenhum na fatura de verdade, o que confundia (dia configurado no
+// contrato != dia que aparecia na fatura).
+async function syncClientBillingFromContract(
+  clientId: string,
+  value: number,
+  billing: ReturnType<typeof readBillingFields>
+) {
+  const nextBillingDate = computeNextBillingDate({
+    frequency: billing.billingFrequency,
+    dayOfWeek: billing.billingDayOfWeek,
+    dayOfMonth1: billing.billingDayOfMonth1,
+    dayOfMonth2: billing.billingDayOfMonth2,
+  });
+
+  await prisma.client.update({
+    where: { id: clientId },
+    data: {
+      billingFrequency: billing.billingFrequency,
+      billingDayOfWeek: billing.billingDayOfWeek,
+      billingDayOfMonth1: billing.billingDayOfMonth1,
+      billingDayOfMonth2: billing.billingDayOfMonth2,
+      nextBillingDate,
+      contractValue: value,
+    },
+  });
+
+  // Uma fatura programada (ainda não paga) que aponta pro vencimento antigo fica
+  // órfã quando o dia de cobrança muda — corrige a data dela em vez de deixar
+  // duplicar com a nova fatura que syncScheduledInvoices vai gerar.
+  if (nextBillingDate) {
+    const stalePending = await prisma.invoice.findFirst({
+      where: {
+        clientId,
+        status: { in: ["PENDING", "OVERDUE"] },
+        description: "Recebimento programado",
+        dueDate: { not: nextBillingDate },
+      },
+      orderBy: { dueDate: "desc" },
+    });
+    if (stalePending) {
+      await prisma.invoice.update({
+        where: { id: stalePending.id },
+        data: { dueDate: nextBillingDate, amount: value, total: value, status: "PENDING" },
+      });
+    }
+  }
+
+  await syncScheduledInvoices();
 }
 
 export async function createContract(formData: FormData) {
@@ -43,6 +98,8 @@ export async function createContract(formData: FormData) {
     throw new Error("Título, cliente e data de início são obrigatórios.");
   }
 
+  const billingFields = readBillingFields(formData);
+
   await prisma.contract.create({
     data: {
       title,
@@ -53,7 +110,7 @@ export async function createContract(formData: FormData) {
       status,
       notes: notes || null,
       content: content || null,
-      ...readBillingFields(formData),
+      ...billingFields,
       includesSocialMedia,
       postsPerWeek: postsPerWeekRaw ? Number(postsPerWeekRaw) : null,
       storiesPerWeek: storiesPerWeekRaw ? Number(storiesPerWeekRaw) : null,
@@ -66,7 +123,11 @@ export async function createContract(formData: FormData) {
     },
   });
 
+  await syncClientBillingFromContract(clientId, value, billingFields);
+
   revalidatePath("/contratos");
+  revalidatePath("/financeiro");
+  revalidatePath(`/clientes/${clientId}`);
   redirect("/contratos");
 }
 
@@ -95,7 +156,8 @@ export async function updateContract(formData: FormData) {
     throw new Error("Título e data de início são obrigatórios.");
   }
 
-  const existing = await prisma.contract.findUnique({ where: { id }, select: { value: true } });
+  const existing = await prisma.contract.findUnique({ where: { id }, select: { value: true, clientId: true } });
+  const billingFields = readBillingFields(formData);
 
   await prisma.contract.update({
     where: { id },
@@ -107,7 +169,7 @@ export async function updateContract(formData: FormData) {
       status,
       notes: notes || null,
       content: content || null,
-      ...readBillingFields(formData),
+      ...billingFields,
       includesSocialMedia,
       postsPerWeek: postsPerWeekRaw ? Number(postsPerWeekRaw) : null,
       storiesPerWeek: storiesPerWeekRaw ? Number(storiesPerWeekRaw) : null,
@@ -131,6 +193,12 @@ export async function updateContract(formData: FormData) {
     });
   }
 
+  if (existing) {
+    await syncClientBillingFromContract(existing.clientId, value, billingFields);
+    revalidatePath(`/clientes/${existing.clientId}`);
+  }
+
   revalidatePath("/contratos");
   revalidatePath(`/contratos/${id}`);
+  revalidatePath("/financeiro");
 }

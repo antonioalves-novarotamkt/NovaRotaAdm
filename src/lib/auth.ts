@@ -59,15 +59,30 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           email: user.email,
           role: user.role,
+          image: user.image,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
+        token.image = (user as any).image;
+      }
+      // Refeito sob demanda (chamado pelo useSession().update() no client
+      // depois de trocar a foto) — sem isso o avatar so' atualizaria no
+      // proximo login, ja que a sessao JWT nao revalida sozinha a cada request.
+      if (trigger === "update" && token.id) {
+        const fresh = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { name: true, image: true },
+        });
+        if (fresh) {
+          token.name = fresh.name;
+          token.image = fresh.image;
+        }
       }
       return token;
     },
@@ -75,6 +90,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        (session.user as any).image = token.image;
       }
       return session;
     },

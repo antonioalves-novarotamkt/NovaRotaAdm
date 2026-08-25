@@ -47,6 +47,7 @@ export function Sidebar({ logoUrl }: { logoUrl?: string | null }) {
   const { open, close } = useSidebar();
   const userName = session?.user?.name || "Usuário";
   const userEmail = session?.user?.email || "";
+  const userImage = (session?.user as { image?: string | null } | undefined)?.image;
 
   return (
     <>
@@ -103,9 +104,14 @@ export function Sidebar({ logoUrl }: { logoUrl?: string | null }) {
         {/* Bottom user section */}
         <div className="px-4 py-4 border-t border-white/10">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-              {getInitials(userName)}
-            </div>
+            {userImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={userImage} alt={userName} className="h-8 w-8 rounded-full object-cover shrink-0" />
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                {getInitials(userName)}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-white text-xs font-medium truncate">{userName}</p>
               <p className="text-[#64748b] text-xs truncate">{userEmail}</p>

@@ -7,19 +7,29 @@ import { Badge } from "@/components/ui/badge";
 import { User, Bell, Shield, Palette, Users } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getInitials } from "@/lib/utils";
 import { NewUserDialog } from "@/components/settings/NewUserDialog";
 import { UserRow } from "@/components/settings/UserRow";
 import { LogoUpload } from "@/components/settings/LogoUpload";
+import { UserAvatarUpload } from "@/components/settings/UserAvatarUpload";
+import { ChangePasswordForm } from "@/components/settings/ChangePasswordForm";
 import { getAgencySettings, updateAgencyLogo, updateAgencyAppIcon, updateAgencyName } from "@/app/actions/agency";
+import { updateOwnProfile } from "@/app/actions/users";
 
 export const dynamic = "force-dynamic";
+
+const roleLabel: Record<string, { label: string; variant: "info" | "success" | "gray" }> = {
+  ADMIN: { label: "Administrador", variant: "success" },
+  MANAGER: { label: "Gerente", variant: "info" },
+  USER: { label: "Usuário", variant: "gray" },
+};
 
 export default async function ConfiguracoesPage() {
   const session = await getServerSession(authOptions);
   const currentUserId = (session?.user as { id?: string } | undefined)?.id;
   const isAdmin = (session?.user as { role?: string } | undefined)?.role === "ADMIN";
 
-  const [users, agency] = await Promise.all([
+  const [users, agency, currentUser] = await Promise.all([
     isAdmin
       ? prisma.user.findMany({
           orderBy: { createdAt: "asc" },
@@ -27,7 +37,15 @@ export default async function ConfiguracoesPage() {
         })
       : Promise.resolve([]),
     getAgencySettings(),
+    currentUserId
+      ? prisma.user.findUnique({
+          where: { id: currentUserId },
+          select: { name: true, email: true, image: true, role: true },
+        })
+      : Promise.resolve(null),
   ]);
+
+  const currentUserBadge = roleLabel[currentUser?.role || "USER"];
 
   return (
     <div>
@@ -43,37 +61,29 @@ export default async function ConfiguracoesPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-orange-600 flex items-center justify-center text-white text-xl font-bold">
-                AD
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-gray-100">Admin User</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">admin@novarota.com</p>
-                <Badge variant="info" className="mt-1">Administrador</Badge>
-              </div>
-              <Button variant="outline" size="sm" className="ml-auto">Alterar Foto</Button>
+              <UserAvatarUpload
+                currentUrl={currentUser?.image}
+                initials={getInitials(currentUser?.name || currentUser?.email || "?")}
+              />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">{currentUser?.name || "—"}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{currentUser?.email}</p>
+              <Badge variant={currentUserBadge.variant} className="mt-1">{currentUserBadge.label}</Badge>
+            </div>
+            <form action={updateOwnProfile} className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Nome Completo</label>
-                <Input defaultValue="Admin User" className="border-gray-200 dark:border-gray-700" />
+                <Input name="name" defaultValue={currentUser?.name || ""} required className="border-gray-200 dark:border-gray-700" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Email</label>
-                <Input defaultValue="admin@novarota.com" type="email" className="border-gray-200 dark:border-gray-700" />
+                <Input defaultValue={currentUser?.email || ""} type="email" disabled className="border-gray-200 dark:border-gray-700 opacity-60" />
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Telefone</label>
-                <Input placeholder="(11) 99999-9999" className="border-gray-200 dark:border-gray-700" />
+              <div className="col-span-2 flex justify-end">
+                <Button type="submit" size="sm" className="bg-orange-600 hover:bg-orange-700">Salvar Alterações</Button>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Cargo</label>
-                <Input defaultValue="Gerente de Agência" className="border-gray-200 dark:border-gray-700" />
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <Button size="sm" className="bg-orange-600 hover:bg-orange-700">Salvar Alterações</Button>
-            </div>
+            </form>
           </CardContent>
         </Card>
 
@@ -185,25 +195,8 @@ export default async function ConfiguracoesPage() {
               <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Segurança</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Senha Atual</label>
-                <Input type="password" placeholder="••••••••" className="border-gray-200 dark:border-gray-700" />
-              </div>
-              <div />
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Nova Senha</label>
-                <Input type="password" placeholder="••••••••" className="border-gray-200 dark:border-gray-700" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Confirmar Senha</label>
-                <Input type="password" placeholder="••••••••" className="border-gray-200 dark:border-gray-700" />
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <Button size="sm" variant="outline">Alterar Senha</Button>
-            </div>
+          <CardContent>
+            <ChangePasswordForm />
           </CardContent>
         </Card>
       </div>
