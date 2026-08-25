@@ -33,6 +33,7 @@ const contractStatusMap: Record<string, { label: string; variant: "success" | "w
 
 const invoiceStatusMap: Record<string, { label: string; variant: "success" | "warning" | "info" | "danger" | "purple" | "gray" }> = {
   PAID: { label: "Pago", variant: "success" },
+  PARTIALLY_PAID: { label: "Parcial", variant: "info" },
   PENDING: { label: "Pendente", variant: "warning" },
   OVERDUE: { label: "Atrasado", variant: "danger" },
   DRAFT: { label: "Rascunho", variant: "gray" },

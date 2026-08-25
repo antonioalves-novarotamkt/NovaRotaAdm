@@ -52,7 +52,9 @@ async function syncClientBillingFromContract(
 
   // Uma fatura programada (ainda não paga) que aponta pro vencimento antigo fica
   // órfã quando o dia de cobrança muda — corrige a data dela em vez de deixar
-  // duplicar com a nova fatura que syncScheduledInvoices vai gerar.
+  // duplicar com a nova fatura que syncScheduledInvoices vai gerar. Não inclui
+  // PARTIALLY_PAID de propósito: sobrescrever amount/total aqui corromperia a
+  // relação com os pagamentos parciais já registrados nela.
   if (nextBillingDate) {
     const stalePending = await prisma.invoice.findFirst({
       where: {

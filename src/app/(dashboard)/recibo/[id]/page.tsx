@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 const statusLabel: Record<string, string> = {
   PAID: "Pago",
+  PARTIALLY_PAID: "Parcial",
   PENDING: "Pendente",
   OVERDUE: "Atrasado",
   DRAFT: "Rascunho",

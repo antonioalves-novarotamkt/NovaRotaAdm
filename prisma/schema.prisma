@@ -528,6 +528,7 @@ enum Priority {
 enum InvoiceStatus {
   DRAFT
   PENDING
+  PARTIALLY_PAID
   PAID
   OVERDUE
   CANCELLED

@@ -72,7 +72,7 @@ export async function syncScheduledInvoices() {
       where: {
         clientId: client.id,
         dueDate: client.nextBillingDate,
-        status: { in: ["PENDING", "OVERDUE"] },
+        status: { in: ["PENDING", "OVERDUE", "PARTIALLY_PAID"] },
       },
     });
     if (existing) continue;
