@@ -33,6 +33,26 @@ const invoiceStatusLabel: Record<string, string> = {
   CANCELLED: "Cancelado",
 };
 
+const monthLabelsFull = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+
+function groupInvoicesByMonth(invoicesList: Invoice[]): { key: string; label: string; invoices: Invoice[] }[] {
+  const groups = new Map<string, Invoice[]>();
+  for (const inv of invoicesList) {
+    const key = `${inv.dueDate.getFullYear()}-${String(inv.dueDate.getMonth() + 1).padStart(2, "0")}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(inv);
+  }
+  return Array.from(groups.entries())
+    .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+    .map(([key, invs]) => {
+      const [year, month] = key.split("-").map(Number);
+      return { key, label: `${monthLabelsFull[month - 1]} de ${year}`, invoices: invs };
+    });
+}
+
 function buildClientStatement(client: { name: string; company: string | null }, clientInvoices: Invoice[]): string {
   const overdueInvoices = clientInvoices.filter((i) => i.status === "OVERDUE");
   const pendingInvoices = clientInvoices.filter((i) => i.status === "PENDING");
@@ -164,6 +184,34 @@ export default async function FinanceiroPage({
     return { month: label, receita: null, projetado };
   });
 
+  // Matriz cliente x mes — mesma janela de tempo do grafico, pra ver rapido o
+  // que cada cliente pagou/deve em cada mes sem precisar filtrar um por um.
+  const matrixMonths = Array.from({ length: monthsCount }).map((_, idx) => new Date(startMonth.getFullYear(), startMonth.getMonth() + idx, 1));
+  const matrixClientIds = Array.from(
+    new Set(
+      invoices
+        .filter((i) => matrixMonths.some((m) => i.dueDate.getFullYear() === m.getFullYear() && i.dueDate.getMonth() === m.getMonth()))
+        .map((i) => i.clientId)
+    )
+  );
+  const matrixClients = matrixClientIds
+    .map((id) => invoices.find((i) => i.clientId === id)!.client)
+    .sort((a, b) => (a.company || a.name).localeCompare(b.company || b.name));
+
+  function matrixCell(clientId: string, month: Date) {
+    const cellInvoices = invoices.filter(
+      (i) => i.clientId === clientId && i.dueDate.getFullYear() === month.getFullYear() && i.dueDate.getMonth() === month.getMonth()
+    );
+    if (cellInvoices.length === 0) return null;
+    const cellTotal = cellInvoices.reduce((s, i) => s + i.total, 0);
+    const status = cellInvoices.some((i) => i.status === "OVERDUE")
+      ? "OVERDUE"
+      : cellInvoices.some((i) => i.status === "PENDING")
+        ? "PENDING"
+        : "PAID";
+    return { total: cellTotal, status };
+  }
+
   return (
     <div>
       <Header title="Financeiro" subtitle="Gerencie faturamento, cobranças e relatórios financeiros" />
@@ -247,37 +295,44 @@ export default async function FinanceiroPage({
                 })()}
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-4">
                 {selectedClientInvoices.length === 0 ? (
                   <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum recebimento registrado para esse cliente ainda.</p>
                 ) : (
-                  selectedClientInvoices.map((invoice) => (
-                    <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{invoice.number}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {invoice.description || "Recebimento"}
-                          {" · "}
-                          {invoice.status === "PAID" && invoice.paidAt
-                            ? `pago em ${formatDate(invoice.paidAt)}`
-                            : invoice.status === "OVERDUE"
-                              ? `venceu em ${formatDate(invoice.dueDate)}`
-                              : `vence em ${formatDate(invoice.dueDate)}`}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.total)}</span>
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${invoiceStatusStyle[invoice.status]}`}>
-                          {invoiceStatusLabel[invoice.status]}
-                        </span>
-                        {invoice.status === "PAID" && (
-                          <Link href={`/recibo/${invoice.id}`}>
-                            <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs">
-                              <Receipt className="h-3.5 w-3.5" />
-                              Recibo
-                            </Button>
-                          </Link>
-                        )}
+                  groupInvoicesByMonth(selectedClientInvoices).map((group) => (
+                    <div key={group.key}>
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 capitalize">{group.label}</p>
+                      <div className="space-y-2">
+                        {group.invoices.map((invoice) => (
+                          <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{invoice.number}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {invoice.description || "Recebimento"}
+                                {" · "}
+                                {invoice.status === "PAID" && invoice.paidAt
+                                  ? `pago em ${formatDate(invoice.paidAt)}`
+                                  : invoice.status === "OVERDUE"
+                                    ? `venceu em ${formatDate(invoice.dueDate)}`
+                                    : `vence em ${formatDate(invoice.dueDate)}`}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.total)}</span>
+                              <span className={`text-xs font-medium px-2 py-1 rounded-full ${invoiceStatusStyle[invoice.status]}`}>
+                                {invoiceStatusLabel[invoice.status]}
+                              </span>
+                              {invoice.status === "PAID" && (
+                                <Link href={`/recibo/${invoice.id}`}>
+                                  <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs">
+                                    <Receipt className="h-3.5 w-3.5" />
+                                    Recibo
+                                  </Button>
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))
@@ -343,6 +398,58 @@ export default async function FinanceiroPage({
             </CardContent>
           </Card>
         </div>
+
+        {/* Client x Month matrix */}
+        {matrixClients.length > 0 && (
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Recebimentos por Cliente e Mês</CardTitle>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Clique em um cliente para ver o extrato completo</p>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr>
+                      <th className="text-left font-medium text-gray-500 dark:text-gray-400 pb-2 pr-3 sticky left-0 bg-white dark:bg-gray-900">Cliente</th>
+                      {matrixMonths.map((m) => (
+                        <th key={m.getTime()} className="text-right font-medium text-gray-500 dark:text-gray-400 pb-2 px-2 whitespace-nowrap capitalize">
+                          {monthLabels[m.getMonth()]}
+                          {spansMultipleYears ? `/${String(m.getFullYear()).slice(2)}` : ""}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {matrixClients.map((client) => (
+                      <tr key={client.id} className="border-t border-gray-100 dark:border-gray-800">
+                        <td className="py-2 pr-3 sticky left-0 bg-white dark:bg-gray-900">
+                          <Link href={`/financeiro?client=${client.id}`} className="text-gray-900 dark:text-gray-100 font-medium hover:text-orange-600 dark:hover:text-orange-400 hover:underline whitespace-nowrap">
+                            {client.company || client.name}
+                          </Link>
+                        </td>
+                        {matrixMonths.map((m) => {
+                          const cell = matrixCell(client.id, m);
+                          return (
+                            <td key={m.getTime()} className="py-2 px-2 text-right whitespace-nowrap">
+                              {cell ? (
+                                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${invoiceStatusStyle[cell.status]}`}>
+                                  {formatCurrency(cell.total)}
+                                </span>
+                              ) : (
+                                <span className="text-gray-300 dark:text-gray-700">—</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Chart */}
         <Card className="border-0 shadow-sm">

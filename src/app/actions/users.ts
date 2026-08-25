@@ -47,6 +47,60 @@ export async function updateUserRole(formData: FormData) {
   revalidatePath("/configuracoes");
 }
 
+export async function updateOwnProfile(formData: FormData) {
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) throw new Error("Não autenticado.");
+
+  const name = String(formData.get("name") || "").trim();
+  if (!name) throw new Error("Nome é obrigatório.");
+
+  await prisma.user.update({ where: { id: userId }, data: { name } });
+
+  revalidatePath("/configuracoes");
+}
+
+export async function updateOwnAvatar(imageUrl: string) {
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) throw new Error("Não autenticado.");
+  if (!imageUrl) throw new Error("Imagem é obrigatória.");
+
+  await prisma.user.update({ where: { id: userId }, data: { image: imageUrl } });
+
+  revalidatePath("/configuracoes");
+}
+
+export async function updateOwnPassword(formData: FormData) {
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) throw new Error("Não autenticado.");
+
+  const currentPassword = String(formData.get("currentPassword") || "");
+  const newPassword = String(formData.get("newPassword") || "");
+  const confirmPassword = String(formData.get("confirmPassword") || "");
+
+  if (newPassword.length < 6) {
+    throw new Error("A nova senha deve ter pelo menos 6 caracteres.");
+  }
+  if (newPassword !== confirmPassword) {
+    throw new Error("As senhas não coincidem.");
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user?.password) {
+    throw new Error("Usuário sem senha configurada.");
+  }
+
+  const isValid = await bcrypt.compare(currentPassword, user.password);
+  if (!isValid) {
+    throw new Error("Senha atual incorreta.");
+  }
+
+  const hash = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({ where: { id: userId }, data: { password: hash } });
+}
+
 export async function deleteUser(formData: FormData) {
   await requireAdmin();
 

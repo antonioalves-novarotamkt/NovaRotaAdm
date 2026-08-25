@@ -1,9 +1,11 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import { Bell, Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSidebar } from "@/components/layout/SidebarContext";
+import { getInitials } from "@/lib/utils";
 
 interface HeaderProps {
   title: string;
@@ -12,6 +14,9 @@ interface HeaderProps {
 
 export function Header({ title, subtitle }: HeaderProps) {
   const { toggle } = useSidebar();
+  const { data: session } = useSession();
+  const userName = session?.user?.name || "Usuário";
+  const userImage = (session?.user as { image?: string | null } | undefined)?.image;
 
   return (
     <header className="h-16 border-b dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20">
@@ -40,9 +45,14 @@ export function Header({ title, subtitle }: HeaderProps) {
           <Bell className="h-4 w-4 text-gray-600 dark:text-gray-300" />
           <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500" />
         </Button>
-        <div className="h-8 w-8 rounded-full bg-orange-600 flex items-center justify-center text-white text-xs font-bold cursor-pointer">
-          AD
-        </div>
+        {userImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={userImage} alt={userName} className="h-8 w-8 rounded-full object-cover cursor-pointer" />
+        ) : (
+          <div className="h-8 w-8 rounded-full bg-orange-600 flex items-center justify-center text-white text-xs font-bold cursor-pointer">
+            {getInitials(userName)}
+          </div>
+        )}
       </div>
     </header>
   );
