@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { ArrowLeft, Mail, Phone, Globe, MapPin, Building2, Calendar, DollarSign, FileText, Users2, ClipboardList, Image as ImageIcon, LineChart, Package } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Globe, MapPin, Building2, Calendar, DollarSign, FileText, Package } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,37 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate, getInitials } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
-import { NewSocialAccountDialog } from "@/components/clients/NewSocialAccountDialog";
-import { RefreshFollowersButton } from "@/components/clients/RefreshFollowersButton";
-import { NewActivityDialog } from "@/components/clients/NewActivityDialog";
 import { ClientLogoUpload } from "@/components/clients/ClientLogoUpload";
 import { ClientBillingForm } from "@/components/clients/ClientBillingForm";
 import { EditClientDialog } from "@/components/clients/EditClientDialog";
-
-const platformLabel: Record<string, string> = {
-  INSTAGRAM: "Instagram",
-  FACEBOOK: "Facebook",
-  TIKTOK: "TikTok",
-  LINKEDIN: "LinkedIn",
-  YOUTUBE: "YouTube",
-  TWITTER: "X / Twitter",
-  OTHER: "Outra",
-};
 
 const statusBadge: Record<string, { label: string; variant: "success" | "warning" | "info" | "danger" | "gray" }> = {
   ACTIVE: { label: "Ativo", variant: "success" },
   INACTIVE: { label: "Inativo", variant: "gray" },
   PROSPECT: { label: "Prospect", variant: "info" },
   CHURNED: { label: "Perdido", variant: "danger" },
-};
-
-const projectStatusMap: Record<string, { label: string; variant: "success" | "warning" | "info" | "danger" | "purple" | "gray" }> = {
-  IN_PROGRESS: { label: "Em Andamento", variant: "info" },
-  COMPLETED: { label: "Concluído", variant: "success" },
-  PLANNING: { label: "Planejamento", variant: "warning" },
-  REVIEW: { label: "Revisão", variant: "purple" },
-  CANCELLED: { label: "Cancelado", variant: "danger" },
-  ON_HOLD: { label: "Em Espera", variant: "gray" },
 };
 
 const invoiceStatusMap: Record<string, { label: string; variant: "success" | "warning" | "info" | "danger" | "gray" }> = {
@@ -59,15 +37,8 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
   const client = await prisma.client.findUnique({
     where: { id: params.id },
     include: {
-      projects: { orderBy: { createdAt: "desc" } },
       invoices: { orderBy: { issueDate: "desc" } },
       contracts: { orderBy: { startDate: "desc" } },
-      socialAccounts: {
-        orderBy: { createdAt: "asc" },
-        include: { metrics: { orderBy: { month: "desc" }, take: 1 } },
-      },
-      activities: { orderBy: { date: "desc" }, take: 20 },
-      websiteMetrics: { orderBy: { month: "desc" }, take: 1 },
     },
   });
 
@@ -219,138 +190,8 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             )}
           </div>
 
-          {/* Right - Social, Activities, Projects, Contracts & Invoices */}
+          {/* Right - Contracts & Invoices */}
           <div className="lg:col-span-2 space-y-4">
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                    <Users2 className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                    Redes Sociais ({client.socialAccounts.length})
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Link href={`/analises?cliente=${client.id}`} className="text-xs text-orange-600 dark:text-orange-400 hover:underline">
-                      Ver Análises
-                    </Link>
-                    <NewSocialAccountDialog clientId={client.id} />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {client.socialAccounts.length === 0 && (
-                  <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma rede social cadastrada.</p>
-                )}
-                {client.socialAccounts.map((account) => {
-                  const latest = account.metrics[0];
-                  return (
-                    <div key={account.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-gray-200 transition-colors">
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {platformLabel[account.platform] || account.platform} · {account.handle}
-                        </p>
-                        {account.platform === "INSTAGRAM" && (
-                          <RefreshFollowersButton socialAccountId={account.id} clientId={client.id} />
-                        )}
-                      </div>
-                      <div className="text-right">
-                        {latest ? (
-                          <>
-                            <span className="block text-sm font-bold text-gray-900 dark:text-gray-100">{latest.followers.toLocaleString("pt-BR")}</span>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {formatDate(latest.month, { month: "long", year: "numeric", day: undefined })}
-                              {latest.engagementRate != null && ` · ${latest.engagementRate}% engajamento`}
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-xs text-gray-400 dark:text-gray-500">Nenhuma métrica registrada ainda</p>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-
-            {client.websiteMetrics.length > 0 && (
-              <Card className="border-0 shadow-sm">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                      <LineChart className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                      Site
-                    </CardTitle>
-                    <Link href={`/analises?cliente=${client.id}`} className="text-xs text-orange-600 dark:text-orange-400 hover:underline">
-                      Ver Análises
-                    </Link>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {(() => {
-                    const latest = client.websiteMetrics[0];
-                    return (
-                      <div className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatDate(latest.month, { month: "long", year: "numeric", day: undefined })}
-                        </span>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
-                          {latest.pageViews != null && `${latest.pageViews.toLocaleString("pt-BR")} visualizações`}
-                          {latest.totalUsers != null && ` · ${latest.totalUsers.toLocaleString("pt-BR")} usuários`}
-                          {latest.newUsers != null && ` · ${latest.newUsers.toLocaleString("pt-BR")} novos usuários`}
-                        </p>
-                      </div>
-                    );
-                  })()}
-                </CardContent>
-              </Card>
-            )}
-
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                    <ClipboardList className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                    Atividades ({client.activities.length})
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Link href={`/atividades?cliente=${client.id}`} className="text-xs text-orange-600 dark:text-orange-400 hover:underline">
-                      Ver todas
-                    </Link>
-                    <NewActivityDialog clientId={client.id} />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {client.activities.length === 0 && (
-                  <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma atividade registrada ainda.</p>
-                )}
-                {client.activities.slice(0, 5).map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-100 dark:border-gray-800">
-                    <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap pt-0.5">{formatDate(activity.date)}</span>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 flex-1">{activity.description}</p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Link href={`/projetos?cliente=${client.id}`} className="block">
-                <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <ImageIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Ver posts do mês</span>
-                  </CardContent>
-                </Card>
-              </Link>
-              <Link href={`/clientes/${client.id}/relatorio`} className="block">
-                <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full bg-orange-50 dark:bg-orange-500/10">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <FileText className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                    <span className="text-sm font-medium text-orange-700">Gerar Relatório Mensal</span>
-                  </CardContent>
-                </Card>
-              </Link>
-            </div>
-
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
@@ -379,34 +220,6 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                         <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(contract.value)}</span>
                         <Badge variant={cStatus.variant}>{cStatus.label}</Badge>
                       </div>
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                  Projetos ({client.projects.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {client.projects.length === 0 && (
-                  <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum projeto cadastrado.</p>
-                )}
-                {client.projects.map((project) => {
-                  const pStatus = projectStatusMap[project.status];
-                  return (
-                    <div key={project.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-gray-200 transition-colors">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{project.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {project.endDate ? `Prazo: ${formatDate(project.endDate)}` : "Sem prazo definido"}
-                          {project.budget != null && ` · ${formatCurrency(project.budget)}`}
-                        </p>
-                      </div>
-                      <Badge variant={pStatus.variant}>{pStatus.label}</Badge>
                     </div>
                   );
                 })}
