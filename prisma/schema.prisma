@@ -118,6 +118,7 @@ model Client {
   activities      ClientActivity[]
   campaignMetrics CampaignMetric[]
   posts           ClientPost[]
+  tasks           Task[]
   sales           ClientSale[]
   websiteMetrics  WebsiteMetric[]
   leadOrigin      Lead?
@@ -330,7 +331,6 @@ model Project {
 
   client  Client  @relation(fields: [clientId], references: [id])
   manager User?   @relation(fields: [managerId], references: [id])
-  tasks   Task[]
   metrics CampaignMetric[]
 
   @@map("projects")
@@ -350,17 +350,20 @@ model Task {
   id          String     @id @default(cuid())
   title       String
   description String?    @db.Text
+  type        TaskType   @default(OTHER)
   status      TaskStatus @default(TODO)
   priority    Priority   @default(MEDIUM)
   dueDate     DateTime?
-  completedAt DateTime?
-  projectId   String
+  contentUrl  String?
+  reviewNote  String?    @db.Text
+  approvedAt  DateTime?
+  clientId    String
   assigneeId  String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assignee User?   @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  assignee User?  @relation("AssignedTasks", fields: [assigneeId], references: [id])
 
   @@map("tasks")
 }
@@ -503,8 +506,16 @@ enum TaskStatus {
   TODO
   IN_PROGRESS
   REVIEW
-  DONE
-  CANCELLED
+  APPROVED
+  REJECTED
+}
+
+enum TaskType {
+  POST
+  STORY
+  BLOG
+  SITE_UPDATE
+  OTHER
 }
 
 enum Priority {
