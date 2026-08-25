@@ -12,7 +12,7 @@ import { MarkExtraChargePaidButton } from "@/components/financeiro/MarkExtraChar
 import { EditPaidDateButton } from "@/components/financeiro/EditPaidDateButton";
 import { ClientStatementActions } from "@/components/financeiro/ClientStatementActions";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { countOccurrencesInMonth } from "@/lib/billing";
+import { countOccurrencesInMonth, projectBillingDates } from "@/lib/billing";
 import { syncInvoiceStatuses } from "@/lib/scheduled-invoices";
 import { prisma } from "@/lib/prisma";
 import type { Invoice } from "@prisma/client";
@@ -125,6 +125,9 @@ export default async function FinanceiroPage({
     prisma.client.findMany({
       where: { status: { notIn: ["CHURNED", "INACTIVE"] }, billingFrequency: { not: "NONE" }, contractValue: { not: null } },
       select: {
+        id: true,
+        name: true,
+        company: true,
         contractValue: true,
         billingFrequency: true,
         billingDayOfWeek: true,
@@ -211,6 +214,72 @@ export default async function FinanceiroPage({
         : "PAID";
     return { total: cellTotal, status };
   }
+
+  // Previsão dos próximos 2 meses (a partir do mês que vem) — semanais
+  // detalhados semana a semana, mensais/quinzenais detalhados mês a mês, pra
+  // dar visibilidade de fluxo de caixa sem misturar tudo num número só.
+  const forecastRangeStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const forecastRangeEnd = new Date(now.getFullYear(), now.getMonth() + 3, 0);
+  const forecastMonths = [
+    new Date(now.getFullYear(), now.getMonth() + 1, 1),
+    new Date(now.getFullYear(), now.getMonth() + 2, 1),
+  ];
+  const forecastSpansYears = forecastMonths[0].getFullYear() !== forecastMonths[1].getFullYear();
+
+  function billingRule(c: (typeof projectableClients)[number]) {
+    return {
+      frequency: c.billingFrequency,
+      dayOfWeek: c.billingDayOfWeek,
+      dayOfMonth1: c.billingDayOfMonth1,
+      dayOfMonth2: c.billingDayOfMonth2,
+    };
+  }
+
+  function startOfWeek(d: Date): Date {
+    const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const day = date.getDay();
+    date.setDate(date.getDate() + (day === 0 ? -6 : 1 - day));
+    return date;
+  }
+
+  function shortDate(d: Date): string {
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  const weeklyForecastClients = projectableClients
+    .filter((c) => c.billingFrequency === "WEEKLY")
+    .map((c) => ({ client: c, dates: projectBillingDates(billingRule(c), forecastRangeStart, forecastRangeEnd) }))
+    .filter((entry) => entry.dates.length > 0);
+
+  const weekStarts = Array.from(
+    new Set(weeklyForecastClients.flatMap((entry) => entry.dates.map((d) => startOfWeek(d).getTime())))
+  )
+    .sort((a, b) => a - b)
+    .map((t) => new Date(t));
+
+  function weeklyForecastCell(entry: (typeof weeklyForecastClients)[number], weekStart: Date) {
+    const weekEnd = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6);
+    const count = entry.dates.filter((d) => d >= weekStart && d <= weekEnd).length;
+    return count * (entry.client.contractValue || 0);
+  }
+
+  const weeklyForecastTotalsByWeek = weekStarts.map((weekStart) =>
+    weeklyForecastClients.reduce((sum, entry) => sum + weeklyForecastCell(entry, weekStart), 0)
+  );
+
+  const monthlyForecastClients = projectableClients
+    .filter((c) => c.billingFrequency === "MONTHLY" || c.billingFrequency === "BIWEEKLY")
+    .map((c) => ({ client: c, dates: projectBillingDates(billingRule(c), forecastRangeStart, forecastRangeEnd) }))
+    .filter((entry) => entry.dates.length > 0);
+
+  function monthlyForecastCell(entry: (typeof monthlyForecastClients)[number], month: Date) {
+    const count = entry.dates.filter((d) => d.getFullYear() === month.getFullYear() && d.getMonth() === month.getMonth()).length;
+    return count * (entry.client.contractValue || 0);
+  }
+
+  const monthlyForecastTotalsByMonth = forecastMonths.map((month) =>
+    monthlyForecastClients.reduce((sum, entry) => sum + monthlyForecastCell(entry, month), 0)
+  );
 
   return (
     <div>
@@ -398,6 +467,119 @@ export default async function FinanceiroPage({
             </CardContent>
           </Card>
         </div>
+
+        {/* Forecast — próximos 2 meses, semanal por semana e mensal por mês */}
+        {(weeklyForecastClients.length > 0 || monthlyForecastClients.length > 0) && (
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Previsão de Recebimentos — Próximos 2 Meses</CardTitle>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Com base na recorrência configurada em cada cliente ativo — semanal detalhado por semana, mensal e quinzenal detalhado por mês
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {weeklyForecastClients.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Semanais</p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr>
+                          <th className="text-left font-medium text-gray-500 dark:text-gray-400 pb-2 pr-3 sticky left-0 bg-white dark:bg-gray-900">Cliente</th>
+                          {weekStarts.map((w) => (
+                            <th key={w.getTime()} className="text-right font-medium text-gray-500 dark:text-gray-400 pb-2 px-2 whitespace-nowrap">
+                              {shortDate(w)} a {shortDate(new Date(w.getFullYear(), w.getMonth(), w.getDate() + 6))}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {weeklyForecastClients.map((entry) => (
+                          <tr key={entry.client.id} className="border-t border-gray-100 dark:border-gray-800">
+                            <td className="py-2 pr-3 sticky left-0 bg-white dark:bg-gray-900">
+                              <Link href={`/financeiro?client=${entry.client.id}`} className="text-gray-900 dark:text-gray-100 font-medium hover:text-orange-600 dark:hover:text-orange-400 hover:underline whitespace-nowrap">
+                                {entry.client.company || entry.client.name}
+                              </Link>
+                            </td>
+                            {weekStarts.map((w) => {
+                              const value = weeklyForecastCell(entry, w);
+                              return (
+                                <td key={w.getTime()} className="py-2 px-2 text-right whitespace-nowrap">
+                                  {value > 0 ? formatCurrency(value) : <span className="text-gray-300 dark:text-gray-700">—</span>}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="border-t border-gray-200 dark:border-gray-700 font-semibold">
+                          <td className="py-2 pr-3 sticky left-0 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">Total</td>
+                          {weeklyForecastTotalsByWeek.map((total, idx) => (
+                            <td key={weekStarts[idx].getTime()} className="py-2 px-2 text-right whitespace-nowrap text-gray-900 dark:text-gray-100">
+                              {formatCurrency(total)}
+                            </td>
+                          ))}
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {monthlyForecastClients.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Mensais e Quinzenais</p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr>
+                          <th className="text-left font-medium text-gray-500 dark:text-gray-400 pb-2 pr-3 sticky left-0 bg-white dark:bg-gray-900">Cliente</th>
+                          {forecastMonths.map((m) => (
+                            <th key={m.getTime()} className="text-right font-medium text-gray-500 dark:text-gray-400 pb-2 px-2 whitespace-nowrap capitalize">
+                              {monthLabelsFull[m.getMonth()]}
+                              {forecastSpansYears ? ` de ${m.getFullYear()}` : ""}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {monthlyForecastClients.map((entry) => (
+                          <tr key={entry.client.id} className="border-t border-gray-100 dark:border-gray-800">
+                            <td className="py-2 pr-3 sticky left-0 bg-white dark:bg-gray-900">
+                              <Link href={`/financeiro?client=${entry.client.id}`} className="text-gray-900 dark:text-gray-100 font-medium hover:text-orange-600 dark:hover:text-orange-400 hover:underline whitespace-nowrap">
+                                {entry.client.company || entry.client.name}
+                              </Link>
+                              <span className="text-gray-400 dark:text-gray-500 font-normal text-xs"> · {frequencyLabel[entry.client.billingFrequency]}</span>
+                            </td>
+                            {forecastMonths.map((m) => {
+                              const value = monthlyForecastCell(entry, m);
+                              return (
+                                <td key={m.getTime()} className="py-2 px-2 text-right whitespace-nowrap">
+                                  {value > 0 ? formatCurrency(value) : <span className="text-gray-300 dark:text-gray-700">—</span>}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="border-t border-gray-200 dark:border-gray-700 font-semibold">
+                          <td className="py-2 pr-3 sticky left-0 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">Total</td>
+                          {monthlyForecastTotalsByMonth.map((total, idx) => (
+                            <td key={forecastMonths[idx].getTime()} className="py-2 px-2 text-right whitespace-nowrap text-gray-900 dark:text-gray-100">
+                              {formatCurrency(total)}
+                            </td>
+                          ))}
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Client x Month matrix */}
         {matrixClients.length > 0 && (
