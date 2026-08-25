@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate, getInitials } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { NewSocialAccountDialog } from "@/components/clients/NewSocialAccountDialog";
+import { RefreshFollowersButton } from "@/components/clients/RefreshFollowersButton";
 import { NewActivityDialog } from "@/components/clients/NewActivityDialog";
 import { ClientLogoUpload } from "@/components/clients/ClientLogoUpload";
 import { ClientBillingForm } from "@/components/clients/ClientBillingForm";
@@ -243,22 +244,27 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                   const latest = account.metrics[0];
                   return (
                     <div key={account.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-gray-200 transition-colors">
-                      <div>
+                      <div className="flex items-center gap-1.5">
                         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {platformLabel[account.platform] || account.platform} · {account.handle}
                         </p>
+                        {account.platform === "INSTAGRAM" && (
+                          <RefreshFollowersButton socialAccountId={account.id} clientId={client.id} />
+                        )}
+                      </div>
+                      <div className="text-right">
                         {latest ? (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatDate(latest.month, { month: "long", year: "numeric", day: undefined })} · {latest.followers.toLocaleString("pt-BR")} seguidores
-                            {latest.engagementRate != null && ` · ${latest.engagementRate}% engajamento`}
-                          </p>
+                          <>
+                            <span className="block text-sm font-bold text-gray-900 dark:text-gray-100">{latest.followers.toLocaleString("pt-BR")}</span>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatDate(latest.month, { month: "long", year: "numeric", day: undefined })}
+                              {latest.engagementRate != null && ` · ${latest.engagementRate}% engajamento`}
+                            </p>
+                          </>
                         ) : (
                           <p className="text-xs text-gray-400 dark:text-gray-500">Nenhuma métrica registrada ainda</p>
                         )}
                       </div>
-                      {latest && (
-                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{latest.followers.toLocaleString("pt-BR")}</span>
-                      )}
                     </div>
                   );
                 })}

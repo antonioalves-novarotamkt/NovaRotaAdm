@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Eye, Heart, Share2 } from "lucide-react";
+import { Eye, Heart, MessageCircle, Share2 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { UploadPostForm } from "@/components/projetos/UploadPostForm";
@@ -90,8 +90,10 @@ export default async function ProjetosPage({
                   <Image src={post.imageUrl} alt={post.caption || "Post"} fill className="object-cover" unoptimized />
                   <EditPostMetrics
                     postId={post.id}
+                    postUrl={post.postUrl}
                     instagramViews={post.instagramViews}
                     instagramLikes={post.instagramLikes}
+                    instagramComments={post.instagramComments}
                     instagramShares={post.instagramShares}
                     facebookViews={post.facebookViews}
                     facebookLikes={post.facebookLikes}
@@ -111,6 +113,7 @@ export default async function ProjetosPage({
                     const hasMetrics =
                       post.instagramViews != null ||
                       post.instagramLikes != null ||
+                      post.instagramComments != null ||
                       post.instagramShares != null ||
                       post.facebookViews != null ||
                       post.facebookLikes != null ||
@@ -118,6 +121,7 @@ export default async function ProjetosPage({
                     if (!hasMetrics) return null;
                     const totalViews = (post.instagramViews ?? 0) + (post.facebookViews ?? 0);
                     const totalLikes = (post.instagramLikes ?? 0) + (post.facebookLikes ?? 0);
+                    const totalComments = post.instagramComments ?? 0;
                     const totalShares = (post.instagramShares ?? 0) + (post.facebookShares ?? 0);
                     return (
                       <div className="flex items-center gap-3 pt-1 text-[11px] text-gray-500 dark:text-gray-400">
@@ -127,6 +131,11 @@ export default async function ProjetosPage({
                         <span className="flex items-center gap-1">
                           <Heart className="h-3 w-3" /> {totalLikes.toLocaleString("pt-BR")}
                         </span>
+                        {totalComments > 0 && (
+                          <span className="flex items-center gap-1">
+                            <MessageCircle className="h-3 w-3" /> {totalComments.toLocaleString("pt-BR")}
+                          </span>
+                        )}
                         <span className="flex items-center gap-1">
                           <Share2 className="h-3 w-3" /> {totalShares.toLocaleString("pt-BR")}
                         </span>
