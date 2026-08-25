@@ -236,13 +236,15 @@ model ClientPost {
   imageUrl  String
   caption   String?
   postDate  DateTime?
+  postUrl   String?
 
-  instagramViews  Int?
-  instagramLikes  Int?
-  instagramShares Int?
-  facebookViews   Int?
-  facebookLikes   Int?
-  facebookShares  Int?
+  instagramViews    Int?
+  instagramLikes    Int?
+  instagramComments Int?
+  instagramShares   Int?
+  facebookViews     Int?
+  facebookLikes     Int?
+  facebookShares    Int?
 
   createdAt DateTime @default(now())
 

@@ -49,6 +49,7 @@ export function UploadPostForm({ clients, defaultClientId }: { clients: ClientOp
     const month = String(formData.get("month") || "");
     const caption = String(formData.get("caption") || "");
     const postDate = String(formData.get("postDate") || "");
+    const postUrl = String(formData.get("postUrl") || "");
 
     if (!clientId) {
       setError("Selecione o cliente.");
@@ -73,6 +74,7 @@ export function UploadPostForm({ clients, defaultClientId }: { clients: ClientOp
         imageUrl: result.url,
         caption: caption || undefined,
         postDate: postDate || undefined,
+        postUrl: postUrl || undefined,
       });
 
       setOpen(false);
@@ -112,6 +114,7 @@ export function UploadPostForm({ clients, defaultClientId }: { clients: ClientOp
           <Input name="postDate" type="date" defaultValue={today} placeholder="Data do post" />
           <input ref={fileInputRef} type="file" name="file" accept="image/*" required className="text-sm" />
           <Input name="caption" placeholder="Legenda / descrição (opcional)" />
+          <Input name="postUrl" placeholder="Link do post no Instagram (opcional, pra atualizar métricas depois)" />
           {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
           <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700" disabled={uploading}>
             {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar"}

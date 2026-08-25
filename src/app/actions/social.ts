@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { SocialPlatform } from "@prisma/client";
+import { fetchInstagramFollowerCount } from "@/lib/aisa-social";
 
 export async function createSocialAccount(formData: FormData) {
   const clientId = String(formData.get("clientId") || "").trim();
@@ -65,5 +66,44 @@ export async function deleteSocialMetric(formData: FormData) {
   const id = String(formData.get("id") || "");
   if (!id) return;
   await prisma.socialMetric.delete({ where: { id } });
+  revalidatePath("/analises");
+}
+
+// Busca o numero de seguidores atual no Instagram e grava direto no mes
+// corrente — sobrescreve o que ja estiver la, mesmo comportamento do
+// "sempre atualizar" combinado pros posts.
+export async function refreshFollowerCount(formData: FormData) {
+  const socialAccountId = String(formData.get("socialAccountId") || "");
+  const clientId = String(formData.get("clientId") || "");
+  if (!socialAccountId) {
+    throw new Error("Conta social não informada.");
+  }
+
+  const account = await prisma.socialAccount.findUnique({ where: { id: socialAccountId } });
+  if (!account) {
+    throw new Error("Conta não encontrada.");
+  }
+  if (account.platform !== "INSTAGRAM") {
+    throw new Error("Atualização automática só funciona com contas do Instagram por enquanto.");
+  }
+
+  const apiKey = process.env.AISA_API_KEY;
+  if (!apiKey) {
+    throw new Error("AISA_API_KEY não configurada nas variáveis de ambiente.");
+  }
+
+  const followers = await fetchInstagramFollowerCount(account.handle, apiKey);
+
+  const now = new Date();
+  const month = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
+
+  await prisma.socialMetric.upsert({
+    where: { socialAccountId_month: { socialAccountId, month } },
+    update: { followers },
+    create: { socialAccountId, month, followers },
+  });
+
+  revalidatePath(`/clientes/${clientId}`);
+  revalidatePath(`/clientes/${clientId}/relatorio`);
   revalidatePath("/analises");
 }
