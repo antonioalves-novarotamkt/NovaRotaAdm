@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate, getInitials } from "@/lib/utils";
+import { paidAmount, remainingAmount } from "@/lib/payments";
 import { prisma } from "@/lib/prisma";
 import { ClientLogoUpload } from "@/components/clients/ClientLogoUpload";
 import { ClientBillingForm } from "@/components/clients/ClientBillingForm";
@@ -21,6 +22,7 @@ const statusBadge: Record<string, { label: string; variant: "success" | "warning
 const invoiceStatusMap: Record<string, { label: string; variant: "success" | "warning" | "info" | "danger" | "gray" }> = {
   DRAFT: { label: "Rascunho", variant: "gray" },
   PAID: { label: "Pago", variant: "success" },
+  PARTIALLY_PAID: { label: "Parcial", variant: "info" },
   PENDING: { label: "Pendente", variant: "warning" },
   OVERDUE: { label: "Atrasado", variant: "danger" },
   CANCELLED: { label: "Cancelado", variant: "gray" },
@@ -37,7 +39,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
   const client = await prisma.client.findUnique({
     where: { id: params.id },
     include: {
-      invoices: { orderBy: { issueDate: "desc" } },
+      invoices: { orderBy: { issueDate: "desc" }, include: { payments: true } },
       contracts: { orderBy: { startDate: "desc" } },
     },
   });
@@ -245,6 +247,8 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           Vence: {formatDate(invoice.dueDate)}
                           {invoice.paidAt && ` · Pago em ${formatDate(invoice.paidAt)}`}
+                          {invoice.status === "PARTIALLY_PAID" &&
+                            ` · recebido ${formatCurrency(paidAmount(invoice))} · falta ${formatCurrency(remainingAmount(invoice))}`}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">

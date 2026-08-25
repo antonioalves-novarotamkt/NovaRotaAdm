@@ -12,10 +12,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { markExtraChargePaid } from "@/app/actions/extra-charges";
+import { formatCurrency } from "@/lib/utils";
 
 const today = new Date().toISOString().slice(0, 10);
 
-export function MarkExtraChargePaidButton({ id }: { id: string }) {
+export function MarkExtraChargePaidButton({ id, remaining, alreadyPaid }: { id: string; remaining: number; alreadyPaid?: number }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -32,6 +33,18 @@ export function MarkExtraChargePaidButton({ id }: { id: string }) {
         </DialogHeader>
         <form action={markExtraChargePaid} onSubmit={() => setOpen(false)} className="space-y-3">
           <input type="hidden" name="id" value={id} />
+          {!!alreadyPaid && (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Já recebido: {formatCurrency(alreadyPaid)} · Saldo devedor: {formatCurrency(remaining)}
+            </p>
+          )}
+          <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
+            Valor recebido
+            <Input name="amount" type="number" step="0.01" min={0.01} max={remaining} defaultValue={remaining} required />
+          </label>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500">
+            Se receber menos que o saldo devedor ({formatCurrency(remaining)}), a fatura fica marcada como parcialmente paga com o restante em aberto.
+          </p>
           <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1 block">
             Data em que foi recebido
             <Input name="paidAt" type="date" defaultValue={today} required />

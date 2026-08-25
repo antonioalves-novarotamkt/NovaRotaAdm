@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { createInvoiceWithUniqueNumber } from "@/lib/scheduled-invoices";
+import { registerInvoicePayment } from "@/lib/payments";
 
 export async function createExtraCharge(formData: FormData) {
   const clientId = String(formData.get("clientId") || "").trim();
@@ -35,10 +36,14 @@ export async function markExtraChargePaid(formData: FormData) {
   if (!id) return;
   const paidAtRaw = String(formData.get("paidAt") || "");
   const paidAt = paidAtRaw ? new Date(`${paidAtRaw}T00:00:00.000Z`) : new Date();
-  await prisma.invoice.update({
-    where: { id },
-    data: { status: "PAID", paidAt },
-  });
+  const amountRaw = String(formData.get("amount") || "");
+
+  const invoice = await prisma.invoice.findUnique({ where: { id } });
+  if (!invoice) throw new Error("Recebimento não encontrado.");
+
+  const amount = amountRaw ? Number(amountRaw) : invoice.total;
+  await registerInvoicePayment(id, amount, paidAt);
+
   revalidatePath("/financeiro");
 }
 

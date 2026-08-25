@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import type { BillingFrequency } from "@prisma/client";
 import { computeNextBillingDate } from "@/lib/billing";
 import { syncScheduledInvoices, createInvoiceWithUniqueNumber } from "@/lib/scheduled-invoices";
+import { registerInvoicePayment } from "@/lib/payments";
 
 export async function updateClientBilling(formData: FormData) {
   const clientId = String(formData.get("clientId") || "").trim();
@@ -51,55 +52,58 @@ export async function registerScheduledPayment(formData: FormData) {
   const clientId = String(formData.get("clientId") || "").trim();
   const paidAtRaw = String(formData.get("paidAt") || "");
   const paidAt = paidAtRaw ? new Date(`${paidAtRaw}T00:00:00.000Z`) : new Date();
+  const amountRaw = String(formData.get("amount") || "");
 
   const client = await prisma.client.findUnique({ where: { id: clientId } });
   if (!client || !client.nextBillingDate || !client.contractValue) {
     throw new Error("Cliente sem recebimento programado.");
   }
 
-  const pendingInvoice = await prisma.invoice.findFirst({
+  let pendingInvoice = await prisma.invoice.findFirst({
     where: {
       clientId,
       dueDate: client.nextBillingDate,
-      status: { in: ["PENDING", "OVERDUE"] },
+      status: { in: ["PENDING", "OVERDUE", "PARTIALLY_PAID"] },
     },
   });
 
-  if (pendingInvoice) {
-    await prisma.invoice.update({
-      where: { id: pendingInvoice.id },
-      data: { status: "PAID", paidAt },
-    });
-  } else {
-    await createInvoiceWithUniqueNumber({
+  if (!pendingInvoice) {
+    pendingInvoice = await createInvoiceWithUniqueNumber({
       clientId,
       amount: client.contractValue,
       tax: 0,
       total: client.contractValue,
-      status: "PAID",
+      status: "PENDING",
       dueDate: client.nextBillingDate,
-      paidAt,
       description: "Recebimento programado",
     });
   }
 
-  const dayAfter = new Date(client.nextBillingDate);
-  dayAfter.setDate(dayAfter.getDate() + 1);
+  const amount = amountRaw ? Number(amountRaw) : pendingInvoice.total;
+  const { isFullyPaid } = await registerInvoicePayment(pendingInvoice.id, amount, paidAt);
 
-  const nextBillingDate = computeNextBillingDate(
-    {
-      frequency: client.billingFrequency,
-      dayOfWeek: client.billingDayOfWeek,
-      dayOfMonth1: client.billingDayOfMonth1,
-      dayOfMonth2: client.billingDayOfMonth2,
-    },
-    dayAfter
-  );
+  // O próximo vencimento só avança quando o período atual estiver
+  // totalmente quitado — uma baixa parcial deixa o cliente ainda devendo
+  // o saldo desse mesmo período, então continua aparecendo pra cobrar.
+  if (isFullyPaid) {
+    const dayAfter = new Date(client.nextBillingDate);
+    dayAfter.setDate(dayAfter.getDate() + 1);
 
-  await prisma.client.update({
-    where: { id: clientId },
-    data: { nextBillingDate },
-  });
+    const nextBillingDate = computeNextBillingDate(
+      {
+        frequency: client.billingFrequency,
+        dayOfWeek: client.billingDayOfWeek,
+        dayOfMonth1: client.billingDayOfMonth1,
+        dayOfMonth2: client.billingDayOfMonth2,
+      },
+      dayAfter
+    );
+
+    await prisma.client.update({
+      where: { id: clientId },
+      data: { nextBillingDate },
+    });
+  }
 
   await syncScheduledInvoices();
 

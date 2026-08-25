@@ -14,11 +14,15 @@ import { ClientStatementActions } from "@/components/financeiro/ClientStatementA
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { countOccurrencesInMonth, projectBillingDates } from "@/lib/billing";
 import { syncInvoiceStatuses } from "@/lib/scheduled-invoices";
+import { paidAmount, remainingAmount, receivedAmount } from "@/lib/payments";
 import { prisma } from "@/lib/prisma";
-import type { Invoice } from "@prisma/client";
+import type { Invoice, Payment } from "@prisma/client";
+
+type InvoiceWithPayments = Invoice & { payments: Payment[] };
 
 const invoiceStatusStyle: Record<string, string> = {
   PAID: "bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400",
+  PARTIALLY_PAID: "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400",
   PENDING: "bg-yellow-50 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
   OVERDUE: "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400",
   DRAFT: "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400",
@@ -27,6 +31,7 @@ const invoiceStatusStyle: Record<string, string> = {
 
 const invoiceStatusLabel: Record<string, string> = {
   PAID: "Pago",
+  PARTIALLY_PAID: "Parcial",
   PENDING: "Pendente",
   OVERDUE: "Atrasado",
   DRAFT: "Rascunho",
@@ -38,8 +43,8 @@ const monthLabelsFull = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
 
-function groupInvoicesByMonth(invoicesList: Invoice[]): { key: string; label: string; invoices: Invoice[] }[] {
-  const groups = new Map<string, Invoice[]>();
+function groupInvoicesByMonth(invoicesList: InvoiceWithPayments[]): { key: string; label: string; invoices: InvoiceWithPayments[] }[] {
+  const groups = new Map<string, InvoiceWithPayments[]>();
   for (const inv of invoicesList) {
     const key = `${inv.dueDate.getFullYear()}-${String(inv.dueDate.getMonth() + 1).padStart(2, "0")}`;
     if (!groups.has(key)) groups.set(key, []);
@@ -53,9 +58,10 @@ function groupInvoicesByMonth(invoicesList: Invoice[]): { key: string; label: st
     });
 }
 
-function buildClientStatement(client: { name: string; company: string | null }, clientInvoices: Invoice[]): string {
+function buildClientStatement(client: { name: string; company: string | null }, clientInvoices: InvoiceWithPayments[]): string {
   const overdueInvoices = clientInvoices.filter((i) => i.status === "OVERDUE");
   const pendingInvoices = clientInvoices.filter((i) => i.status === "PENDING");
+  const partialInvoices = clientInvoices.filter((i) => i.status === "PARTIALLY_PAID");
   const paidInvoices = clientInvoices.filter((i) => i.status === "PAID");
 
   const lines: string[] = [`Resumo financeiro — ${client.company || client.name}`, ""];
@@ -64,6 +70,16 @@ function buildClientStatement(client: { name: string; company: string | null }, 
     const total = overdueInvoices.reduce((s, i) => s + i.total, 0);
     lines.push(`EM ATRASO (${overdueInvoices.length}) — ${formatCurrency(total)}`);
     for (const inv of overdueInvoices) lines.push(`- ${inv.number} · ${formatCurrency(inv.total)} · venceu em ${formatDate(inv.dueDate)}`);
+    lines.push("");
+  }
+  if (partialInvoices.length > 0) {
+    const totalRemaining = partialInvoices.reduce((s, i) => s + remainingAmount(i), 0);
+    lines.push(`PARCIALMENTE PAGO (${partialInvoices.length}) — falta ${formatCurrency(totalRemaining)}`);
+    for (const inv of partialInvoices) {
+      lines.push(
+        `- ${inv.number} · recebido ${formatCurrency(paidAmount(inv))} de ${formatCurrency(inv.total)} · falta ${formatCurrency(remainingAmount(inv))}`
+      );
+    }
     lines.push("");
   }
   if (pendingInvoices.length > 0) {
@@ -77,7 +93,7 @@ function buildClientStatement(client: { name: string; company: string | null }, 
     lines.push(`PAGO (${paidInvoices.length}) — ${formatCurrency(total)}`);
     for (const inv of paidInvoices) lines.push(`- ${inv.number} · ${formatCurrency(inv.total)} · pago em ${inv.paidAt ? formatDate(inv.paidAt) : "—"}`);
   }
-  if (overdueInvoices.length === 0 && pendingInvoices.length === 0 && paidInvoices.length === 0) {
+  if (overdueInvoices.length === 0 && partialInvoices.length === 0 && pendingInvoices.length === 0 && paidInvoices.length === 0) {
     lines.push("Nenhum recebimento registrado ainda.");
   }
   return lines.join("\n");
@@ -112,7 +128,7 @@ export default async function FinanceiroPage({
   const [invoices, clients, scheduledClients, projectableClients] = await Promise.all([
     prisma.invoice.findMany({
       orderBy: { issueDate: "desc" },
-      include: { client: true },
+      include: { client: true, payments: true },
     }),
     prisma.client.findMany({
       orderBy: { name: "asc" },
@@ -147,8 +163,12 @@ export default async function FinanceiroPage({
     .sort((a, b) => (b.paidAt as Date).getTime() - (a.paidAt as Date).getTime())
     .slice(0, 15);
 
-  const paid = invoices.filter((i) => i.status === "PAID").reduce((s, i) => s + i.total, 0);
-  const pending = invoices.filter((i) => i.status === "PENDING").reduce((s, i) => s + i.total, 0);
+  // "Recebido" conta o valor de baixas parciais mesmo antes da fatura fechar;
+  // "A Receber" soma o saldo que ainda falta das parciais junto com as pendentes.
+  const paid = invoices.reduce((s, i) => s + receivedAmount(i), 0);
+  const pending =
+    invoices.filter((i) => i.status === "PENDING").reduce((s, i) => s + i.total, 0) +
+    invoices.filter((i) => i.status === "PARTIALLY_PAID").reduce((s, i) => s + remainingAmount(i), 0);
   const overdue = invoices.filter((i) => i.status === "OVERDUE").reduce((s, i) => s + i.total, 0);
   const total = invoices.reduce((s, i) => s + i.total, 0);
 
@@ -211,7 +231,9 @@ export default async function FinanceiroPage({
       ? "OVERDUE"
       : cellInvoices.some((i) => i.status === "PENDING")
         ? "PENDING"
-        : "PAID";
+        : cellInvoices.some((i) => i.status === "PARTIALLY_PAID")
+          ? "PARTIALLY_PAID"
+          : "PAID";
     return { total: cellTotal, status };
   }
 
@@ -342,9 +364,11 @@ export default async function FinanceiroPage({
             <CardContent className="space-y-4">
               <div className="grid grid-cols-3 gap-3">
                 {(() => {
-                  const paidTotal = selectedClientInvoices.filter((i) => i.status === "PAID").reduce((s, i) => s + i.total, 0);
+                  const paidTotal = selectedClientInvoices.reduce((s, i) => s + receivedAmount(i), 0);
                   const overdueTotal = selectedClientInvoices.filter((i) => i.status === "OVERDUE").reduce((s, i) => s + i.total, 0);
-                  const pendingTotal = selectedClientInvoices.filter((i) => i.status === "PENDING").reduce((s, i) => s + i.total, 0);
+                  const pendingTotal =
+                    selectedClientInvoices.filter((i) => i.status === "PENDING").reduce((s, i) => s + i.total, 0) +
+                    selectedClientInvoices.filter((i) => i.status === "PARTIALLY_PAID").reduce((s, i) => s + remainingAmount(i), 0);
                   return (
                     <>
                       <div className="p-3 rounded-lg bg-green-50 dark:bg-green-500/10">
@@ -381,9 +405,11 @@ export default async function FinanceiroPage({
                                 {" · "}
                                 {invoice.status === "PAID" && invoice.paidAt
                                   ? `pago em ${formatDate(invoice.paidAt)}`
-                                  : invoice.status === "OVERDUE"
-                                    ? `venceu em ${formatDate(invoice.dueDate)}`
-                                    : `vence em ${formatDate(invoice.dueDate)}`}
+                                  : invoice.status === "PARTIALLY_PAID"
+                                    ? `recebido ${formatCurrency(paidAmount(invoice))} · falta ${formatCurrency(remainingAmount(invoice))}`
+                                    : invoice.status === "OVERDUE"
+                                      ? `venceu em ${formatDate(invoice.dueDate)}`
+                                      : `vence em ${formatDate(invoice.dueDate)}`}
                               </p>
                             </div>
                             <div className="flex items-center gap-3">
@@ -437,7 +463,11 @@ export default async function FinanceiroPage({
                 </div>
               </div>
               <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(paid)}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{invoices.filter((i) => i.status === "PAID").length} recebido(s)</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                {invoices.filter((i) => i.status === "PAID").length} recebido(s)
+                {invoices.some((i) => i.status === "PARTIALLY_PAID") &&
+                  ` · ${invoices.filter((i) => i.status === "PARTIALLY_PAID").length} parcial(is)`}
+              </p>
             </CardContent>
           </Card>
 
@@ -450,7 +480,9 @@ export default async function FinanceiroPage({
                 </div>
               </div>
               <p className="text-2xl font-bold text-yellow-600">{formatCurrency(pending)}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{invoices.filter((i) => i.status === "PENDING").length} programado(s)</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                {invoices.filter((i) => i.status === "PENDING" || i.status === "PARTIALLY_PAID").length} programado(s)
+              </p>
             </CardContent>
           </Card>
 
@@ -656,6 +688,14 @@ export default async function FinanceiroPage({
             <CardContent className="space-y-2">
               {scheduledClients.map((client) => {
                 const overdue = client.nextBillingDate && client.nextBillingDate < new Date();
+                const scheduledInvoice = invoices.find(
+                  (i) =>
+                    i.clientId === client.id &&
+                    i.dueDate.getTime() === client.nextBillingDate?.getTime() &&
+                    (i.status === "PENDING" || i.status === "OVERDUE" || i.status === "PARTIALLY_PAID")
+                );
+                const remaining = scheduledInvoice ? remainingAmount(scheduledInvoice) : client.contractValue || 0;
+                const alreadyPaidAmount = scheduledInvoice ? paidAmount(scheduledInvoice) : 0;
                 return (
                   <div key={client.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
                     <div>
@@ -665,13 +705,14 @@ export default async function FinanceiroPage({
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         {frequencyLabel[client.billingFrequency]} · vence {client.nextBillingDate && formatDate(client.nextBillingDate)}
                         {overdue && <span className="text-red-500 dark:text-red-400 font-medium"> · atrasado</span>}
+                        {scheduledInvoice?.status === "PARTIALLY_PAID" && (
+                          <span className="text-blue-500 dark:text-blue-400 font-medium"> · parcial, recebido {formatCurrency(alreadyPaidAmount)}</span>
+                        )}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                        {client.contractValue ? formatCurrency(client.contractValue) : "—"}
-                      </span>
-                      <RegisterPaymentButton clientId={client.id} />
+                      <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(remaining)}</span>
+                      <RegisterPaymentButton clientId={client.id} remaining={remaining} alreadyPaid={alreadyPaidAmount} />
                     </div>
                   </div>
                 );
@@ -706,12 +747,16 @@ export default async function FinanceiroPage({
                       {" · "}
                       {invoice.status === "PAID" && invoice.paidAt
                         ? `recebido em ${formatDate(invoice.paidAt)}`
-                        : `${invoice.status === "OVERDUE" ? "atrasado" : "pendente"} · vence em ${formatDate(invoice.dueDate)}`}
+                        : invoice.status === "PARTIALLY_PAID"
+                          ? `recebido ${formatCurrency(paidAmount(invoice))} · falta ${formatCurrency(remainingAmount(invoice))}`
+                          : `${invoice.status === "OVERDUE" ? "atrasado" : "pendente"} · vence em ${formatDate(invoice.dueDate)}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.total)}</span>
-                    {invoice.status !== "PAID" && <MarkExtraChargePaidButton id={invoice.id} />}
+                    {invoice.status !== "PAID" && (
+                      <MarkExtraChargePaidButton id={invoice.id} remaining={remainingAmount(invoice)} alreadyPaid={paidAmount(invoice)} />
+                    )}
                     {invoice.status === "PAID" && invoice.paidAt && (
                       <>
                         <EditPaidDateButton id={invoice.id} currentDate={invoice.paidAt.toISOString().slice(0, 10)} />
