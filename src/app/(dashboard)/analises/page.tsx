@@ -1,11 +1,15 @@
-import { BarChart2, Users2, Globe } from "lucide-react";
+import Link from "next/link";
+import { BarChart2, Users2, Globe, Image as ImageIcon, FileText } from "lucide-react";
 import { Header } from "@/components/layout/Header";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnalysisSocialDialog } from "@/components/analises/AnalysisSocialDialog";
 import { AnalysisWebsiteDialog } from "@/components/analises/AnalysisWebsiteDialog";
 import { EditSocialMetricDialog } from "@/components/analises/EditSocialMetricDialog";
 import { EditWebsiteMetricDialog } from "@/components/analises/EditWebsiteMetricDialog";
 import { DeleteMetricButton } from "@/components/analises/DeleteMetricButton";
+import { NewSocialAccountDialog } from "@/components/clients/NewSocialAccountDialog";
+import { RefreshFollowersButton } from "@/components/clients/RefreshFollowersButton";
+import { formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +35,7 @@ export default async function AnalisesPage({
   const selectedMonth = searchParams.mes || currentMonth;
   const monthDate = new Date(`${selectedMonth}-01T00:00:00.000Z`);
 
-  const [clients, socialMetrics, websiteMetrics] = await Promise.all([
+  const [clients, socialMetrics, websiteMetrics, selectedClientDetail] = await Promise.all([
     prisma.client.findMany({
       orderBy: { name: "asc" },
       select: {
@@ -57,6 +61,20 @@ export default async function AnalisesPage({
       include: { client: true },
       orderBy: { createdAt: "desc" },
     }),
+    selectedClientId
+      ? prisma.client.findUnique({
+          where: { id: selectedClientId },
+          select: {
+            id: true,
+            name: true,
+            company: true,
+            socialAccounts: {
+              orderBy: { createdAt: "asc" },
+              include: { metrics: { orderBy: { month: "desc" }, take: 1 } },
+            },
+          },
+        })
+      : Promise.resolve(null),
   ]);
 
   type FeedEntry =
@@ -113,6 +131,74 @@ export default async function AnalisesPage({
             <AnalysisWebsiteDialog clients={clients} defaultClientId={selectedClientId} />
           </div>
         </div>
+
+        {selectedClientDetail && (
+          <>
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <Users2 className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    Redes Sociais ({selectedClientDetail.socialAccounts.length})
+                  </CardTitle>
+                  <NewSocialAccountDialog clientId={selectedClientDetail.id} />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {selectedClientDetail.socialAccounts.length === 0 && (
+                  <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma rede social cadastrada.</p>
+                )}
+                {selectedClientDetail.socialAccounts.map((account) => {
+                  const latest = account.metrics[0];
+                  return (
+                    <div key={account.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-gray-200 transition-colors">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {platformLabel[account.platform] || account.platform} · {account.handle}
+                        </p>
+                        {account.platform === "INSTAGRAM" && (
+                          <RefreshFollowersButton socialAccountId={account.id} clientId={selectedClientDetail.id} />
+                        )}
+                      </div>
+                      <div className="text-right">
+                        {latest ? (
+                          <>
+                            <span className="block text-sm font-bold text-gray-900 dark:text-gray-100">{latest.followers.toLocaleString("pt-BR")}</span>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatDate(latest.month, { month: "long", year: "numeric", day: undefined })}
+                              {latest.engagementRate != null && ` · ${latest.engagementRate}% engajamento`}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Nenhuma métrica registrada ainda</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Link href={`/projetos?cliente=${selectedClientDetail.id}`} className="block">
+                <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <ImageIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Ver posts do cliente</span>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link href={`/clientes/${selectedClientDetail.id}/relatorio`} className="block">
+                <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full bg-orange-50 dark:bg-orange-500/10">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <FileText className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                    <span className="text-sm font-medium text-orange-700">Gerar Relatório Mensal</span>
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
+          </>
+        )}
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-0">

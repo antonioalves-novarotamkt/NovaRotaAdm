@@ -20,6 +20,7 @@ export async function createSocialAccount(formData: FormData) {
   });
 
   revalidatePath(`/clientes/${clientId}`);
+  revalidatePath("/analises");
 }
 
 function optionalNumber(formData: FormData, key: string): number | null {
