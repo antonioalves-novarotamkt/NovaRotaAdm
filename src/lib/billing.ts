@@ -71,6 +71,24 @@ export function billingScheduleText(rule: BillingRule): string {
   return "";
 }
 
+// Gera todas as datas de cobrança da regra dentro de [from, to] — usado pra
+// projetar recebimentos futuros (ex: previsão dos próximos meses), sem
+// depender do nextBillingDate salvo no cliente (que só guarda a próxima
+// ocorrência isolada).
+export function projectBillingDates(rule: BillingRule, from: Date, to: Date): Date[] {
+  const dates: Date[] = [];
+  let cursor = from;
+  let guard = 0;
+  while (guard < 60) {
+    const next = computeNextBillingDate(rule, cursor);
+    if (!next || next > to) break;
+    dates.push(next);
+    cursor = new Date(next.getFullYear(), next.getMonth(), next.getDate() + 1);
+    guard++;
+  }
+  return dates;
+}
+
 export function computeNextBillingDate(rule: BillingRule, after: Date = new Date()): Date | null {
   if (rule.frequency === "WEEKLY" && rule.dayOfWeek != null) {
     return nextWeekdayOccurrence(after, rule.dayOfWeek);
