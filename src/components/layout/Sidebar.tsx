@@ -19,6 +19,7 @@ import {
   LogOut,
   Search,
   X,
+  Kanban,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { BrandLogo } from "@/components/layout/BrandLogo";
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/funil", label: "Funil de Vendas", icon: Target },
   { href: "/prospeccao", label: "Prospecção", icon: Search },
   { href: "/clientes", label: "Clientes", icon: Users },
+  { href: "/tarefas", label: "Tarefas", icon: Kanban },
   { href: "/contratos", label: "Contratos", icon: FileText },
   { href: "/atividades", label: "Atividades", icon: ClipboardList },
   { href: "/analises", label: "Análises", icon: LineChart },
