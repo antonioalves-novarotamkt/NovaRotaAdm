@@ -35,12 +35,12 @@ export function ClientPitchCard({
   function handleGenerate() {
     setError(null);
     startGenerate(async () => {
-      try {
-        const text = await generateAndSaveClientPitch(leadId);
-        setPitch(text);
-        setDraft(text);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao gerar texto.");
+      const result = await generateAndSaveClientPitch(leadId);
+      if (result.ok) {
+        setPitch(result.text);
+        setDraft(result.text);
+      } else {
+        setError(result.error);
       }
     });
   }
