@@ -5,19 +5,12 @@ import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PrintButton } from "@/components/contracts/PrintButton";
-import { WhatsappTextBox } from "@/components/funil/WhatsappTextBox";
+import { ClientPitchCard } from "@/components/funil/ClientPitchCard";
 import { buildWhatsappAnalysisText } from "@/lib/lead-analysis";
 import { prisma } from "@/lib/prisma";
 import { getAgencySettings } from "@/app/actions/agency";
 
 export const dynamic = "force-dynamic";
-
-function whatsappLinkWithText(phone: string, text: string): string | null {
-  const digits = phone.replace(/\D/g, "");
-  if (!digits) return null;
-  const withCountry = digits.length === 10 || digits.length === 11 ? `55${digits}` : digits;
-  return `https://wa.me/${withCountry}?text=${encodeURIComponent(text)}`;
-}
 
 export default async function LeadReportPage({ params }: { params: { id: string } }) {
   const [lead, agency] = await Promise.all([
@@ -30,8 +23,7 @@ export default async function LeadReportPage({ params }: { params: { id: string 
 
   if (!lead) notFound();
 
-  const text = buildWhatsappAnalysisText(lead, lead.analysisItems, agency.name);
-  const waLink = lead.phone ? whatsappLinkWithText(lead.phone, text) : null;
+  const fallbackText = buildWhatsappAnalysisText(lead, lead.analysisItems, agency.name);
 
   return (
     <div>
@@ -81,25 +73,38 @@ export default async function LeadReportPage({ params }: { params: { id: string 
               )}
             </div>
 
-            {lead.analysisItems.length === 0 ? (
-              <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma seção de análise cadastrada ainda.</p>
-            ) : (
-              <div className="space-y-4">
-                {lead.analysisItems.map((item) => (
-                  <div key={item.id}>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{item.title}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line mt-0.5">{item.content}</p>
-                  </div>
-                ))}
-              </div>
+            <div className="print:hidden">
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
+                Suas anotações (uso interno — não aparecem na versão impressa)
+              </p>
+              {lead.analysisItems.length === 0 ? (
+                <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma seção de análise cadastrada ainda.</p>
+              ) : (
+                <div className="space-y-4">
+                  {lead.analysisItems.map((item) => (
+                    <div key={item.id}>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{item.title}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line mt-0.5">{item.content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {lead.clientPitchText && (
+              <p className="hidden print:block text-sm text-gray-700 whitespace-pre-line">{lead.clientPitchText}</p>
             )}
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm print:hidden">
-          <CardContent className="p-6 space-y-3">
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Texto para WhatsApp</p>
-            <WhatsappTextBox text={text} waLink={waLink} />
+          <CardContent className="p-6">
+            <ClientPitchCard
+              leadId={lead.id}
+              initialPitch={lead.clientPitchText}
+              fallbackText={fallbackText}
+              phone={lead.phone}
+            />
           </CardContent>
         </Card>
       </div>
