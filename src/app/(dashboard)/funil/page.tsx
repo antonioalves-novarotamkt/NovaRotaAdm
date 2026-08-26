@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 const stages = [
   { key: "NEW", label: "Novo Contato" },
   { key: "CONTACTED", label: "Em Contato" },
+  { key: "ANALYZING", label: "Analisando" },
   { key: "PROPOSAL", label: "Proposta Enviada" },
   { key: "NEGOTIATION", label: "Negociação" },
   { key: "WON", label: "Ganho" },
@@ -90,7 +91,7 @@ export default async function FunilPage() {
         </div>
 
         {/* Kanban board */}
-        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 xl:grid-cols-7 gap-4">
           {stages.map((stage) => {
             const stageLeads = byStage.get(stage.key) || [];
             const stageValue = stageLeads.reduce((s, l) => s + (l.value || 0), 0);

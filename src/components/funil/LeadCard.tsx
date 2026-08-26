@@ -37,13 +37,17 @@ export interface LeadCardData {
 const stageLabel: Record<string, string> = {
   NEW: "Novo Contato",
   CONTACTED: "Em Contato",
+  ANALYZING: "Analisando",
   PROPOSAL: "Proposta Enviada",
   NEGOTIATION: "Negociação",
   WON: "Ganho",
   LOST: "Perdido",
 };
 
-const stageOrder = ["NEW", "CONTACTED", "PROPOSAL", "NEGOTIATION", "WON", "LOST"];
+const stageOrder = ["NEW", "CONTACTED", "ANALYZING", "PROPOSAL", "NEGOTIATION", "WON", "LOST"];
+// A seta de "avançar" só faz sentido até a última etapa antes de
+// Negociação — dali pra Ganho é sempre via "Converter em Cliente".
+const LAST_AUTO_ADVANCE_IDX = stageOrder.indexOf("NEGOTIATION") - 1;
 
 function whatsappLink(phone: string): string | null {
   const digits = phone.replace(/\D/g, "");
@@ -152,7 +156,7 @@ export function LeadCard({ lead }: { lead: LeadCardData }) {
   }
 
   const currentIdx = stageOrder.indexOf(lead.stage);
-  const nextStage = currentIdx >= 0 && currentIdx < 3 ? stageOrder[currentIdx + 1] : null;
+  const nextStage = currentIdx >= 0 && currentIdx <= LAST_AUTO_ADVANCE_IDX ? stageOrder[currentIdx + 1] : null;
   const waLink = lead.phone ? whatsappLink(lead.phone) : null;
   const links = extractLeadLinks(lead.notes);
   const hasAnyLink = Boolean(
