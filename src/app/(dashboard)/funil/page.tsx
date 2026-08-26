@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 
 const stages = [
   { key: "NEW", label: "Novo Contato" },
-  { key: "CONTACTED", label: "Em Contato" },
   { key: "ANALYZING", label: "Analisando" },
+  { key: "CONTACTED", label: "Em Contato" },
   { key: "PROPOSAL", label: "Proposta Enviada" },
   { key: "NEGOTIATION", label: "Negociação" },
   { key: "WON", label: "Ganho" },
