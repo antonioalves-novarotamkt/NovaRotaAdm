@@ -102,8 +102,15 @@ export async function syncScheduledInvoices() {
  */
 export async function syncInvoiceStatuses() {
   await syncScheduledInvoices();
+
+  // dueDate fica salvo como meia-noite UTC do dia do vencimento — comparar
+  // com o instante exato (new Date()) marcava como atrasada uma fatura que
+  // vence hoje assim que passasse da meia-noite, mesmo faltando o dia
+  // inteiro pra ela vencer de verdade. Só conta como atrasada a partir do
+  // dia seguinte ao vencimento.
+  const startOfToday = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
   await prisma.invoice.updateMany({
-    where: { status: "PENDING", dueDate: { lt: new Date() } },
+    where: { status: "PENDING", dueDate: { lt: startOfToday } },
     data: { status: "OVERDUE" },
   });
 }
