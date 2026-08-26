@@ -163,7 +163,8 @@ model Lead {
 
   googlePlaceId String? @unique
 
-  analysisItems LeadAnalysisItem[]
+  analysisItems   LeadAnalysisItem[]
+  clientPitchText String?            @db.Text
 
   @@map("leads")
 }
