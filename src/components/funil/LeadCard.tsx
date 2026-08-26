@@ -16,6 +16,8 @@ import {
   Facebook,
   Linkedin,
   Mail,
+  ClipboardList,
+  FileText,
 } from "lucide-react";
 import { updateLeadStage, deleteLead, convertLeadToClient } from "@/app/actions/leads";
 import { formatCurrency } from "@/lib/utils";
@@ -32,6 +34,7 @@ export interface LeadCardData {
   notes: string | null;
   lostReason: string | null;
   convertedClientId: string | null;
+  hasAnalysis: boolean;
 }
 
 const stageLabel: Record<string, string> = {
@@ -296,6 +299,24 @@ export function LeadCard({ lead }: { lead: LeadCardData }) {
               </p>
             )}
           </div>
+        )
+      )}
+
+      {lead.hasAnalysis ? (
+        <Link
+          href={`/funil/${lead.id}/relatorio`}
+          className="flex items-center gap-1.5 text-xs font-medium text-orange-600 dark:text-orange-400 hover:underline"
+        >
+          <FileText className="h-3.5 w-3.5" /> Ver Análise
+        </Link>
+      ) : (
+        lead.stage === "ANALYZING" && (
+          <Link
+            href={`/funil/${lead.id}/analise`}
+            className="flex items-center gap-1.5 text-xs font-medium text-orange-600 dark:text-orange-400 hover:underline"
+          >
+            <ClipboardList className="h-3.5 w-3.5" /> Analisar
+          </Link>
         )
       )}
 
