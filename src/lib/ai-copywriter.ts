@@ -46,7 +46,7 @@ ${notesBlock}`;
     },
     body: JSON.stringify({
       model: "claude-sonnet-5",
-      max_tokens: 1024,
+      max_tokens: 2048,
       messages: [{ role: "user", content: prompt }],
     }),
   });
@@ -57,10 +57,23 @@ ${notesBlock}`;
   }
 
   const data = await response.json();
-  const text = data?.content?.[0]?.text;
-  if (!text || typeof text !== "string") {
-    throw new Error("A API da Anthropic não retornou um texto válido.");
+
+  // A resposta pode trazer outros tipos de bloco antes do texto (ex: um
+  // bloco de "thinking"), então procura por todos os blocos de texto em vez
+  // de assumir que o primeiro item da lista já é o texto.
+  const contentBlocks: Array<{ type?: string; text?: string }> = Array.isArray(data?.content) ? data.content : [];
+  const text = contentBlocks
+    .filter((b) => b?.type === "text" && typeof b.text === "string")
+    .map((b) => b.text)
+    .join("\n")
+    .trim();
+
+  if (!text) {
+    const blockTypes = contentBlocks.map((b) => b?.type).join(", ") || "nenhum";
+    throw new Error(
+      `A API da Anthropic não retornou texto (motivo: ${data?.stop_reason ?? "desconhecido"}, blocos recebidos: ${blockTypes}).`
+    );
   }
 
-  return text.trim();
+  return text;
 }
