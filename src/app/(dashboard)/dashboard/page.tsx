@@ -22,6 +22,7 @@ import { syncInvoiceStatuses } from "@/lib/scheduled-invoices";
 import { CALENDAR_TASK_TYPES, taskTypeLabel } from "@/lib/tasks";
 import { computeNextBillingDate, projectBillingDates } from "@/lib/billing";
 import { remainingAmount, receivedAmount } from "@/lib/payments";
+import { syncRecurringCosts } from "@/lib/recurring-costs";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -53,6 +54,11 @@ export default async function DashboardPage({
     await syncInvoiceStatuses();
   } catch (error) {
     console.error("syncInvoiceStatuses falhou no Dashboard:", error);
+  }
+  try {
+    await syncRecurringCosts();
+  } catch (error) {
+    console.error("syncRecurringCosts falhou no Dashboard:", error);
   }
 
   const now = new Date();
