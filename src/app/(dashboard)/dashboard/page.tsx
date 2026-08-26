@@ -20,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { syncInvoiceStatuses } from "@/lib/scheduled-invoices";
 import { CALENDAR_TASK_TYPES, taskTypeLabel } from "@/lib/tasks";
+import { computeNextBillingDate, projectBillingDates } from "@/lib/billing";
+import { remainingAmount, receivedAmount } from "@/lib/payments";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -85,6 +87,8 @@ export default async function DashboardPage({
     costsThisMonth,
     costsPrevMonth,
     contentCalendarTasks,
+    monthInvoices,
+    recurringClients,
   ] = await Promise.all([
     prisma.invoice.findMany({ where: { status: "PAID" }, select: { total: true, paidAt: true } }),
     prisma.client.count({ where: { status: "ACTIVE" } }),
@@ -116,6 +120,29 @@ export default async function DashboardPage({
       },
       include: { client: { select: { id: true, name: true, company: true } } },
       orderBy: { dueDate: "asc" },
+    }),
+    prisma.invoice.findMany({
+      where: {
+        OR: [
+          { dueDate: { gte: monthStart, lt: nextMonthStart } },
+          { paidAt: { gte: monthStart, lt: nextMonthStart } },
+        ],
+      },
+      include: { payments: true, client: { select: { id: true, name: true, company: true } } },
+    }),
+    prisma.client.findMany({
+      where: { status: { notIn: ["CHURNED", "INACTIVE"] }, billingFrequency: { not: "NONE" }, contractValue: { not: null }, nextBillingDate: { not: null } },
+      select: {
+        id: true,
+        name: true,
+        company: true,
+        contractValue: true,
+        billingFrequency: true,
+        billingDayOfWeek: true,
+        billingDayOfMonth1: true,
+        billingDayOfMonth2: true,
+        nextBillingDate: true,
+      },
     }),
   ]);
 
@@ -165,6 +192,64 @@ export default async function DashboardPage({
     const idx = chartData.findIndex((c) => c.key === new Date(entry.month).getTime());
     if (idx !== -1) chartData[idx].vendas = entry._sum.grossValue || 0;
   }
+
+  // Faturamento dia a dia do mês selecionado — junta o que já foi recebido
+  // (por data de pagamento) com o que ainda está previsto (vencimento de
+  // fatura já gerada, mais ocorrências futuras de clientes recorrentes que
+  // ainda nem viraram fatura), pra dar visibilidade do mês inteiro dia a
+  // dia — essencial pra quem tem cliente com cobrança semanal, onde o
+  // faturamento do mês não é um valor só, é vários ao longo do mês.
+  const dailyBilling = new Map<number, { received: number; expected: number }>();
+  function addToDay(date: Date, field: "received" | "expected", amount: number) {
+    if (amount <= 0) return;
+    const day = date.getDate();
+    const entry = dailyBilling.get(day) || { received: 0, expected: 0 };
+    entry[field] += amount;
+    dailyBilling.set(day, entry);
+  }
+
+  for (const invoice of monthInvoices) {
+    if (invoice.paidAt && invoice.paidAt >= monthStart && invoice.paidAt < nextMonthStart) {
+      addToDay(invoice.paidAt, "received", receivedAmount(invoice));
+    }
+    if (
+      invoice.dueDate >= monthStart &&
+      invoice.dueDate < nextMonthStart &&
+      (invoice.status === "PENDING" || invoice.status === "OVERDUE" || invoice.status === "PARTIALLY_PAID")
+    ) {
+      addToDay(invoice.dueDate, "expected", remainingAmount(invoice));
+    }
+  }
+
+  const monthEnd = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0);
+  for (const client of recurringClients) {
+    if (!client.nextBillingDate || !client.contractValue) continue;
+    const rule = {
+      frequency: client.billingFrequency,
+      dayOfWeek: client.billingDayOfWeek,
+      dayOfMonth1: client.billingDayOfMonth1,
+      dayOfMonth2: client.billingDayOfMonth2,
+    };
+    // A próxima cobrança do cliente já tem fatura gerada (contada acima via
+    // dueDate) — projeta só as ocorrências seguintes dentro do mês, senão
+    // contaria a mesma cobrança duas vezes.
+    const dayAfterNext = new Date(client.nextBillingDate);
+    dayAfterNext.setDate(dayAfterNext.getDate() + 1);
+    const projectFrom = dayAfterNext < monthStart ? monthStart : dayAfterNext;
+    if (projectFrom >= nextMonthStart) continue;
+    const futureDates = projectBillingDates(rule, projectFrom, monthEnd);
+    for (const date of futureDates) addToDay(date, "expected", client.contractValue);
+  }
+
+  const dailyBillingRows = Array.from(dailyBilling.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([day, amounts]) => ({
+      day,
+      date: new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), day),
+      ...amounts,
+      total: amounts.received + amounts.expected,
+    }));
+  const monthBillingTotal = dailyBillingRows.reduce((s, r) => s + r.total, 0);
 
   return (
     <div>
@@ -257,6 +342,39 @@ export default async function DashboardPage({
             href="/financeiro"
           />
         </div>
+
+        {/* Faturamento dia a dia — recebido + previsto, útil pra quem tem cobrança semanal */}
+        {dailyBillingRows.length > 0 && (
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Faturamento do Mês — Dia a Dia</CardTitle>
+                <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(monthBillingTotal)}</span>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Recebido (já pago) e previsto (vencimento programado, inclusive cobranças semanais futuras), dia a dia ao longo do mês
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {dailyBillingRows.map((row) => (
+                <div key={row.day} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100 w-28 capitalize">
+                    {formatDate(row.date, { weekday: "short", day: "2-digit", month: "2-digit", year: undefined })}
+                  </span>
+                  <div className="flex items-center gap-3 text-xs flex-1 justify-end mr-3">
+                    {row.received > 0 && (
+                      <span className="text-green-600 dark:text-green-400 font-medium">Recebido {formatCurrency(row.received)}</span>
+                    )}
+                    {row.expected > 0 && (
+                      <span className="text-yellow-600 dark:text-yellow-400 font-medium">Previsto {formatCurrency(row.expected)}</span>
+                    )}
+                  </div>
+                  <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(row.total)}</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Charts & Recent Activity Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
