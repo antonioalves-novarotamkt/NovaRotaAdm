@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +12,14 @@ import { prisma } from "@/lib/prisma";
 import { getAgencySettings } from "@/app/actions/agency";
 
 export const dynamic = "force-dynamic";
+
+// Define o título da página em português com o nome do cliente — é o que o
+// navegador usa como nome sugerido ao salvar o relatório como PDF.
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const lead = await prisma.lead.findUnique({ where: { id: params.id }, select: { name: true, company: true } });
+  if (!lead) return {};
+  return { title: `Análise de Oportunidades - ${lead.company || lead.name}` };
+}
 
 export default async function LeadReportPage({ params }: { params: { id: string } }) {
   const [lead, agency] = await Promise.all([
@@ -63,7 +72,7 @@ export default async function LeadReportPage({ params }: { params: { id: string 
             </div>
 
             <div className="mb-6">
-              <p className="text-xs text-gray-400 dark:text-gray-500 tracking-widest uppercase">Lead</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 tracking-widest uppercase">Cliente</p>
               <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{lead.company || lead.name}</p>
               {lead.company && lead.name !== lead.company && (
                 <p className="text-sm text-gray-500 dark:text-gray-400">{lead.name}</p>
@@ -94,6 +103,15 @@ export default async function LeadReportPage({ params }: { params: { id: string 
             <p className="hidden print:block text-sm text-gray-700 whitespace-pre-line">
               {lead.clientPitchText || fallbackText}
             </p>
+
+            {(agency.website || agency.phone || agency.cnpj) && (
+              <div className="mt-10 pt-4 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-500 space-y-0.5">
+                <p className="font-medium text-gray-500 dark:text-gray-400">{agency.name}</p>
+                {agency.website && <p>{agency.website}</p>}
+                {agency.phone && <p>{agency.phone}</p>}
+                {agency.cnpj && <p>CNPJ: {agency.cnpj}</p>}
+              </div>
+            )}
           </CardContent>
         </Card>
 
