@@ -91,9 +91,9 @@ export default async function LeadReportPage({ params }: { params: { id: string 
               )}
             </div>
 
-            {lead.clientPitchText && (
-              <p className="hidden print:block text-sm text-gray-700 whitespace-pre-line">{lead.clientPitchText}</p>
-            )}
+            <p className="hidden print:block text-sm text-gray-700 whitespace-pre-line">
+              {lead.clientPitchText || fallbackText}
+            </p>
           </CardContent>
         </Card>
 

@@ -55,14 +55,14 @@ export function Sidebar({ logoUrl }: { logoUrl?: string | null }) {
     <>
       {open && (
         <div
-          className="fixed inset-0 bg-black/40 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/40 z-30 lg:hidden print:hidden"
           onClick={close}
           aria-hidden="true"
         />
       )}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-full w-64 bg-[#0f172a] flex flex-col z-40 transition-transform duration-200 ease-in-out",
+          "fixed left-0 top-0 h-full w-64 bg-[#0f172a] flex flex-col z-40 transition-transform duration-200 ease-in-out print:hidden",
           open ? "translate-x-0" : "-translate-x-full",
           "lg:translate-x-0"
         )}
