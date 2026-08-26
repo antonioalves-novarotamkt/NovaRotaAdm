@@ -44,7 +44,7 @@ const stageLabel: Record<string, string> = {
   LOST: "Perdido",
 };
 
-const stageOrder = ["NEW", "CONTACTED", "ANALYZING", "PROPOSAL", "NEGOTIATION", "WON", "LOST"];
+const stageOrder = ["NEW", "ANALYZING", "CONTACTED", "PROPOSAL", "NEGOTIATION", "WON", "LOST"];
 // A seta de "avançar" só faz sentido até a última etapa antes de
 // Negociação — dali pra Ganho é sempre via "Converter em Cliente".
 const LAST_AUTO_ADVANCE_IDX = stageOrder.indexOf("NEGOTIATION") - 1;
