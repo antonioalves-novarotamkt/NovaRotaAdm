@@ -4,13 +4,16 @@ import { useTransition } from "react";
 import { Trash2 } from "lucide-react";
 import { deleteOperationalCost } from "@/app/actions/costs";
 
-export function DeleteCostButton({ costId }: { costId: string }) {
+export function DeleteCostButton({ costId, recurring }: { costId: string; recurring?: boolean }) {
   const [isPending, startTransition] = useTransition();
 
   return (
     <button
       onClick={() => {
-        if (confirm("Remover esse lançamento de custo?")) {
+        const message = recurring
+          ? "Esse é um custo mensal. Remover também para as próximas repetições — os meses já lançados continuam no histórico. Confirmar?"
+          : "Remover esse lançamento de custo?";
+        if (confirm(message)) {
           const formData = new FormData();
           formData.set("id", costId);
           startTransition(() => deleteOperationalCost(formData));

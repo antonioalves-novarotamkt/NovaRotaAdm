@@ -50,6 +50,10 @@ export function NewCostDialog({ defaultMonth }: { defaultMonth?: string }) {
             <Input name="month" type="month" defaultValue={defaultMonth || currentMonth} required />
             <Input name="amount" type="number" step="0.01" placeholder="Valor (R$)" required />
           </div>
+          <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+            <input type="checkbox" name="recurring" className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
+            Custo mensal (repete todo mês automaticamente)
+          </label>
           <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
             Salvar
           </Button>

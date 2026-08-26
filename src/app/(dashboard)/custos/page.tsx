@@ -1,10 +1,11 @@
-import { Wallet, DollarSign, PieChart } from "lucide-react";
+import { Wallet, DollarSign, PieChart, Repeat } from "lucide-react";
 import { CostCategory } from "@prisma/client";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { NewCostDialog } from "@/components/custos/NewCostDialog";
 import { DeleteCostButton } from "@/components/custos/DeleteCostButton";
 import { formatCurrency } from "@/lib/utils";
+import { syncRecurringCosts } from "@/lib/recurring-costs";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,12 @@ export default async function CustosPage({
 }: {
   searchParams: { mes?: string; categoria?: string };
 }) {
+  try {
+    await syncRecurringCosts();
+  } catch (error) {
+    console.error("syncRecurringCosts falhou nos Custos:", error);
+  }
+
   const selectedMonth = searchParams.mes || currentMonth;
   const selectedCategory = searchParams.categoria || "";
   const monthDate = new Date(`${selectedMonth}-01T00:00:00.000Z`);
@@ -162,12 +169,20 @@ export default async function CustosPage({
                 {costs.map((cost) => (
                   <div key={cost.id} className="flex items-center justify-between p-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{cost.description}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                        {cost.description}
+                        {cost.recurring && (
+                          <span title="Custo mensal — repete automaticamente" className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-500/10 px-1.5 py-0.5 rounded-full">
+                            <Repeat className="h-3 w-3" />
+                            Mensal
+                          </span>
+                        )}
+                      </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">{categoryLabel[cost.category] || cost.category}</p>
                     </div>
                     <div className="flex items-center gap-6">
                       <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(cost.amount)}</span>
-                      <DeleteCostButton costId={cost.id} />
+                      <DeleteCostButton costId={cost.id} recurring={cost.recurring} />
                     </div>
                   </div>
                 ))}

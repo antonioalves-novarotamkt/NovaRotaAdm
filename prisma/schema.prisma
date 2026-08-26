@@ -466,6 +466,7 @@ model OperationalCost {
   description String
   amount      Float
   month       DateTime
+  recurring   Boolean      @default(false)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
