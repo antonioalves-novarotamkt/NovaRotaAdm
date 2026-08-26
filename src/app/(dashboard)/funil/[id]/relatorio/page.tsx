@@ -1,17 +1,25 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { EB_Garamond } from "next/font/google";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PrintButton } from "@/components/contracts/PrintButton";
-import { ClientPitchCard } from "@/components/funil/ClientPitchCard";
+import { ClientTextsCard } from "@/components/funil/ClientTextsCard";
 import { buildWhatsappAnalysisText } from "@/lib/lead-analysis";
 import { prisma } from "@/lib/prisma";
 import { getAgencySettings } from "@/app/actions/agency";
 
 export const dynamic = "force-dynamic";
+
+const serif = EB_Garamond({ subsets: ["latin"], weight: ["500", "600"] });
+
+// Cor de destaque do relatório impresso — mesma linha visual do modelo da
+// agência (título e linhas em navy, sem depender do tema claro/escuro).
+const NAVY = "text-[#1e3a5f] print:!text-[#1e3a5f]";
+const NAVY_BORDER = "border-[#1e3a5f] print:!border-[#1e3a5f]";
 
 // Define o título da página em português com o nome do cliente — é o que o
 // navegador usa como nome sugerido ao salvar o relatório como PDF.
@@ -36,7 +44,7 @@ export default async function LeadReportPage({ params }: { params: { id: string 
 
   return (
     <div>
-      <Header title={`Análise — ${lead.company || lead.name}`} subtitle="Relatório e texto pronto para enviar" />
+      <Header title={`Análise — ${lead.company || lead.name}`} subtitle="Relatório e textos prontos para enviar" />
       <div className="p-6 space-y-4 max-w-2xl mx-auto">
         <div className="flex items-center justify-between print:hidden">
           <Link href="/funil">
@@ -56,30 +64,23 @@ export default async function LeadReportPage({ params }: { params: { id: string 
           </div>
         </div>
 
-        <Card className="border-0 shadow-sm print:shadow-none print:border-0">
-          <CardContent className="p-8">
-            <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-100 dark:border-gray-800">
-              <div className="flex items-center gap-3">
-                {agency.logoUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={agency.logoUrl} alt={agency.name} className="h-14 object-contain" />
-                )}
-                <div>
-                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{agency.name}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Análise de Oportunidades</p>
-                </div>
-              </div>
+        <Card className="border-0 shadow-sm print:shadow-none print:border-0 bg-white">
+          <CardContent className="p-10">
+            <div className={`flex items-center justify-between pb-5 mb-8 border-b-2 ${NAVY_BORDER}`}>
+              {agency.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={agency.logoUrl} alt={agency.name} className="h-12 object-contain" />
+              ) : (
+                <p className="text-base font-bold text-gray-900">{agency.name}</p>
+              )}
+              <h1 className={`${serif.className} text-2xl ${NAVY}`}>Análise de Oportunidades</h1>
             </div>
 
-            <div className="mb-6">
-              <p className="text-xs text-gray-400 dark:text-gray-500 tracking-widest uppercase">Cliente</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{lead.company || lead.name}</p>
-              {lead.company && lead.name !== lead.company && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">{lead.name}</p>
-              )}
-              {lead.instagramHandle && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">Instagram: {lead.instagramHandle}</p>
-              )}
+            <div className="mb-8">
+              <p className="text-xs text-gray-400 tracking-widest uppercase">Cliente</p>
+              <p className="text-xl font-bold text-gray-900">{lead.company || lead.name}</p>
+              {lead.company && lead.name !== lead.company && <p className="text-sm text-gray-500">{lead.name}</p>}
+              {lead.instagramHandle && <p className="text-sm text-gray-500">Instagram: {lead.instagramHandle}</p>}
             </div>
 
             <div className="print:hidden">
@@ -100,26 +101,23 @@ export default async function LeadReportPage({ params }: { params: { id: string 
               )}
             </div>
 
-            <p className="hidden print:block text-sm text-gray-700 whitespace-pre-line">
-              {lead.clientPitchText || fallbackText}
+            <p className="hidden print:block text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+              {lead.reportText || fallbackText}
             </p>
 
-            {(agency.website || agency.phone || agency.cnpj) && (
-              <div className="mt-10 pt-4 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-500 space-y-0.5">
-                <p className="font-medium text-gray-500 dark:text-gray-400">{agency.name}</p>
-                {agency.website && <p>{agency.website}</p>}
-                {agency.phone && <p>{agency.phone}</p>}
-                {agency.cnpj && <p>CNPJ: {agency.cnpj}</p>}
-              </div>
-            )}
+            <div className={`hidden print:flex mt-16 pt-4 border-t-2 ${NAVY_BORDER} items-end justify-between`}>
+              <p className={`${serif.className} text-lg ${NAVY}`}>{agency.name}</p>
+              {agency.website && <p className={`text-sm font-bold ${NAVY}`}>{agency.website}</p>}
+            </div>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm print:hidden">
           <CardContent className="p-6">
-            <ClientPitchCard
+            <ClientTextsCard
               leadId={lead.id}
-              initialPitch={lead.clientPitchText}
+              initialReportText={lead.reportText}
+              initialWhatsappText={lead.whatsappTeaserText}
               fallbackText={fallbackText}
               phone={lead.phone}
             />
