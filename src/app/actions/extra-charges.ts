@@ -45,6 +45,7 @@ export async function markExtraChargePaid(formData: FormData) {
   await registerInvoicePayment(id, amount, paidAt);
 
   revalidatePath("/financeiro");
+  revalidatePath(`/clientes/${invoice.clientId}`);
 }
 
 export async function deleteExtraCharge(formData: FormData) {

@@ -80,32 +80,10 @@ export async function registerScheduledPayment(formData: FormData) {
   }
 
   const amount = amountRaw ? Number(amountRaw) : pendingInvoice.total;
-  const { isFullyPaid } = await registerInvoicePayment(pendingInvoice.id, amount, paidAt);
-
-  // O próximo vencimento só avança quando o período atual estiver
-  // totalmente quitado — uma baixa parcial deixa o cliente ainda devendo
-  // o saldo desse mesmo período, então continua aparecendo pra cobrar.
-  if (isFullyPaid) {
-    const dayAfter = new Date(client.nextBillingDate);
-    dayAfter.setDate(dayAfter.getDate() + 1);
-
-    const nextBillingDate = computeNextBillingDate(
-      {
-        frequency: client.billingFrequency,
-        dayOfWeek: client.billingDayOfWeek,
-        dayOfMonth1: client.billingDayOfMonth1,
-        dayOfMonth2: client.billingDayOfMonth2,
-      },
-      dayAfter
-    );
-
-    await prisma.client.update({
-      where: { id: clientId },
-      data: { nextBillingDate },
-    });
-  }
-
-  await syncScheduledInvoices();
+  // registerInvoicePayment já cuida de avançar o próximo vencimento quando
+  // essa fatura for a cobrança programada vigente e fechar 100% — mesma
+  // regra aplicada não importa por qual tela a baixa é dada.
+  await registerInvoicePayment(pendingInvoice.id, amount, paidAt);
 
   revalidatePath("/financeiro");
 }

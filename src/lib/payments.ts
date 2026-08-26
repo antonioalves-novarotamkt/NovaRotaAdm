@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { computeNextBillingDate } from "@/lib/billing";
+import { syncScheduledInvoices } from "@/lib/scheduled-invoices";
 import type { Invoice, Payment } from "@prisma/client";
 
 type InvoiceWithPayments = Invoice & { payments: Payment[] };
@@ -29,7 +31,7 @@ export function receivedAmount(invoice: InvoiceWithPayments): number {
  * o saldo restante pra uma próxima baixa.
  */
 export async function registerInvoicePayment(invoiceId: string, amountPaid: number, paidAt: Date) {
-  const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId }, include: { payments: true } });
+  const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId }, include: { payments: true, client: true } });
   if (!invoice) throw new Error("Fatura não encontrada.");
 
   const alreadyPaid = paidAmount(invoice);
@@ -52,6 +54,26 @@ export async function registerInvoicePayment(invoiceId: string, amountPaid: numb
     where: { id: invoiceId },
     data: isFullyPaid ? { status: "PAID", paidAt } : { status: "PARTIALLY_PAID" },
   });
+
+  // Se essa é a cobrança programada vigente do cliente (recorrência semanal/
+  // mensal/quinzenal), fechá-la 100% avança o próximo vencimento — não
+  // importa por qual tela a baixa foi dada (recebimento programado, extrato
+  // do cliente, etc), o comportamento tem que ser o mesmo.
+  if (isFullyPaid && invoice.description === "Recebimento programado" && invoice.client.nextBillingDate?.getTime() === invoice.dueDate.getTime()) {
+    const dayAfter = new Date(invoice.dueDate);
+    dayAfter.setDate(dayAfter.getDate() + 1);
+    const nextBillingDate = computeNextBillingDate(
+      {
+        frequency: invoice.client.billingFrequency,
+        dayOfWeek: invoice.client.billingDayOfWeek,
+        dayOfMonth1: invoice.client.billingDayOfMonth1,
+        dayOfMonth2: invoice.client.billingDayOfMonth2,
+      },
+      dayAfter
+    );
+    await prisma.client.update({ where: { id: invoice.clientId }, data: { nextBillingDate } });
+    await syncScheduledInvoices();
+  }
 
   return { isFullyPaid, remaining: invoice.total - (alreadyPaid + amountPaid) };
 }

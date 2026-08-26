@@ -421,6 +421,9 @@ export default async function FinanceiroPage({
                               <span className={`text-xs font-medium px-2 py-1 rounded-full ${invoiceStatusStyle[invoice.status]}`}>
                                 {invoiceStatusLabel[invoice.status]}
                               </span>
+                              {invoice.status !== "PAID" && invoice.status !== "CANCELLED" && invoice.status !== "DRAFT" && (
+                                <MarkExtraChargePaidButton id={invoice.id} remaining={remainingAmount(invoice)} alreadyPaid={paidAmount(invoice)} />
+                              )}
                               {invoice.status === "PAID" && (
                                 <Link href={`/recibo/${invoice.id}`}>
                                   <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs">
