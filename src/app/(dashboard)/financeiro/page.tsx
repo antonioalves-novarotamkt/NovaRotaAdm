@@ -173,6 +173,10 @@ export default async function FinanceiroPage({
   const total = invoices.reduce((s, i) => s + i.total, 0);
 
   const now = new Date();
+  // dueDate/nextBillingDate ficam salvos como meia-noite UTC do dia — usa o
+  // mesmo corte pra decidir "atrasado" aqui, senão uma fatura que vence hoje
+  // aparece como atrasada assim que passa da meia-noite.
+  const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const startMonth = new Date(now.getFullYear(), now.getMonth() - MONTHS_BACK, 1);
   const endMonth = new Date(now.getFullYear(), now.getMonth() + MONTHS_AHEAD, 1);
@@ -687,7 +691,7 @@ export default async function FinanceiroPage({
             </CardHeader>
             <CardContent className="space-y-2">
               {scheduledClients.map((client) => {
-                const overdue = client.nextBillingDate && client.nextBillingDate < new Date();
+                const overdue = client.nextBillingDate && client.nextBillingDate < startOfToday;
                 const scheduledInvoice = invoices.find(
                   (i) =>
                     i.clientId === client.id &&
