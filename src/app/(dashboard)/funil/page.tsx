@@ -21,6 +21,7 @@ const stages = [
 export default async function FunilPage() {
   const leads = await prisma.lead.findMany({
     orderBy: { createdAt: "desc" },
+    include: { _count: { select: { analysisItems: true } } },
   });
 
   const byStage = new Map<string, typeof leads>();
@@ -108,7 +109,9 @@ export default async function FunilPage() {
                   {stageLeads.length === 0 ? (
                     <p className="text-xs text-gray-300 dark:text-gray-600 px-1">Nenhum lead</p>
                   ) : (
-                    stageLeads.map((lead) => <LeadCard key={lead.id} lead={lead} />)
+                    stageLeads.map((lead) => (
+                      <LeadCard key={lead.id} lead={{ ...lead, hasAnalysis: lead._count.analysisItems > 0 }} />
+                    ))
                   )}
                 </div>
               </div>

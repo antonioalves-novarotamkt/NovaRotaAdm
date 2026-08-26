@@ -91,6 +91,7 @@ export async function searchAndImportLeadsAisa(
           phone: lead.telefone && lead.telefone !== "WhatsApp Direto" ? lead.telefone : null,
           source: "Google Maps + Instagram (AIsa)",
           notes: buildAisaNotes(lead),
+          instagramHandle: lead.instagramUrl || null,
         },
       });
       imported++;

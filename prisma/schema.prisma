@@ -156,12 +156,34 @@ model Lead {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  instagramHandle String?
+
   convertedClientId String? @unique
   convertedClient   Client? @relation(fields: [convertedClientId], references: [id])
 
   googlePlaceId String? @unique
 
+  analysisItems LeadAnalysisItem[]
+
   @@map("leads")
+}
+
+// Seções da análise de um lead ("Redes Sociais", "Site", "Google", "iFood"...)
+// — escritas à mão pela agência, não geradas por IA. Uma lista em vez de
+// colunas fixas porque as seções variam por tipo de negócio (um restaurante
+// tem iFood/Keeta/99, outro segmento não tem nada disso).
+model LeadAnalysisItem {
+  id        String   @id @default(cuid())
+  leadId    String
+  title     String
+  content   String   @db.Text
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@map("lead_analysis_items")
 }
 
 enum LeadStage {

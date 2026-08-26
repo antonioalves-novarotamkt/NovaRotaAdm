@@ -39,6 +39,7 @@ export function NewLeadDialog() {
             <Input name="source" placeholder="Origem (indicação, site...)" />
             <Input name="value" type="number" step="0.01" placeholder="Valor estimado (R$)" />
           </div>
+          <Input name="instagramHandle" placeholder="Instagram (@usuário ou link, opcional)" />
           <textarea
             name="notes"
             placeholder="Observações"

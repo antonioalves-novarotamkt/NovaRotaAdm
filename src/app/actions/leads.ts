@@ -13,6 +13,7 @@ export async function createLead(formData: FormData) {
   const source = String(formData.get("source") || "").trim();
   const valueRaw = String(formData.get("value") || "");
   const notes = String(formData.get("notes") || "").trim();
+  const instagramHandle = String(formData.get("instagramHandle") || "").trim();
 
   if (!name) {
     throw new Error("Nome é obrigatório.");
@@ -27,6 +28,7 @@ export async function createLead(formData: FormData) {
       source: source || null,
       value: valueRaw ? Number(valueRaw) : null,
       notes: notes || null,
+      instagramHandle: instagramHandle || null,
     },
   });
 
