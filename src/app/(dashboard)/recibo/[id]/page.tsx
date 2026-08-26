@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PrintButton } from "@/components/contracts/PrintButton";
+import { CancelPaymentButton } from "@/components/financeiro/CancelPaymentButton";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { getAgencySettings } from "@/app/actions/agency";
@@ -42,7 +43,10 @@ export default async function ReciboPage({ params }: { params: { id: string } })
               Voltar
             </Button>
           </Link>
-          <PrintButton />
+          <div className="flex items-center gap-2">
+            {(invoice.status === "PAID" || invoice.status === "PARTIALLY_PAID") && <CancelPaymentButton id={invoice.id} />}
+            <PrintButton />
+          </div>
         </div>
 
         <Card className="border-0 shadow-sm print:shadow-none print:border-0">
