@@ -11,7 +11,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <SidebarProvider>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <Sidebar logoUrl={agency.logoUrl} />
-        <main className="lg:ml-64 min-h-screen">{children}</main>
+        <main className="lg:ml-64 print:ml-0 min-h-screen">{children}</main>
       </div>
     </SidebarProvider>
   );

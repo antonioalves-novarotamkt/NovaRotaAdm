@@ -19,7 +19,7 @@ export function Header({ title, subtitle }: HeaderProps) {
   const userImage = (session?.user as { image?: string | null } | undefined)?.image;
 
   return (
-    <header className="h-16 border-b dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20">
+    <header className="h-16 border-b dark:border-gray-800 bg-white dark:bg-gray-900 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 print:hidden">
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={toggle}
