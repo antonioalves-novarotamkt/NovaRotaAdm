@@ -1,4 +1,4 @@
-import { Target, TrendingUp, Percent, Users } from "lucide-react";
+import { Target, TrendingUp, CheckCircle2, Users } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { NewLeadDialog } from "@/components/funil/NewLeadDialog";
@@ -8,14 +8,15 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+// Só as etapas do pipeline em si aparecem como coluna. "Ganho" não tem
+// coluna — assim que converte em cliente, o lead sai do quadro (o cliente
+// passa a ser acompanhado em Clientes). "Perdido" não existe mais como
+// etapa: marcar um lead como perdido já remove o registro na hora.
 const stages = [
   { key: "NEW", label: "Novo Contato" },
   { key: "ANALYZING", label: "Analisando" },
   { key: "CONTACTED", label: "Em Contato" },
   { key: "PROPOSAL", label: "Proposta Enviada" },
-  { key: "NEGOTIATION", label: "Negociação" },
-  { key: "WON", label: "Ganho" },
-  { key: "LOST", label: "Perdido" },
 ] as const;
 
 export default async function FunilPage() {
@@ -30,11 +31,9 @@ export default async function FunilPage() {
     byStage.get(lead.stage)?.push(lead);
   }
 
-  const openLeads = leads.filter((l) => l.stage !== "WON" && l.stage !== "LOST");
+  const openLeads = leads.filter((l) => l.stage !== "WON");
   const pipelineValue = openLeads.reduce((s, l) => s + (l.value || 0), 0);
-  const decided = leads.filter((l) => l.stage === "WON" || l.stage === "LOST");
-  const won = leads.filter((l) => l.stage === "WON").length;
-  const conversionRate = decided.length > 0 ? (won / decided.length) * 100 : 0;
+  const wonCount = leads.filter((l) => l.stage === "WON").length;
 
   return (
     <div>
@@ -67,13 +66,12 @@ export default async function FunilPage() {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Taxa de Conversão</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Convertidos</p>
                   <div className="h-8 w-8 rounded-lg bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center">
-                    <Percent className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <CheckCircle2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                   </div>
                 </div>
-                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{conversionRate.toFixed(0)}%</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{won} de {decided.length} decididos</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{wonCount}</p>
               </CardContent>
             </Card>
             <Card className="border-0 shadow-sm">
@@ -92,7 +90,7 @@ export default async function FunilPage() {
         </div>
 
         {/* Kanban board */}
-        <div className="grid grid-cols-1 md:grid-cols-4 xl:grid-cols-7 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {stages.map((stage) => {
             const stageLeads = byStage.get(stage.key) || [];
             const stageValue = stageLeads.reduce((s, l) => s + (l.value || 0), 0);
