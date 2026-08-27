@@ -193,9 +193,7 @@ enum LeadStage {
   CONTACTED
   ANALYZING
   PROPOSAL
-  NEGOTIATION
   WON
-  LOST
 }
 
 model ClientSale {

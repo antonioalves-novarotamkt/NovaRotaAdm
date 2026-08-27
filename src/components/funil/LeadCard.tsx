@@ -42,15 +42,15 @@ const stageLabel: Record<string, string> = {
   CONTACTED: "Em Contato",
   ANALYZING: "Analisando",
   PROPOSAL: "Proposta Enviada",
-  NEGOTIATION: "Negociação",
   WON: "Ganho",
   LOST: "Perdido",
 };
 
-const stageOrder = ["NEW", "ANALYZING", "CONTACTED", "PROPOSAL", "NEGOTIATION", "WON", "LOST"];
-// A seta de "avançar" só faz sentido até a última etapa antes de
-// Negociação — dali pra Ganho é sempre via "Converter em Cliente".
-const LAST_AUTO_ADVANCE_IDX = stageOrder.indexOf("NEGOTIATION") - 1;
+const stageOrder = ["NEW", "ANALYZING", "CONTACTED", "PROPOSAL", "WON", "LOST"];
+// A seta de "avançar" só faz sentido até a última etapa antes de Ganho —
+// dali pra Ganho é sempre via "Converter em Cliente" (a negociação em si
+// acontece depois que a proposta foi enviada, não é uma etapa separada).
+const LAST_AUTO_ADVANCE_IDX = stageOrder.indexOf("WON") - 1;
 
 function whatsappLink(phone: string): string | null {
   const digits = phone.replace(/\D/g, "");
@@ -109,34 +109,20 @@ export function LeadCard({ lead }: { lead: LeadCardData }) {
   const [isPending, startTransition] = useTransition();
   const [expanded, setExpanded] = useState(false);
 
-  function handleStageChange(stage: string, lostReason?: string) {
+  function handleStageChange(stage: string) {
     const formData = new FormData();
     formData.set("id", lead.id);
     formData.set("stage", stage);
-    if (lostReason) formData.set("lostReason", lostReason);
     startTransition(() => updateLeadStage(formData));
   }
 
-  function handleSelectStage(stage: string) {
-    if (stage === "LOST") {
-      const reason = window.prompt(
-        "Motivo (opcional) — fica registrado para você analisar depois:",
-        lead.lostReason || ""
-      );
-      if (reason === null) return; // cancelado
-      handleStageChange(stage, reason);
-      return;
-    }
-    handleStageChange(stage);
-  }
-
+  // Marcar como perdido remove o lead da base na hora — não fica coluna
+  // "Perdido" acumulando registros no funil.
   function handleMarkUnfit() {
-    const reason = window.prompt(
-      "Por que esse lead não é apto? (ex: fora da região, porte incompatível, já é cliente de outra agência)",
-      "Não apto"
-    );
-    if (reason === null) return;
-    handleStageChange("LOST", reason || "Não apto");
+    if (!confirm("Marcar este lead como perdido? Ele será removido da base — essa ação não pode ser desfeita.")) return;
+    const formData = new FormData();
+    formData.set("id", lead.id);
+    startTransition(() => deleteLead(formData));
   }
 
   function handleDelete() {
@@ -215,12 +201,6 @@ export function LeadCard({ lead }: { lead: LeadCardData }) {
       )}
 
       {lead.source && <p className="text-xs text-gray-400 dark:text-gray-500">Origem: {lead.source}</p>}
-
-      {lead.stage === "LOST" && lead.lostReason && (
-        <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 rounded px-2 py-1">
-          Motivo: {lead.lostReason}
-        </p>
-      )}
 
       {hasAnyLink ? (
         <div className="flex flex-wrap gap-x-3 gap-y-1 pt-0.5">
@@ -324,7 +304,7 @@ export function LeadCard({ lead }: { lead: LeadCardData }) {
         <select
           value={lead.stage}
           disabled={isPending || !!lead.convertedClientId}
-          onChange={(e) => handleSelectStage(e.target.value)}
+          onChange={(e) => handleStageChange(e.target.value)}
           className="flex-1 min-w-0 h-7 text-xs rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-2"
         >
           {stageOrder.map((s) => (
@@ -361,15 +341,13 @@ export function LeadCard({ lead }: { lead: LeadCardData }) {
           >
             Converter em Cliente
           </button>
-          {lead.stage !== "LOST" && (
-            <button
-              onClick={handleMarkUnfit}
-              disabled={isPending}
-              className="w-full flex items-center justify-center gap-1 text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 py-1"
-            >
-              <Ban className="h-3 w-3" /> Marcar como não apto
-            </button>
-          )}
+          <button
+            onClick={handleMarkUnfit}
+            disabled={isPending}
+            className="w-full flex items-center justify-center gap-1 text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 py-1"
+          >
+            <Ban className="h-3 w-3" /> Marcar como não apto
+          </button>
         </>
       )}
     </div>
