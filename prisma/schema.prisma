@@ -26,6 +26,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   tasks         Task[]              @relation("AssignedTasks")
+  taskUpdates   TaskUpdate[]
   projects      Project[]
   resetTokens   PasswordResetToken[]
 
@@ -388,7 +389,24 @@ model Task {
   client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
   assignee User?  @relation("AssignedTasks", fields: [assigneeId], references: [id])
 
+  updates TaskUpdate[]
+
   @@map("tasks")
+}
+
+// Registro de atualizações da tarefa — vai sendo preenchido conforme o
+// andamento muda, sem sobrescrever o que já foi registrado antes.
+model TaskUpdate {
+  id        String   @id @default(cuid())
+  taskId    String
+  content   String   @db.Text
+  authorId  String?
+  createdAt DateTime @default(now())
+
+  task   Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User? @relation(fields: [authorId], references: [id])
+
+  @@map("task_updates")
 }
 
 model Invoice {
