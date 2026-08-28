@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, Loader2, Check, X, Trash2 } from "lucide-react";
+import { Calendar, Loader2, Check, X, Trash2, MessageSquarePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +13,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { updateTaskDetails, moveTask, approveTask, rejectTask, deleteTask } from "@/app/actions/tasks";
+import { updateTaskDetails, moveTask, approveTask, rejectTask, deleteTask, addTaskUpdate } from "@/app/actions/tasks";
 import { taskTypeLabel } from "@/lib/tasks";
-import { formatDate, getInitials } from "@/lib/utils";
+import { formatDate, formatRelativeTime, getInitials } from "@/lib/utils";
+import { clientColor } from "@/lib/client-color";
 import type { Task, TaskStatus, TaskType } from "@prisma/client";
 
 const inputClass =
@@ -35,9 +36,17 @@ interface UserOption {
   email: string;
 }
 
+interface TaskUpdateWithAuthor {
+  id: string;
+  content: string;
+  createdAt: Date;
+  author: { id: string; name: string | null; email: string } | null;
+}
+
 type TaskWithRelations = Task & {
-  client: { id: string; name: string; company: string | null };
+  client: { id: string; name: string; company: string | null; logoUrl: string | null };
   assignee: { id: string; name: string | null; email: string } | null;
+  updates: TaskUpdateWithAuthor[];
 };
 
 export function TaskCard({
@@ -54,6 +63,8 @@ export function TaskCard({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState(false);
+  const [updateText, setUpdateText] = useState("");
+  const [isAddingUpdate, startAddUpdate] = useTransition();
 
   function runAction(action: (formData: FormData) => Promise<void>, formData: FormData, closeOnSuccess = true) {
     setError(null);
@@ -95,10 +106,35 @@ export function TaskCard({
     runAction(deleteTask, fd);
   }
 
+  function handleAddUpdate() {
+    const content = updateText.trim();
+    if (!content) return;
+    setError(null);
+    startAddUpdate(async () => {
+      try {
+        const fd = new FormData();
+        fd.set("taskId", task.id);
+        fd.set("content", content);
+        await addTaskUpdate(fd);
+        setUpdateText("");
+        router.refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao adicionar atualização.");
+      }
+    });
+  }
+
+  const color = clientColor(task.client.id);
+  const clientLabel = task.client.company || task.client.name;
+  const lastUpdate = task.updates[0];
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="w-full text-left p-3 rounded-lg border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600 transition-colors space-y-2">
+        <button
+          style={{ borderLeftColor: color }}
+          className="w-full text-left p-3 rounded-lg border border-gray-100 dark:border-gray-800 border-l-4 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600 transition-colors space-y-2"
+        >
           <div className="flex items-center justify-between gap-2">
             <Badge variant={typeBadgeVariant[task.type]}>{taskTypeLabel[task.type]}</Badge>
             {task.dueDate && (
@@ -109,8 +145,21 @@ export function TaskCard({
             )}
           </div>
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">{task.title}</p>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{task.client.company || task.client.name}</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              {task.client.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={task.client.logoUrl} alt={clientLabel} className="h-5 w-5 rounded-full object-cover shrink-0" />
+              ) : (
+                <span
+                  style={{ backgroundColor: color }}
+                  className="h-5 w-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0"
+                >
+                  {getInitials(clientLabel)}
+                </span>
+              )}
+              <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{clientLabel}</span>
+            </div>
             {task.assignee && (
               <span
                 title={task.assignee.name || task.assignee.email}
@@ -120,6 +169,12 @@ export function TaskCard({
               </span>
             )}
           </div>
+          {lastUpdate && (
+            <p className="flex items-start gap-1 text-[11px] text-gray-400 dark:text-gray-500 line-clamp-1 pt-0.5 border-t border-gray-50 dark:border-gray-800">
+              <MessageSquarePlus className="h-3 w-3 shrink-0 mt-0.5" />
+              <span className="truncate">{lastUpdate.content}</span>
+            </p>
+          )}
         </button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
@@ -198,6 +253,41 @@ export function TaskCard({
           )}
 
           {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
+        </div>
+
+        <div className="space-y-2 pt-3 border-t">
+          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Atualizações</p>
+          {task.updates.length > 0 && (
+            <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+              {task.updates.map((u) => (
+                <div key={u.id} className="text-xs bg-gray-50 dark:bg-gray-800 rounded-md px-2.5 py-1.5">
+                  <p className="text-gray-700 dark:text-gray-200 whitespace-pre-line">{u.content}</p>
+                  <p className="text-gray-400 dark:text-gray-500 mt-0.5">
+                    {u.author?.name || u.author?.email || "Equipe"} · {formatRelativeTime(u.createdAt)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex items-start gap-2">
+            <textarea
+              value={updateText}
+              onChange={(e) => setUpdateText(e.target.value)}
+              placeholder="Registrar uma atualização..."
+              rows={2}
+              className="flex-1 rounded-md border border-input bg-background px-2.5 py-1.5 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 shrink-0"
+              disabled={isAddingUpdate || !updateText.trim()}
+              onClick={handleAddUpdate}
+            >
+              {isAddingUpdate ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Adicionar"}
+            </Button>
+          </div>
         </div>
 
         <form action={updateTaskDetails} onSubmit={() => setOpen(false)} className="space-y-3 pt-3 border-t">

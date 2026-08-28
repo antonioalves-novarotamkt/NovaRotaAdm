@@ -36,8 +36,12 @@ export default async function TarefasPage({
         ...(selectedAssigneeId ? { assigneeId: selectedAssigneeId } : {}),
       },
       include: {
-        client: { select: { id: true, name: true, company: true } },
+        client: { select: { id: true, name: true, company: true, logoUrl: true } },
         assignee: { select: { id: true, name: true, email: true } },
+        updates: {
+          orderBy: { createdAt: "desc" },
+          include: { author: { select: { id: true, name: true, email: true } } },
+        },
       },
       orderBy: { createdAt: "desc" },
     }),

@@ -139,3 +139,21 @@ export async function deleteTask(formData: FormData) {
   const task = await prisma.task.delete({ where: { id } });
   revalidateBoard(task.clientId);
 }
+
+// Adiciona uma nova entrada no histórico de atualizações da tarefa — não
+// sobrescreve as anteriores, cada mudança/observação vira um registro novo.
+export async function addTaskUpdate(formData: FormData) {
+  const taskId = String(formData.get("taskId") || "");
+  const content = String(formData.get("content") || "").trim();
+  if (!taskId || !content) throw new Error("Escreva algo para registrar a atualização.");
+
+  const session = await getServerSession(authOptions);
+  const authorId = (session?.user as { id?: string } | undefined)?.id;
+
+  const task = await prisma.taskUpdate.create({
+    data: { taskId, content, authorId: authorId || null },
+    include: { task: { select: { clientId: true } } },
+  });
+
+  revalidateBoard(task.task.clientId);
+}
