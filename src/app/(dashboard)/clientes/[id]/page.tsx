@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { ArrowLeft, Mail, Phone, Globe, MapPin, Building2, Calendar, DollarSign, FileText, Package } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Globe, MapPin, Building2, Calendar, DollarSign, FileText, Package, Users2 } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,18 @@ import { prisma } from "@/lib/prisma";
 import { ClientLogoUpload } from "@/components/clients/ClientLogoUpload";
 import { ClientBillingForm } from "@/components/clients/ClientBillingForm";
 import { EditClientDialog } from "@/components/clients/EditClientDialog";
+import { NewSocialAccountDialog } from "@/components/clients/NewSocialAccountDialog";
+import { RefreshFollowersButton } from "@/components/clients/RefreshFollowersButton";
+
+const platformLabel: Record<string, string> = {
+  INSTAGRAM: "Instagram",
+  FACEBOOK: "Facebook",
+  TIKTOK: "TikTok",
+  LINKEDIN: "LinkedIn",
+  YOUTUBE: "YouTube",
+  TWITTER: "X / Twitter",
+  OTHER: "Outra",
+};
 
 const statusBadge: Record<string, { label: string; variant: "success" | "warning" | "info" | "danger" | "gray" }> = {
   ACTIVE: { label: "Ativo", variant: "success" },
@@ -41,6 +53,10 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
     include: {
       invoices: { orderBy: { issueDate: "desc" }, include: { payments: true } },
       contracts: { orderBy: { startDate: "desc" } },
+      socialAccounts: {
+        orderBy: { createdAt: "asc" },
+        include: { metrics: { orderBy: { month: "desc" }, take: 1 } },
+      },
     },
   });
 
@@ -159,6 +175,54 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                 </CardContent>
               </Card>
             )}
+
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <Users2 className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    Redes Sociais
+                  </CardTitle>
+                  <NewSocialAccountDialog clientId={client.id} />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {client.socialAccounts.length === 0 ? (
+                  <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma rede social cadastrada.</p>
+                ) : (
+                  client.socialAccounts.map((account) => {
+                    const latest = account.metrics[0];
+                    const label = `${platformLabel[account.platform] || account.platform} · ${account.handle}`;
+                    return (
+                      <div key={account.id} className="flex items-center justify-between p-2.5 rounded-lg border border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {account.url ? (
+                            <a
+                              href={account.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-sm font-medium text-orange-600 dark:text-orange-400 hover:underline truncate"
+                            >
+                              {label}
+                            </a>
+                          ) : (
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{label}</p>
+                          )}
+                          {account.platform === "INSTAGRAM" && (
+                            <RefreshFollowersButton socialAccountId={account.id} clientId={client.id} />
+                          )}
+                        </div>
+                        {latest && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                            {latest.followers.toLocaleString("pt-BR")} seguidores
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </CardContent>
+            </Card>
 
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-2">
