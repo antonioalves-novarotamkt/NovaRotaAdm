@@ -13,6 +13,7 @@ import { ClientBillingForm } from "@/components/clients/ClientBillingForm";
 import { EditClientDialog } from "@/components/clients/EditClientDialog";
 import { NewSocialAccountDialog } from "@/components/clients/NewSocialAccountDialog";
 import { RefreshFollowersButton } from "@/components/clients/RefreshFollowersButton";
+import { DeleteSocialAccountButton } from "@/components/clients/DeleteSocialAccountButton";
 
 const platformLabel: Record<string, string> = {
   INSTAGRAM: "Instagram",
@@ -212,11 +213,14 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                             <RefreshFollowersButton socialAccountId={account.id} clientId={client.id} />
                           )}
                         </div>
-                        {latest && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
-                            {latest.followers.toLocaleString("pt-BR")} seguidores
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {latest && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {latest.followers.toLocaleString("pt-BR")} seguidores
+                            </span>
+                          )}
+                          <DeleteSocialAccountButton id={account.id} label={label} />
+                        </div>
                       </div>
                     );
                   })

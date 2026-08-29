@@ -23,6 +23,19 @@ export async function createSocialAccount(formData: FormData) {
   revalidatePath("/analises");
 }
 
+// Apaga a conta e as métricas registradas nela junto (onDelete: Cascade no
+// schema) — útil pra corrigir um cadastro duplicado ou errado.
+export async function deleteSocialAccount(formData: FormData) {
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+
+  const account = await prisma.socialAccount.delete({ where: { id } });
+
+  revalidatePath(`/clientes/${account.clientId}`);
+  revalidatePath(`/clientes/${account.clientId}/relatorio`);
+  revalidatePath("/analises");
+}
+
 function optionalNumber(formData: FormData, key: string): number | null {
   const raw = String(formData.get(key) || "");
   return raw ? Number(raw) : null;
