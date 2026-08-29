@@ -381,6 +381,7 @@ model Task {
   contentUrl  String?
   reviewNote  String?    @db.Text
   approvedAt  DateTime?
+  postedAt    DateTime?
   clientId    String
   assigneeId  String?
   createdAt   DateTime   @default(now())
@@ -389,9 +390,25 @@ model Task {
   client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
   assignee User?  @relation("AssignedTasks", fields: [assigneeId], references: [id])
 
-  updates TaskUpdate[]
+  updates        TaskUpdate[]
+  scheduledPosts ScheduledPost[]
 
   @@map("tasks")
+}
+
+// Um card de tarefa às vezes é um lote com vários posts/stories — cada um
+// agendado pra um dia/horário diferente. Uma lista em vez de um campo único
+// no Task porque um card pode ter várias datas ao mesmo tempo.
+model ScheduledPost {
+  id          String   @id @default(cuid())
+  taskId      String
+  scheduledAt DateTime
+  label       String?
+  createdAt   DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("scheduled_posts")
 }
 
 // Registro de atualizações da tarefa — vai sendo preenchido conforme o
@@ -549,6 +566,7 @@ enum TaskStatus {
   IN_PROGRESS
   REVIEW
   APPROVED
+  POSTED
   REJECTED
 }
 

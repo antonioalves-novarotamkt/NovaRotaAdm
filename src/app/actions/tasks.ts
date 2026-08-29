@@ -134,6 +134,20 @@ export async function rejectTask(formData: FormData) {
   revalidateBoard(task.clientId);
 }
 
+// Marca o lote inteiro como postado — feito manualmente por quem publica,
+// não é automático mesmo que todos os agendamentos já tenham passado.
+export async function moveToPosted(formData: FormData) {
+  const id = String(formData.get("id") || "");
+  if (!id) throw new Error("Tarefa inválida.");
+
+  const task = await prisma.task.update({
+    where: { id },
+    data: { status: "POSTED", postedAt: new Date() },
+  });
+
+  revalidateBoard(task.clientId);
+}
+
 export async function deleteTask(formData: FormData) {
   const id = String(formData.get("id") || "");
   const task = await prisma.task.delete({ where: { id } });
@@ -156,4 +170,33 @@ export async function addTaskUpdate(formData: FormData) {
   });
 
   revalidateBoard(task.task.clientId);
+}
+
+// Agenda um post/story dentro do card — um card de Agendamento costuma ser
+// um lote inteiro, então cada item do lote entra como um registro separado
+// em vez de um campo único de data na tarefa.
+export async function addScheduledPost(formData: FormData) {
+  const taskId = String(formData.get("taskId") || "");
+  const scheduledAtRaw = String(formData.get("scheduledAt") || "");
+  const label = String(formData.get("label") || "").trim();
+  if (!taskId || !scheduledAtRaw) throw new Error("Informe a data e hora do agendamento.");
+
+  const post = await prisma.scheduledPost.create({
+    data: { taskId, scheduledAt: new Date(scheduledAtRaw), label: label || null },
+    include: { task: { select: { clientId: true } } },
+  });
+
+  revalidateBoard(post.task.clientId);
+}
+
+export async function deleteScheduledPost(formData: FormData) {
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+
+  const post = await prisma.scheduledPost.delete({
+    where: { id },
+    include: { task: { select: { clientId: true } } },
+  });
+
+  revalidateBoard(post.task.clientId);
 }

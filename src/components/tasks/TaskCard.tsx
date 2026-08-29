@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, Loader2, Check, X, Trash2, MessageSquarePlus } from "lucide-react";
+import { Calendar, Loader2, Check, X, Trash2, MessageSquarePlus, CalendarClock, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,11 +13,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { updateTaskDetails, moveTask, approveTask, rejectTask, deleteTask, addTaskUpdate } from "@/app/actions/tasks";
+import {
+  updateTaskDetails,
+  moveTask,
+  approveTask,
+  rejectTask,
+  deleteTask,
+  addTaskUpdate,
+  moveToPosted,
+  addScheduledPost,
+  deleteScheduledPost,
+} from "@/app/actions/tasks";
 import { taskTypeLabel } from "@/lib/tasks";
 import { formatDate, formatRelativeTime, getInitials } from "@/lib/utils";
 import { clientColor } from "@/lib/client-color";
 import type { Task, TaskStatus, TaskType } from "@prisma/client";
+
+function formatDateTime(date: Date): string {
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(date);
+}
 
 const inputClass =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
@@ -43,11 +57,50 @@ interface TaskUpdateWithAuthor {
   author: { id: string; name: string | null; email: string } | null;
 }
 
+interface ScheduledPostEntry {
+  id: string;
+  scheduledAt: Date;
+  label: string | null;
+}
+
 type TaskWithRelations = Task & {
   client: { id: string; name: string; company: string | null; logoUrl: string | null };
   assignee: { id: string; name: string | null; email: string } | null;
   updates: TaskUpdateWithAuthor[];
+  scheduledPosts: ScheduledPostEntry[];
 };
+
+function ScheduledPostRow({ post }: { post: ScheduledPostEntry }) {
+  const router = useRouter();
+  const [isDeleting, startDelete] = useTransition();
+
+  function handleDelete() {
+    if (!confirm("Remover este agendamento?")) return;
+    startDelete(async () => {
+      const fd = new FormData();
+      fd.set("id", post.id);
+      await deleteScheduledPost(fd);
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="flex items-center justify-between text-xs bg-gray-50 dark:bg-gray-800 rounded-md px-2.5 py-1.5">
+      <div className="min-w-0">
+        <span className="font-medium text-gray-700 dark:text-gray-200">{formatDateTime(post.scheduledAt)}</span>
+        {post.label && <span className="text-gray-500 dark:text-gray-400"> · {post.label}</span>}
+      </div>
+      <button
+        onClick={handleDelete}
+        disabled={isDeleting}
+        className="text-gray-300 dark:text-gray-600 hover:text-red-500 transition-colors shrink-0 ml-2"
+        title="Remover agendamento"
+      >
+        {isDeleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+      </button>
+    </div>
+  );
+}
 
 export function TaskCard({
   task,
@@ -65,6 +118,9 @@ export function TaskCard({
   const [rejecting, setRejecting] = useState(false);
   const [updateText, setUpdateText] = useState("");
   const [isAddingUpdate, startAddUpdate] = useTransition();
+  const [scheduleAt, setScheduleAt] = useState("");
+  const [scheduleLabel, setScheduleLabel] = useState("");
+  const [isAddingSchedule, startAddSchedule] = useTransition();
 
   function runAction(action: (formData: FormData) => Promise<void>, formData: FormData, closeOnSuccess = true) {
     setError(null);
@@ -106,6 +162,31 @@ export function TaskCard({
     runAction(deleteTask, fd);
   }
 
+  function handleMoveToPosted() {
+    const fd = new FormData();
+    fd.set("id", task.id);
+    runAction(moveToPosted, fd);
+  }
+
+  function handleAddSchedule() {
+    if (!scheduleAt) return;
+    setError(null);
+    startAddSchedule(async () => {
+      try {
+        const fd = new FormData();
+        fd.set("taskId", task.id);
+        fd.set("scheduledAt", scheduleAt);
+        fd.set("label", scheduleLabel);
+        await addScheduledPost(fd);
+        setScheduleAt("");
+        setScheduleLabel("");
+        router.refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao agendar.");
+      }
+    });
+  }
+
   function handleAddUpdate() {
     const content = updateText.trim();
     if (!content) return;
@@ -127,6 +208,7 @@ export function TaskCard({
   const color = clientColor(task.client.id);
   const clientLabel = task.client.company || task.client.name;
   const lastUpdate = task.updates[0];
+  const nextScheduled = task.scheduledPosts[0];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -169,6 +251,13 @@ export function TaskCard({
               </span>
             )}
           </div>
+          {task.scheduledPosts.length > 0 && (
+            <p className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 pt-0.5 border-t border-gray-50 dark:border-gray-800">
+              <CalendarClock className="h-3 w-3 shrink-0" />
+              {task.scheduledPosts.length} agendado{task.scheduledPosts.length > 1 ? "s" : ""}
+              {nextScheduled && ` · ${formatDateTime(nextScheduled.scheduledAt)}`}
+            </p>
+          )}
           {lastUpdate && (
             <p className="flex items-start gap-1 text-[11px] text-gray-400 dark:text-gray-500 line-clamp-1 pt-0.5 border-t border-gray-50 dark:border-gray-800">
               <MessageSquarePlus className="h-3 w-3 shrink-0 mt-0.5" />
@@ -252,8 +341,61 @@ export function TaskCard({
             </div>
           )}
 
+          {task.status === "APPROVED" && (
+            <Button type="button" size="sm" className="gap-1.5 bg-orange-600 hover:bg-orange-700" disabled={isPending} onClick={handleMoveToPosted}>
+              {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+              Marcar como Postado
+            </Button>
+          )}
+
+          {task.status === "REJECTED" && (
+            <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled={isPending} onClick={() => handleMove("REVIEW")}>
+              Reenviar para Aprovação
+            </Button>
+          )}
+
           {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
         </div>
+
+        {(task.status === "APPROVED" || task.status === "POSTED") && (
+          <div className="space-y-2 pt-3 border-t">
+            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Agendamento de Posts</p>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500">
+              Um lote pode ter vários posts/stories — agende cada um separadamente.
+            </p>
+            {task.scheduledPosts.length > 0 && (
+              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                {task.scheduledPosts.map((post) => (
+                  <ScheduledPostRow key={post.id} post={post} />
+                ))}
+              </div>
+            )}
+            <div className="flex items-start gap-2">
+              <Input
+                type="datetime-local"
+                value={scheduleAt}
+                onChange={(e) => setScheduleAt(e.target.value)}
+                className="h-8 text-xs flex-1"
+              />
+              <Input
+                value={scheduleLabel}
+                onChange={(e) => setScheduleLabel(e.target.value)}
+                placeholder="Ex: Post 1"
+                className="h-8 text-xs flex-1"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-8 shrink-0"
+                disabled={isAddingSchedule || !scheduleAt}
+                onClick={handleAddSchedule}
+              >
+                {isAddingSchedule ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Agendar"}
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-2 pt-3 border-t">
           <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Atualizações</p>
