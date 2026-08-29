@@ -9,6 +9,7 @@ import { EditWebsiteMetricDialog } from "@/components/analises/EditWebsiteMetric
 import { DeleteMetricButton } from "@/components/analises/DeleteMetricButton";
 import { NewSocialAccountDialog } from "@/components/clients/NewSocialAccountDialog";
 import { RefreshFollowersButton } from "@/components/clients/RefreshFollowersButton";
+import { DeleteSocialAccountButton } from "@/components/clients/DeleteSocialAccountButton";
 import { formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 
@@ -150,28 +151,30 @@ export default async function AnalisesPage({
                 )}
                 {selectedClientDetail.socialAccounts.map((account) => {
                   const latest = account.metrics[0];
+                  const label = `${platformLabel[account.platform] || account.platform} · ${account.handle}`;
                   return (
                     <div key={account.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-gray-200 transition-colors">
                       <div className="flex items-center gap-1.5">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {platformLabel[account.platform] || account.platform} · {account.handle}
-                        </p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</p>
                         {account.platform === "INSTAGRAM" && (
                           <RefreshFollowersButton socialAccountId={account.id} clientId={selectedClientDetail.id} />
                         )}
                       </div>
-                      <div className="text-right">
-                        {latest ? (
-                          <>
-                            <span className="block text-sm font-bold text-gray-900 dark:text-gray-100">{latest.followers.toLocaleString("pt-BR")}</span>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {formatDate(latest.month, { month: "long", year: "numeric", day: undefined })}
-                              {latest.engagementRate != null && ` · ${latest.engagementRate}% engajamento`}
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-xs text-gray-400 dark:text-gray-500">Nenhuma métrica registrada ainda</p>
-                        )}
+                      <div className="flex items-center gap-2">
+                        <div className="text-right">
+                          {latest ? (
+                            <>
+                              <span className="block text-sm font-bold text-gray-900 dark:text-gray-100">{latest.followers.toLocaleString("pt-BR")}</span>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {formatDate(latest.month, { month: "long", year: "numeric", day: undefined })}
+                                {latest.engagementRate != null && ` · ${latest.engagementRate}% engajamento`}
+                              </p>
+                            </>
+                          ) : (
+                            <p className="text-xs text-gray-400 dark:text-gray-500">Nenhuma métrica registrada ainda</p>
+                          )}
+                        </div>
+                        <DeleteSocialAccountButton id={account.id} label={label} />
                       </div>
                     </div>
                   );
