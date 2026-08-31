@@ -101,9 +101,21 @@ export default async function LeadReportPage({ params }: { params: { id: string 
               )}
             </div>
 
-            <p className="hidden print:block text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-              {lead.reportText || fallbackText}
-            </p>
+            <div className="hidden print:block">
+              {/* Um parágrafo por bloco (separado por linha em branco) em vez de um único
+                  bloco de texto — assim o navegador pode quebrar a página entre parágrafos
+                  em vez de empurrar o texto inteiro pra página seguinte (regra de "orphans"
+                  do CSS, que evita deixar só 1 linha isolada no topo da página). */}
+              {(lead.reportText || fallbackText).split(/\n\s*\n/).map((paragraph, i) => (
+                <p
+                  key={i}
+                  style={{ breakInside: "avoid" }}
+                  className="text-sm text-gray-700 leading-relaxed whitespace-pre-line mb-4 last:mb-0"
+                >
+                  {paragraph}
+                </p>
+              ))}
+            </div>
 
             <div className={`hidden print:flex mt-16 pt-4 border-t-2 ${NAVY_BORDER} items-end justify-between`}>
               <p className={`${serif.className} text-lg ${NAVY}`}>{agency.name}</p>

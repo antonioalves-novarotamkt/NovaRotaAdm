@@ -17,11 +17,11 @@ export const taskStatusLabel: Record<TaskStatus, string> = {
   REJECTED: "Correção",
 };
 
-// Ordem das colunas do quadro — do início do fluxo até o fim. Ao aprovar,
-// o card vai direto pra "Agendamento" (onde entram as datas de cada
-// post/story do lote); ao reprovar, vai pra "Correção", de onde pode
-// voltar pra "Aguardando Aprovação" depois de ajustado.
-export const TASK_STATUS_COLUMNS: TaskStatus[] = ["TODO", "IN_PROGRESS", "REVIEW", "APPROVED", "POSTED", "REJECTED"];
+// Ordem das colunas do quadro — do início do fluxo até o fim. "Correção"
+// fica antes de "Aguardando Aprovação" porque é de lá que os cards
+// reprovados voltam, depois de ajustados. Ao aprovar, o card vai direto
+// pra "Agendamento" (onde entram as datas de cada post/story do lote).
+export const TASK_STATUS_COLUMNS: TaskStatus[] = ["TODO", "IN_PROGRESS", "REJECTED", "REVIEW", "APPROVED", "POSTED"];
 
 // Tipos de conteúdo com data (post/story) que entram no calendário do Dashboard
 // quando aprovados — os demais (blog, site, outra) só viram atividade no relatório.
