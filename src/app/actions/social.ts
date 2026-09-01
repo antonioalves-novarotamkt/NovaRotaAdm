@@ -86,38 +86,47 @@ export async function deleteSocialMetric(formData: FormData) {
 // Busca o numero de seguidores atual no Instagram e grava direto no mes
 // corrente — sobrescreve o que ja estiver la, mesmo comportamento do
 // "sempre atualizar" combinado pros posts.
-export async function refreshFollowerCount(formData: FormData) {
+//
+// Retorna um objeto em vez de lançar erro: em produção, o Next.js apaga a
+// mensagem de erros lançados (throw) em Server Actions e mostra só um aviso
+// genérico com digest — retornar o erro como dado preserva a mensagem real
+// para exibir na tela.
+export async function refreshFollowerCount(
+  formData: FormData
+): Promise<{ ok: true; followers: number } | { ok: false; error: string }> {
   const socialAccountId = String(formData.get("socialAccountId") || "");
   const clientId = String(formData.get("clientId") || "");
-  if (!socialAccountId) {
-    throw new Error("Conta social não informada.");
+  if (!socialAccountId) return { ok: false, error: "Conta social não informada." };
+
+  try {
+    const account = await prisma.socialAccount.findUnique({ where: { id: socialAccountId } });
+    if (!account) return { ok: false, error: "Conta não encontrada." };
+    if (account.platform !== "INSTAGRAM") {
+      return { ok: false, error: "Atualização automática só funciona com contas do Instagram por enquanto." };
+    }
+
+    const apiKey = process.env.AISA_API_KEY;
+    if (!apiKey) {
+      return { ok: false, error: "AISA_API_KEY não configurada nas variáveis de ambiente." };
+    }
+
+    const followers = await fetchInstagramFollowerCount(account.handle, apiKey);
+
+    const now = new Date();
+    const month = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
+
+    await prisma.socialMetric.upsert({
+      where: { socialAccountId_month: { socialAccountId, month } },
+      update: { followers },
+      create: { socialAccountId, month, followers },
+    });
+
+    revalidatePath(`/clientes/${clientId}`);
+    revalidatePath(`/clientes/${clientId}/relatorio`);
+    revalidatePath("/analises");
+
+    return { ok: true, followers };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Erro ao atualizar seguidores." };
   }
-
-  const account = await prisma.socialAccount.findUnique({ where: { id: socialAccountId } });
-  if (!account) {
-    throw new Error("Conta não encontrada.");
-  }
-  if (account.platform !== "INSTAGRAM") {
-    throw new Error("Atualização automática só funciona com contas do Instagram por enquanto.");
-  }
-
-  const apiKey = process.env.AISA_API_KEY;
-  if (!apiKey) {
-    throw new Error("AISA_API_KEY não configurada nas variáveis de ambiente.");
-  }
-
-  const followers = await fetchInstagramFollowerCount(account.handle, apiKey);
-
-  const now = new Date();
-  const month = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
-
-  await prisma.socialMetric.upsert({
-    where: { socialAccountId_month: { socialAccountId, month } },
-    update: { followers },
-    create: { socialAccountId, month, followers },
-  });
-
-  revalidatePath(`/clientes/${clientId}`);
-  revalidatePath(`/clientes/${clientId}/relatorio`);
-  revalidatePath("/analises");
 }

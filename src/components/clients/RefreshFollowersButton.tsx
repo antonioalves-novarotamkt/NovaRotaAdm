@@ -16,11 +16,11 @@ export function RefreshFollowersButton({ socialAccountId, clientId }: { socialAc
     formData.set("socialAccountId", socialAccountId);
     formData.set("clientId", clientId);
     startTransition(async () => {
-      try {
-        await refreshFollowerCount(formData);
+      const result = await refreshFollowerCount(formData);
+      if (result.ok) {
         router.refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao atualizar.");
+      } else {
+        setError(result.error);
       }
     });
   }
