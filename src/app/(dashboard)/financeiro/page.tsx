@@ -319,11 +319,11 @@ export default async function FinanceiroPage({
         </div>
 
         {/* Client filter */}
-        <form method="get" className="flex items-center gap-2">
+        <form method="get" className="flex flex-col sm:flex-row sm:items-center gap-2">
           <select
             name="client"
             defaultValue={selectedClientId}
-            className="h-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm"
+            className="h-9 w-full sm:w-auto rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm"
           >
             <option value="">Ver todos os clientes</option>
             {clients.map((c) => (
@@ -332,18 +332,20 @@ export default async function FinanceiroPage({
               </option>
             ))}
           </select>
-          <button type="submit" className="h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
-            Ver pagamentos do cliente
-          </button>
-          {selectedClient && (
-            <Link
-              href="/financeiro"
-              className="h-9 px-3 flex items-center gap-1.5 rounded-md text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-            >
-              <X className="h-3.5 w-3.5" />
-              Limpar filtro
-            </Link>
-          )}
+          <div className="flex items-center gap-2">
+            <button type="submit" className="h-9 px-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 whitespace-nowrap">
+              Ver pagamentos do cliente
+            </button>
+            {selectedClient && (
+              <Link
+                href="/financeiro"
+                className="h-9 px-3 flex items-center gap-1.5 rounded-md text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 whitespace-nowrap"
+              >
+                <X className="h-3.5 w-3.5" />
+                Limpar filtro
+              </Link>
+            )}
+          </div>
         </form>
 
         {selectedClient && (
@@ -366,7 +368,7 @@ export default async function FinanceiroPage({
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {(() => {
                   const paidTotal = selectedClientInvoices.reduce((s, i) => s + receivedAmount(i), 0);
                   const overdueTotal = selectedClientInvoices.filter((i) => i.status === "OVERDUE").reduce((s, i) => s + i.total, 0);
@@ -377,15 +379,15 @@ export default async function FinanceiroPage({
                     <>
                       <div className="p-3 rounded-lg bg-green-50 dark:bg-green-500/10">
                         <p className="text-xs text-green-700 dark:text-green-400">Pago</p>
-                        <p className="text-lg font-bold text-green-700 dark:text-green-400">{formatCurrency(paidTotal)}</p>
+                        <p className="text-lg font-bold text-green-700 dark:text-green-400 truncate">{formatCurrency(paidTotal)}</p>
                       </div>
                       <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-500/10">
                         <p className="text-xs text-yellow-700 dark:text-yellow-400">Pendente</p>
-                        <p className="text-lg font-bold text-yellow-700 dark:text-yellow-400">{formatCurrency(pendingTotal)}</p>
+                        <p className="text-lg font-bold text-yellow-700 dark:text-yellow-400 truncate">{formatCurrency(pendingTotal)}</p>
                       </div>
                       <div className="p-3 rounded-lg bg-red-50 dark:bg-red-500/10">
                         <p className="text-xs text-red-700 dark:text-red-400">Em atraso</p>
-                        <p className="text-lg font-bold text-red-700 dark:text-red-400">{formatCurrency(overdueTotal)}</p>
+                        <p className="text-lg font-bold text-red-700 dark:text-red-400 truncate">{formatCurrency(overdueTotal)}</p>
                       </div>
                     </>
                   );
@@ -401,8 +403,8 @@ export default async function FinanceiroPage({
                       <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 capitalize">{group.label}</p>
                       <div className="space-y-2">
                         {group.invoices.map((invoice) => (
-                          <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
-                            <div>
+                          <div key={invoice.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg border border-gray-100 dark:border-gray-800">
+                            <div className="min-w-0">
                               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{invoice.number}</p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {invoice.description || "Recebimento"}
@@ -416,9 +418,9 @@ export default async function FinanceiroPage({
                                       : `vence em ${formatDate(invoice.dueDate)}`}
                               </p>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 flex-wrap">
                               <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.total)}</span>
-                              <span className={`text-xs font-medium px-2 py-1 rounded-full ${invoiceStatusStyle[invoice.status]}`}>
+                              <span className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${invoiceStatusStyle[invoice.status]}`}>
                                 {invoiceStatusLabel[invoice.status]}
                               </span>
                               {invoice.status !== "PAID" && invoice.status !== "CANCELLED" && invoice.status !== "DRAFT" && (
@@ -704,8 +706,8 @@ export default async function FinanceiroPage({
                 const remaining = scheduledInvoice ? remainingAmount(scheduledInvoice) : client.contractValue || 0;
                 const alreadyPaidAmount = scheduledInvoice ? paidAmount(scheduledInvoice) : 0;
                 return (
-                  <div key={client.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
-                    <div>
+                  <div key={client.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg border border-gray-100 dark:border-gray-800">
+                    <div className="min-w-0">
                       <Link href={`/clientes/${client.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-orange-600">
                         {client.company || client.name}
                       </Link>
@@ -717,7 +719,7 @@ export default async function FinanceiroPage({
                         )}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(remaining)}</span>
                       <RegisterPaymentButton clientId={client.id} remaining={remaining} alreadyPaid={alreadyPaidAmount} />
                     </div>
@@ -744,8 +746,8 @@ export default async function FinanceiroPage({
               <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum recebimento extra lançado ainda.</p>
             ) : (
               extraCharges.map((invoice) => (
-                <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
-                  <div>
+                <div key={invoice.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg border border-gray-100 dark:border-gray-800">
+                  <div className="min-w-0">
                     <Link href={`/clientes/${invoice.client.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-orange-600">
                       {invoice.client.company || invoice.client.name}
                     </Link>
@@ -759,7 +761,7 @@ export default async function FinanceiroPage({
                           : `${invoice.status === "OVERDUE" ? "atrasado" : "pendente"} · vence em ${formatDate(invoice.dueDate)}`}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.total)}</span>
                     {invoice.status !== "PAID" && (
                       <MarkExtraChargePaidButton id={invoice.id} remaining={remainingAmount(invoice)} alreadyPaid={paidAmount(invoice)} />
@@ -794,8 +796,8 @@ export default async function FinanceiroPage({
               <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum recebimento confirmado ainda.</p>
             ) : (
               recentlyPaid.map((invoice) => (
-                <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800">
-                  <div>
+                <div key={invoice.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg border border-gray-100 dark:border-gray-800">
+                  <div className="min-w-0">
                     <Link href={`/clientes/${invoice.client.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-orange-600">
                       {invoice.client.company || invoice.client.name}
                     </Link>
@@ -805,7 +807,7 @@ export default async function FinanceiroPage({
                       {formatDate(invoice.paidAt as Date)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.total)}</span>
                     <EditPaidDateButton id={invoice.id} currentDate={(invoice.paidAt as Date).toISOString().slice(0, 10)} />
                     <Link href={`/recibo/${invoice.id}`}>
