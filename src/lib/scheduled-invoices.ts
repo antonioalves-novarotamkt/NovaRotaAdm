@@ -45,6 +45,14 @@ export async function createInvoiceWithUniqueNumber(
   throw new Error("Não foi possível gerar um número de fatura único.");
 }
 
+// Clientes semanais sempre têm até essa quantidade de faturas em aberto
+// (pendente ou parcialmente paga) geradas com antecedência, pra dar
+// visibilidade do que vem pela frente. Atrasadas não contam nessa janela —
+// elas ficam de fora, acumulando à parte — então quando uma das 4 é paga
+// por completo, a janela abre espaço e a próxima é gerada sozinha na
+// próxima sincronização.
+const WEEKLY_LOOKAHEAD_INVOICES = 4;
+
 /**
  * Ensures every client on a recurring billing schedule has a PENDING (or
  * later OVERDUE) invoice matching their current nextBillingDate, so that
@@ -59,6 +67,9 @@ export async function createInvoiceWithUniqueNumber(
  * semanas em atraso sem dar baixa, a cobrança da semana atual continua
  * saindo em dia mesmo assim, em vez de travar esperando o atraso ser
  * quitado. Faturas antigas não pagas continuam ali, acumulando.
+ *
+ * Clientes semanais, além disso, mantêm sempre WEEKLY_LOOKAHEAD_INVOICES
+ * faturas abertas na frente (ver abaixo).
  */
 export async function syncScheduledInvoices() {
   const clients = await prisma.client.findMany({
@@ -95,11 +106,29 @@ export async function syncScheduledInvoices() {
       let dueDate: Date | null = client.nextBillingDate;
       let guard = 0;
 
-      // Avança período a período até alcançar um vencimento que ainda não
-      // chegou — gera a fatura de cada período percorrido no caminho
-      // (inclusive semanas puladas desde a última sincronização), sem
-      // depender de nenhuma delas ter sido paga.
-      while (dueDate && dueDate <= startOfToday && guard < 104) {
+      const isWeekly = client.billingFrequency === "WEEKLY";
+
+      // Quantas faturas "na frente" (hoje ou datas futuras, ainda não
+      // pagas) o cliente semanal já tem — serve de ponto de partida pra
+      // saber quanto falta gerar até completar WEEKLY_LOOKAHEAD_INVOICES.
+      // Atrasadas (dueDate no passado) não entram aqui de propósito.
+      let aheadCount = isWeekly
+        ? await prisma.invoice.count({
+            where: {
+              clientId: client.id,
+              status: { in: ["PENDING", "PARTIALLY_PAID"] },
+              dueDate: { gte: startOfToday },
+            },
+          })
+        : 0;
+
+      // Avança período a período: sempre até alcançar um vencimento que
+      // ainda não chegou (gera a fatura de cada período percorrido no
+      // caminho, inclusive semanas puladas desde a última sincronização,
+      // sem depender de nenhuma delas ter sido paga); pra clientes
+      // semanais, continua avançando pra datas futuras enquanto a janela
+      // de WEEKLY_LOOKAHEAD_INVOICES não estiver completa.
+      while (dueDate && guard < 104 && (dueDate <= startOfToday || (isWeekly && aheadCount < WEEKLY_LOOKAHEAD_INVOICES))) {
         const dayAfter = new Date(dueDate);
         dayAfter.setDate(dayAfter.getDate() + 1);
         const next = computeNextBillingDate(
@@ -144,6 +173,7 @@ export async function syncScheduledInvoices() {
           });
           created += 1;
         }
+        if (isWeekly && dueDate >= startOfToday) aheadCount += 1;
 
         dueDate = next;
         guard++;
