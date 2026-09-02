@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { computeNextBillingDate } from "@/lib/billing";
 import { syncScheduledInvoices } from "@/lib/scheduled-invoices";
 import type { Invoice, Payment } from "@prisma/client";
 
@@ -55,23 +54,11 @@ export async function registerInvoicePayment(invoiceId: string, amountPaid: numb
     data: isFullyPaid ? { status: "PAID", paidAt } : { status: "PARTIALLY_PAID" },
   });
 
-  // Se essa é a cobrança programada vigente do cliente (recorrência semanal/
-  // mensal/quinzenal), fechá-la 100% avança o próximo vencimento — não
-  // importa por qual tela a baixa foi dada (recebimento programado, extrato
-  // do cliente, etc), o comportamento tem que ser o mesmo.
-  if (isFullyPaid && invoice.description === "Recebimento programado" && invoice.client.nextBillingDate?.getTime() === invoice.dueDate.getTime()) {
-    const dayAfter = new Date(invoice.dueDate);
-    dayAfter.setDate(dayAfter.getDate() + 1);
-    const nextBillingDate = computeNextBillingDate(
-      {
-        frequency: invoice.client.billingFrequency,
-        dayOfWeek: invoice.client.billingDayOfWeek,
-        dayOfMonth1: invoice.client.billingDayOfMonth1,
-        dayOfMonth2: invoice.client.billingDayOfMonth2,
-      },
-      dayAfter
-    );
-    await prisma.client.update({ where: { id: invoice.clientId }, data: { nextBillingDate } });
+  // O vencimento programado do cliente avança sozinho com o tempo (ver
+  // syncScheduledInvoices), independente de pagamento — só garante que a
+  // tela já reflita isso na hora, sem esperar o próximo carregamento de
+  // página que rodaria a sincronização de qualquer forma.
+  if (isFullyPaid && invoice.description === "Recebimento programado") {
     await syncScheduledInvoices();
   }
 
