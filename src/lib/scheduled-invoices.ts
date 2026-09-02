@@ -64,32 +64,43 @@ export async function syncScheduledInvoices() {
     select: { id: true, contractValue: true, nextBillingDate: true },
   });
 
+  // Cada cliente é isolado no try/catch: se um cliente falhar (ex: colisão
+  // de número de fatura sob concorrência), os que vêm depois na lista ainda
+  // são processados — antes, um erro no meio do loop travava a sincronização
+  // pra todo mundo daquele ponto em diante, silenciosamente (só logado no
+  // console), até a próxima tentativa começar do zero e falhar no mesmo lugar.
   let created = 0;
+  const errors: { clientId: string; error: unknown }[] = [];
   for (const client of clients) {
     if (!client.nextBillingDate || !client.contractValue) continue;
 
-    const existing = await prisma.invoice.findFirst({
-      where: {
-        clientId: client.id,
-        dueDate: client.nextBillingDate,
-        status: { in: ["PENDING", "OVERDUE", "PARTIALLY_PAID"] },
-      },
-    });
-    if (existing) continue;
+    try {
+      const existing = await prisma.invoice.findFirst({
+        where: {
+          clientId: client.id,
+          dueDate: client.nextBillingDate,
+          status: { in: ["PENDING", "OVERDUE", "PARTIALLY_PAID"] },
+        },
+      });
+      if (existing) continue;
 
-    await createInvoiceWithUniqueNumber({
-      clientId: client.id,
-      amount: client.contractValue,
-      tax: 0,
-      total: client.contractValue,
-      status: "PENDING",
-      dueDate: client.nextBillingDate,
-      description: "Recebimento programado",
-    });
-    created += 1;
+      await createInvoiceWithUniqueNumber({
+        clientId: client.id,
+        amount: client.contractValue,
+        tax: 0,
+        total: client.contractValue,
+        status: "PENDING",
+        dueDate: client.nextBillingDate,
+        description: "Recebimento programado",
+      });
+      created += 1;
+    } catch (error) {
+      console.error(`syncScheduledInvoices: falhou pro cliente ${client.id}`, error);
+      errors.push({ clientId: client.id, error });
+    }
   }
 
-  return { created };
+  return { created, errors };
 }
 
 /**
