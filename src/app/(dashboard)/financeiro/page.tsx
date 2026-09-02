@@ -58,11 +58,13 @@ function groupInvoicesByMonth(invoicesList: InvoiceWithPayments[]): { key: strin
     });
 }
 
+// Mensagem pro cliente só traz o que ainda está em aberto (atrasado,
+// parcialmente pago ou pendente) — o que já foi pago não entra, pra não
+// poluir a cobrança com histórico que não é mais acionável pro cliente.
 function buildClientStatement(client: { name: string; company: string | null }, clientInvoices: InvoiceWithPayments[]): string {
   const overdueInvoices = clientInvoices.filter((i) => i.status === "OVERDUE");
   const pendingInvoices = clientInvoices.filter((i) => i.status === "PENDING");
   const partialInvoices = clientInvoices.filter((i) => i.status === "PARTIALLY_PAID");
-  const paidInvoices = clientInvoices.filter((i) => i.status === "PAID");
 
   const lines: string[] = [`Resumo financeiro — ${client.company || client.name}`, ""];
 
@@ -88,15 +90,10 @@ function buildClientStatement(client: { name: string; company: string | null }, 
     for (const inv of pendingInvoices) lines.push(`- ${inv.number} · ${formatCurrency(inv.total)} · vence em ${formatDate(inv.dueDate)}`);
     lines.push("");
   }
-  if (paidInvoices.length > 0) {
-    const total = paidInvoices.reduce((s, i) => s + i.total, 0);
-    lines.push(`PAGO (${paidInvoices.length}) — ${formatCurrency(total)}`);
-    for (const inv of paidInvoices) lines.push(`- ${inv.number} · ${formatCurrency(inv.total)} · pago em ${inv.paidAt ? formatDate(inv.paidAt) : "—"}`);
+  if (overdueInvoices.length === 0 && partialInvoices.length === 0 && pendingInvoices.length === 0) {
+    lines.push("Nenhum valor em aberto no momento.");
   }
-  if (overdueInvoices.length === 0 && partialInvoices.length === 0 && pendingInvoices.length === 0 && paidInvoices.length === 0) {
-    lines.push("Nenhum recebimento registrado ainda.");
-  }
-  return lines.join("\n");
+  return lines.join("\n").trimEnd();
 }
 
 const frequencyLabel: Record<string, string> = {
@@ -361,7 +358,7 @@ export default async function FinanceiroPage({
                     <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
                       {selectedClient.company || selectedClient.name}
                     </CardTitle>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Resumo de pagamentos — pago, pendente e em atraso, tudo junto pra mandar pro cliente</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Histórico completo aqui na tela — a mensagem pra copiar/enviar traz só o que está em atraso ou pendente</p>
                   </div>
                 </div>
                 <ClientStatementActions text={clientStatementText} phone={selectedClient.phone} />
