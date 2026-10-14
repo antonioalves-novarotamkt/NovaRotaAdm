@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, Loader2, Check, X, Trash2, MessageSquarePlus, CalendarClock, Send, Upload, Image as ImageIcon, Video, Copy } from "lucide-react";
+import { Calendar, Loader2, Check, X, Trash2, MessageSquarePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,50 +13,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  updateTaskDetails,
-  moveTask,
-  approveTask,
-  rejectTask,
-  deleteTask,
-  addTaskUpdate,
-  moveToPosted,
-  addScheduledPost,
-  deleteScheduledPost,
-} from "@/app/actions/tasks";
-import {
-  addTaskMedia,
-  deleteTaskMedia,
-  updateTaskCaption,
-  sendTaskForClientApproval,
-  addAgencyComment,
-} from "@/app/actions/task-approval";
-import { taskTypeLabel, taskHasCaption, CLIENT_APPROVAL_TASK_TYPES } from "@/lib/tasks";
-import { approvalStatusLabel } from "@/lib/task-approval";
+import { updateTaskDetails, moveTask, approveTask, rejectTask, deleteTask, addTaskUpdate } from "@/app/actions/tasks";
+import { taskTypeLabel } from "@/lib/tasks";
 import { formatDate, formatRelativeTime, getInitials } from "@/lib/utils";
 import { clientColor } from "@/lib/client-color";
-import type { ApprovalStatus, CommentPart, CommentRole, MediaKind, Task, TaskStatus, TaskType } from "@prisma/client";
-
-function formatDateTime(date: Date): string {
-  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(date);
-}
+import type { Task, TaskStatus, TaskType } from "@prisma/client";
 
 const inputClass =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
-const typeBadgeVariant: Record<TaskType, "info" | "purple" | "warning" | "gray" | "success"> = {
-  POST: "info",
-  REELS: "success",
-  STORY: "purple",
+const typeBadgeVariant: Record<TaskType, "warning" | "gray"> = {
   BLOG: "warning",
   SITE_UPDATE: "gray",
   OTHER: "gray",
-};
-
-const approvalBadgeVariant: Record<ApprovalStatus, "warning" | "success" | "danger"> = {
-  PENDING: "warning",
-  APPROVED: "success",
-  CHANGES_REQUESTED: "danger",
 };
 
 interface UserOption {
@@ -72,132 +41,11 @@ interface TaskUpdateWithAuthor {
   author: { id: string; name: string | null; email: string } | null;
 }
 
-interface ScheduledPostEntry {
-  id: string;
-  scheduledAt: Date;
-  label: string | null;
-}
-
-interface TaskMediaEntry {
-  id: string;
-  url: string;
-  kind: MediaKind;
-}
-
-interface TaskCommentEntry {
-  id: string;
-  author: string;
-  role: CommentRole;
-  part: CommentPart;
-  kind: string;
-  text: string;
-  createdAt: Date;
-}
-
 type TaskWithRelations = Task & {
-  client: { id: string; name: string; company: string | null; logoUrl: string | null; approvalToken: string | null };
+  client: { id: string; name: string; company: string | null; logoUrl: string | null };
   assignee: { id: string; name: string | null; email: string } | null;
   updates: TaskUpdateWithAuthor[];
-  scheduledPosts: ScheduledPostEntry[];
-  media: TaskMediaEntry[];
-  comments: TaskCommentEntry[];
 };
-
-function ScheduledPostRow({ post }: { post: ScheduledPostEntry }) {
-  const router = useRouter();
-  const [isDeleting, startDelete] = useTransition();
-
-  function handleDelete() {
-    if (!confirm("Remover este agendamento?")) return;
-    startDelete(async () => {
-      const fd = new FormData();
-      fd.set("id", post.id);
-      await deleteScheduledPost(fd);
-      router.refresh();
-    });
-  }
-
-  return (
-    <div className="flex items-center justify-between text-xs bg-gray-50 dark:bg-gray-800 rounded-md px-2.5 py-1.5">
-      <div className="min-w-0">
-        <span className="font-medium text-gray-700 dark:text-gray-200">{formatDateTime(post.scheduledAt)}</span>
-        {post.label && <span className="text-gray-500 dark:text-gray-400"> · {post.label}</span>}
-      </div>
-      <button
-        onClick={handleDelete}
-        disabled={isDeleting}
-        className="text-gray-300 dark:text-gray-600 hover:text-red-500 transition-colors shrink-0 ml-2"
-        title="Remover agendamento"
-      >
-        {isDeleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-      </button>
-    </div>
-  );
-}
-
-function TaskMediaThumb({ media }: { media: TaskMediaEntry }) {
-  const router = useRouter();
-  const [isDeleting, startDelete] = useTransition();
-
-  function handleDelete() {
-    if (!confirm("Remover esse arquivo?")) return;
-    startDelete(async () => {
-      const fd = new FormData();
-      fd.set("id", media.id);
-      await deleteTaskMedia(fd);
-      router.refresh();
-    });
-  }
-
-  return (
-    <div className="relative h-16 w-16 rounded-md border border-gray-100 dark:border-gray-800 overflow-hidden bg-gray-50 dark:bg-gray-800 shrink-0 group">
-      {media.kind === "VIDEO" ? (
-        <video src={media.url} className="h-full w-full object-cover" muted />
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={media.url} alt="" className="h-full w-full object-cover" />
-      )}
-      <button
-        onClick={handleDelete}
-        disabled={isDeleting}
-        className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-        title="Remover arquivo"
-      >
-        {isDeleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
-      </button>
-    </div>
-  );
-}
-
-const commentKindText: Record<string, string> = {
-  APPROVED: "aprovou",
-  CHANGES_REQUESTED: "pediu ajuste",
-  COMMENT: "comentou",
-  VERSION: "enviou uma nova versão",
-};
-
-const commentPartText: Record<CommentPart, string> = {
-  ART: "arte",
-  CAPTION: "legenda",
-  GENERAL: "",
-};
-
-function TaskCommentRow({ comment }: { comment: TaskCommentEntry }) {
-  const action = commentKindText[comment.kind] || "comentou";
-  const partText = commentPartText[comment.part];
-  return (
-    <div className="text-xs bg-gray-50 dark:bg-gray-800 rounded-md px-2.5 py-1.5">
-      <p className="text-gray-500 dark:text-gray-400">
-        <span className={comment.role === "CLIENT" ? "font-medium text-blue-600 dark:text-blue-400" : "font-medium text-orange-600 dark:text-orange-400"}>
-          {comment.author}
-        </span>{" "}
-        {action}
-        {partText ? ` (${partText})` : ""} · {formatRelativeTime(comment.createdAt)}
-      </p>
-      {comment.text && <p className="text-gray-700 dark:text-gray-200 whitespace-pre-line mt-0.5">{comment.text}</p>}
-    </div>
-  );
-}
 
 export function TaskCard({
   task,
@@ -215,17 +63,6 @@ export function TaskCard({
   const [rejecting, setRejecting] = useState(false);
   const [updateText, setUpdateText] = useState("");
   const [isAddingUpdate, startAddUpdate] = useTransition();
-  const [scheduleAt, setScheduleAt] = useState("");
-  const [scheduleLabel, setScheduleLabel] = useState("");
-  const [isAddingSchedule, startAddSchedule] = useTransition();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [captionText, setCaptionText] = useState(task.caption ?? "");
-  const [isSavingCaption, startSaveCaption] = useTransition();
-  const [commentText, setCommentText] = useState("");
-  const [isAddingComment, startAddComment] = useTransition();
-  const [isSending, startSend] = useTransition();
-  const [linkCopied, setLinkCopied] = useState(false);
 
   function runAction(action: (formData: FormData) => Promise<void>, formData: FormData, closeOnSuccess = true) {
     setError(null);
@@ -267,31 +104,6 @@ export function TaskCard({
     runAction(deleteTask, fd);
   }
 
-  function handleMoveToPosted() {
-    const fd = new FormData();
-    fd.set("id", task.id);
-    runAction(moveToPosted, fd);
-  }
-
-  function handleAddSchedule() {
-    if (!scheduleAt) return;
-    setError(null);
-    startAddSchedule(async () => {
-      try {
-        const fd = new FormData();
-        fd.set("taskId", task.id);
-        fd.set("scheduledAt", scheduleAt);
-        fd.set("label", scheduleLabel);
-        await addScheduledPost(fd);
-        setScheduleAt("");
-        setScheduleLabel("");
-        router.refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao agendar.");
-      }
-    });
-  }
-
   function handleAddUpdate() {
     const content = updateText.trim();
     if (!content) return;
@@ -310,97 +122,9 @@ export function TaskCard({
     });
   }
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setError(null);
-    setIsUploading(true);
-    try {
-      const uploadData = new FormData();
-      uploadData.set("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: uploadData });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Erro ao enviar arquivo.");
-
-      const fd = new FormData();
-      fd.set("taskId", task.id);
-      fd.set("url", result.url);
-      fd.set("kind", result.kind);
-      await addTaskMedia(fd);
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao enviar arquivo.");
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  }
-
-  function handleSaveCaption() {
-    setError(null);
-    startSaveCaption(async () => {
-      try {
-        const fd = new FormData();
-        fd.set("taskId", task.id);
-        fd.set("caption", captionText);
-        await updateTaskCaption(fd);
-        router.refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao salvar legenda.");
-      }
-    });
-  }
-
-  function handleSendForApproval() {
-    setError(null);
-    startSend(async () => {
-      try {
-        const fd = new FormData();
-        fd.set("id", task.id);
-        await sendTaskForClientApproval(fd);
-        router.refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao enviar para aprovação.");
-      }
-    });
-  }
-
-  function handleAddComment() {
-    const text = commentText.trim();
-    if (!text) return;
-    setError(null);
-    startAddComment(async () => {
-      try {
-        const fd = new FormData();
-        fd.set("taskId", task.id);
-        fd.set("text", text);
-        await addAgencyComment(fd);
-        setCommentText("");
-        router.refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao comentar.");
-      }
-    });
-  }
-
-  async function handleCopyApprovalLink() {
-    if (!task.client.approvalToken) return;
-    const url = `${window.location.origin}/aprovacao/${task.client.approvalToken}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
-    } catch {
-      alert(url);
-    }
-  }
-
   const color = clientColor(task.client.id);
   const clientLabel = task.client.company || task.client.name;
   const lastUpdate = task.updates[0];
-  const nextScheduled = task.scheduledPosts[0];
-  const isClientApprovalType = CLIENT_APPROVAL_TASK_TYPES.includes(task.type);
-  const needsCaption = taskHasCaption(task.type);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -443,13 +167,6 @@ export function TaskCard({
               </span>
             )}
           </div>
-          {task.scheduledPosts.length > 0 && (
-            <p className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 pt-0.5 border-t border-gray-50 dark:border-gray-800">
-              <CalendarClock className="h-3 w-3 shrink-0" />
-              {task.scheduledPosts.length} agendado{task.scheduledPosts.length > 1 ? "s" : ""}
-              {nextScheduled && ` · ${formatDateTime(nextScheduled.scheduledAt)}`}
-            </p>
-          )}
           {lastUpdate && (
             <p className="flex items-start gap-1 text-[11px] text-gray-400 dark:text-gray-500 line-clamp-1 pt-0.5 border-t border-gray-50 dark:border-gray-800">
               <MessageSquarePlus className="h-3 w-3 shrink-0 mt-0.5" />
@@ -471,25 +188,7 @@ export function TaskCard({
             )}
           </p>
 
-          {task.status === "REVIEW" && isClientApprovalType && (
-            <div className="space-y-2 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-500/10">
-              <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400">Aguardando aprovação do cliente</p>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant={approvalBadgeVariant[task.artStatus]}>Arte: {approvalStatusLabel[task.artStatus]}</Badge>
-                {needsCaption && (
-                  <Badge variant={approvalBadgeVariant[task.captionStatus]}>Legenda: {approvalStatusLabel[task.captionStatus]}</Badge>
-                )}
-              </div>
-              {task.client.approvalToken && (
-                <Button type="button" size="sm" variant="outline" className="h-7 text-xs gap-1.5" onClick={handleCopyApprovalLink}>
-                  <Copy className="h-3 w-3" />
-                  {linkCopied ? "Link copiado!" : "Copiar link de aprovação"}
-                </Button>
-              )}
-            </div>
-          )}
-
-          {task.status === "REVIEW" && canApprove && !isClientApprovalType && (
+          {task.status === "REVIEW" && canApprove && (
             <div className="space-y-2 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-500/10">
               <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400">Aguardando sua aprovação</p>
               <div className="flex items-center gap-2">
@@ -543,7 +242,7 @@ export function TaskCard({
                   Em Produção
                 </Button>
               )}
-              {task.status !== "REVIEW" && !isClientApprovalType && (
+              {task.status !== "REVIEW" && (
                 <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled={isPending} onClick={() => handleMove("REVIEW")}>
                   Enviar para Aprovação
                 </Button>
@@ -551,28 +250,7 @@ export function TaskCard({
             </div>
           )}
 
-          {isClientApprovalType && (task.status === "TODO" || task.status === "IN_PROGRESS") && (
-            <Button type="button" size="sm" className="gap-1.5 bg-orange-600 hover:bg-orange-700" disabled={isSending} onClick={handleSendForApproval}>
-              {isSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-              Enviar para aprovação do cliente
-            </Button>
-          )}
-
-          {task.status === "APPROVED" && (
-            <Button type="button" size="sm" className="gap-1.5 bg-orange-600 hover:bg-orange-700" disabled={isPending} onClick={handleMoveToPosted}>
-              {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-              Marcar como Postado
-            </Button>
-          )}
-
-          {task.status === "REJECTED" && isClientApprovalType && (
-            <Button type="button" size="sm" variant="outline" className="h-7 text-xs gap-1.5" disabled={isSending} onClick={handleSendForApproval}>
-              {isSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3 w-3" />}
-              Reenviar para o cliente
-            </Button>
-          )}
-
-          {task.status === "REJECTED" && !isClientApprovalType && (
+          {task.status === "REJECTED" && (
             <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled={isPending} onClick={() => handleMove("REVIEW")}>
               Reenviar para Aprovação
             </Button>
@@ -580,117 +258,6 @@ export function TaskCard({
 
           {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
         </div>
-
-        {isClientApprovalType && (
-          <div className="space-y-2 pt-3 border-t">
-            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Conteúdo para o cliente</p>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              {task.media.map((m) => (
-                <TaskMediaThumb key={m.id} media={m} />
-              ))}
-              <input ref={fileInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleFileChange} />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className="h-16 w-16 rounded-md border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:border-orange-400 hover:text-orange-500 transition-colors shrink-0"
-                title="Enviar arte (imagem ou vídeo)"
-              >
-                {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
-              </button>
-            </div>
-
-            {needsCaption && (
-              <div className="space-y-1">
-                <textarea
-                  value={captionText}
-                  onChange={(e) => setCaptionText(e.target.value)}
-                  placeholder="Legenda que o cliente vai aprovar..."
-                  rows={3}
-                  className="w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="h-7 text-xs"
-                  disabled={isSavingCaption || captionText === (task.caption ?? "")}
-                  onClick={handleSaveCaption}
-                >
-                  {isSavingCaption ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Salvar legenda"}
-                </Button>
-              </div>
-            )}
-
-            {task.comments.length > 0 && (
-              <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                {task.comments.map((c) => (
-                  <TaskCommentRow key={c.id} comment={c} />
-                ))}
-              </div>
-            )}
-            <div className="flex items-start gap-2">
-              <textarea
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Responder ao cliente..."
-                rows={2}
-                className="flex-1 rounded-md border border-input bg-background px-2.5 py-1.5 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              />
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-8 shrink-0"
-                disabled={isAddingComment || !commentText.trim()}
-                onClick={handleAddComment}
-              >
-                {isAddingComment ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Enviar"}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {(task.status === "APPROVED" || task.status === "POSTED") && (
-          <div className="space-y-2 pt-3 border-t">
-            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Agendamento de Posts</p>
-            <p className="text-[11px] text-gray-400 dark:text-gray-500">
-              Um lote pode ter vários posts/stories — agende cada um separadamente.
-            </p>
-            {task.scheduledPosts.length > 0 && (
-              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-                {task.scheduledPosts.map((post) => (
-                  <ScheduledPostRow key={post.id} post={post} />
-                ))}
-              </div>
-            )}
-            <div className="flex items-start gap-2">
-              <Input
-                type="datetime-local"
-                value={scheduleAt}
-                onChange={(e) => setScheduleAt(e.target.value)}
-                className="h-8 text-xs flex-1"
-              />
-              <Input
-                value={scheduleLabel}
-                onChange={(e) => setScheduleLabel(e.target.value)}
-                placeholder="Ex: Post 1"
-                className="h-8 text-xs flex-1"
-              />
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-8 shrink-0"
-                disabled={isAddingSchedule || !scheduleAt}
-                onClick={handleAddSchedule}
-              >
-                {isAddingSchedule ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Agendar"}
-              </Button>
-            </div>
-          </div>
-        )}
 
         <div className="space-y-2 pt-3 border-t">
           <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Atualizações</p>

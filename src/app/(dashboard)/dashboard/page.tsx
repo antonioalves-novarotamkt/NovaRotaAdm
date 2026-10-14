@@ -19,7 +19,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { syncInvoiceStatuses } from "@/lib/scheduled-invoices";
-import { CALENDAR_TASK_TYPES, taskTypeLabel } from "@/lib/tasks";
 import { computeNextBillingDate, projectBillingDates } from "@/lib/billing";
 import { remainingAmount, receivedAmount } from "@/lib/payments";
 import { syncRecurringCosts } from "@/lib/recurring-costs";
@@ -92,7 +91,6 @@ export default async function DashboardPage({
     recentInvoices,
     costsThisMonth,
     costsPrevMonth,
-    contentCalendarTasks,
     monthInvoices,
     recurringClients,
   ] = await Promise.all([
@@ -118,15 +116,6 @@ export default async function DashboardPage({
     }),
     prisma.operationalCost.aggregate({ where: { month: monthStart }, _sum: { amount: true } }),
     prisma.operationalCost.aggregate({ where: { month: prevMonthStart }, _sum: { amount: true } }),
-    prisma.task.findMany({
-      where: {
-        type: { in: CALENDAR_TASK_TYPES },
-        status: "APPROVED",
-        dueDate: { gte: monthStart, lt: nextMonthStart },
-      },
-      include: { client: { select: { id: true, name: true, company: true } } },
-      orderBy: { dueDate: "asc" },
-    }),
     prisma.invoice.findMany({
       where: {
         OR: [
@@ -426,42 +415,6 @@ export default async function DashboardPage({
             </CardContent>
           </Card>
         </div>
-
-        {/* Content Calendar — posts/stories aprovados no quadro de Tarefas */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Calendário de Conteúdo</CardTitle>
-              <Link href="/tarefas" className="text-xs text-orange-600 dark:text-orange-400 hover:underline">Ver quadro de tarefas</Link>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Posts e stories aprovados, de todos os clientes, agendados para este mês</p>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {contentCalendarTasks.length === 0 ? (
-              <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum post ou story aprovado agendado para este mês ainda.</p>
-            ) : (
-              contentCalendarTasks.map((task) => (
-                <Link
-                  key={task.id}
-                  href={`/tarefas?cliente=${task.client.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 transition-colors"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                      {task.dueDate ? formatDate(task.dueDate) : "—"}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{task.title}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {task.client.company || task.client.name} · {taskTypeLabel[task.type]}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            )}
-          </CardContent>
-        </Card>
 
         {/* Contracts & Invoices */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
