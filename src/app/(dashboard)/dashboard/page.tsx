@@ -3,9 +3,7 @@ import {
   Users,
   FileText,
   DollarSign,
-  ShoppingCart,
   Clock,
-  ImageIcon,
   AlertCircle,
   Wallet,
   TrendingUp,
@@ -82,11 +80,8 @@ export default async function DashboardPage({
     invoices,
     activeClientsCount,
     newClientsThisMonth,
-    salesThisMonth,
-    salesPrevMonth,
     overdueInvoices,
     upcomingBilling,
-    postsThisMonth,
     recentContracts,
     recentInvoices,
     costsThisMonth,
@@ -97,13 +92,10 @@ export default async function DashboardPage({
     prisma.invoice.findMany({ where: { status: "PAID" }, select: { total: true, paidAt: true } }),
     prisma.client.count({ where: { status: "ACTIVE" } }),
     prisma.client.count({ where: { createdAt: { gte: monthStart, lt: nextMonthStart } } }),
-    prisma.clientSale.aggregate({ where: { month: monthStart }, _sum: { grossValue: true } }),
-    prisma.clientSale.aggregate({ where: { month: prevMonthStart }, _sum: { grossValue: true } }),
     prisma.invoice.findMany({ where: { status: "OVERDUE" }, select: { total: true } }),
     prisma.client.count({
       where: { nextBillingDate: { gte: now, lte: in7Days } },
     }),
-    prisma.clientPost.count({ where: { month: monthStart } }),
     prisma.contract.findMany({
       orderBy: { createdAt: "desc" },
       take: 5,
@@ -149,10 +141,6 @@ export default async function DashboardPage({
     .reduce((s, i) => s + i.total, 0);
   const revenueChange = revenuePrevMonth > 0 ? ((revenueThisMonth - revenuePrevMonth) / revenuePrevMonth) * 100 : 0;
 
-  const salesTotalThisMonth = salesThisMonth._sum.grossValue || 0;
-  const salesTotalPrevMonth = salesPrevMonth._sum.grossValue || 0;
-  const salesChange = salesTotalPrevMonth > 0 ? ((salesTotalThisMonth - salesTotalPrevMonth) / salesTotalPrevMonth) * 100 : 0;
-
   const overdueTotal = overdueInvoices.reduce((s, i) => s + i.total, 0);
   const overdueCount = overdueInvoices.length;
 
@@ -170,23 +158,8 @@ export default async function DashboardPage({
     const faturamento = invoices
       .filter((i) => i.paidAt && i.paidAt >= d && i.paidAt < dNext)
       .reduce((s, i) => s + i.total, 0);
-    return { key: d.getTime(), month: monthLabels[d.getUTCMonth()], faturamento, vendas: 0 };
+    return { month: monthLabels[d.getUTCMonth()], faturamento };
   });
-
-  const salesByMonth = await prisma.clientSale.groupBy({
-    by: ["month"],
-    _sum: { grossValue: true },
-    where: {
-      month: {
-        gte: new Date(Date.UTC(now.getFullYear(), now.getMonth() - 5, 1)),
-        lt: nextMonthStart,
-      },
-    },
-  });
-  for (const entry of salesByMonth) {
-    const idx = chartData.findIndex((c) => c.key === new Date(entry.month).getTime());
-    if (idx !== -1) chartData[idx].vendas = entry._sum.grossValue || 0;
-  }
 
   // Faturamento dia a dia do mês selecionado — junta o que já foi recebido
   // (por data de pagamento) com o que ainda está previsto (vencimento de
@@ -317,16 +290,6 @@ export default async function DashboardPage({
             href="/clientes?status=ACTIVE"
           />
           <KPICard
-            title="Vendas dos Clientes"
-            value={formatCurrency(salesTotalThisMonth)}
-            change={Math.round(salesChange * 10) / 10}
-            changeLabel="vs mês anterior"
-            trend={salesChange >= 0 ? "up" : "down"}
-            icon={<ShoppingCart className="h-5 w-5 text-purple-600 dark:text-purple-400" />}
-            iconBg="bg-purple-50 dark:bg-purple-500/10"
-            href="/vendas"
-          />
-          <KPICard
             title="A Receber"
             value={formatCurrency(overdueTotal)}
             change={overdueCount}
@@ -382,16 +345,6 @@ export default async function DashboardPage({
               <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Resumo Rápido</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Link
-                href="/projetos"
-                className="flex items-center gap-3 p-3 rounded-lg bg-orange-50 dark:bg-orange-500/10 hover:opacity-80 transition-opacity"
-              >
-                <ImageIcon className="h-5 w-5 text-orange-500 shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{postsThisMonth} post(s) publicados</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Este mês</p>
-                </div>
-              </Link>
               <Link
                 href="/financeiro"
                 className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-500/10 hover:opacity-80 transition-opacity"

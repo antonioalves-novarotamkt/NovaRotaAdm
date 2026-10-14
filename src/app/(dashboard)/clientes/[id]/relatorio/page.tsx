@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Eye, Heart, Share2, TrendingUp, ShoppingCart, Globe } from "lucide-react";
+import { ArrowLeft, TrendingUp } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PrintButton } from "@/components/contracts/PrintButton";
 import { SendReportEmailButton } from "@/components/clientes/SendReportEmailButton";
-import { formatDate, formatCurrency } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { getAgencySettings } from "@/app/actions/agency";
 
@@ -61,47 +61,13 @@ export default async function ClientReportPage({
 
   if (!client) notFound();
 
-  const [activities, posts, campaigns, sales, websiteMetric] = await Promise.all([
-    prisma.clientActivity.findMany({
-      where: {
-        clientId: client.id,
-        date: { gte: monthDate, lt: nextMonthDate },
-      },
-      orderBy: { date: "asc" },
-    }),
-    prisma.clientPost.findMany({
-      where: { clientId: client.id, month: monthDate },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.campaignMetric.findMany({
-      where: {
-        clientId: client.id,
-        date: { gte: monthDate, lt: nextMonthDate },
-      },
-    }),
-    prisma.clientSale.findMany({
-      where: { clientId: client.id, month: monthDate },
-    }),
-    prisma.websiteMetric.findFirst({
-      where: { clientId: client.id, month: monthDate },
-    }),
-  ]);
-
-  const totalSalesValue = sales.reduce((s, sale) => s + sale.grossValue, 0);
-  const totalSalesCount = sales.reduce((s, sale) => s + sale.salesCount, 0);
-  const salesWithNet = sales.filter((s) => s.netValue != null);
-  const totalNetValue = salesWithNet.reduce((s, sale) => s + (sale.netValue as number), 0);
-  const totalSalesLoss = salesWithNet.reduce((s, sale) => s + (sale.grossValue - (sale.netValue as number)), 0);
-  const hasNetData = salesWithNet.length > 0;
-
-  const totalViews = posts.reduce((s, p) => s + (p.instagramViews || 0) + (p.facebookViews || 0), 0);
-  const totalLikes = posts.reduce((s, p) => s + (p.instagramLikes || 0) + (p.facebookLikes || 0), 0);
-  const totalShares = posts.reduce((s, p) => s + (p.instagramShares || 0) + (p.facebookShares || 0), 0);
-
-  const totalSpend = campaigns.reduce((s, c) => s + c.spend, 0);
-  const totalImpressions = campaigns.reduce((s, c) => s + c.impressions, 0);
-  const totalClicks = campaigns.reduce((s, c) => s + c.clicks, 0);
-  const totalConversions = campaigns.reduce((s, c) => s + c.conversions, 0);
+  const activities = await prisma.clientActivity.findMany({
+    where: {
+      clientId: client.id,
+      date: { gte: monthDate, lt: nextMonthDate },
+    },
+    orderBy: { date: "asc" },
+  });
 
   const monthLabel = `${monthNames[monthDate.getMonth()]} de ${monthDate.getFullYear()}`;
 
@@ -174,15 +140,6 @@ export default async function ClientReportPage({
                   (m) => new Date(m.month).getTime() === prevMonthDate.getTime()
                 );
                 const growth = current && previous ? current.followers - previous.followers : null;
-                const showInstagramInsights =
-                  account.platform === "INSTAGRAM" &&
-                  current &&
-                  (current.totalViews != null ||
-                    current.followerViewsPct != null ||
-                    current.nonFollowerViewsPct != null ||
-                    current.profileVisits != null ||
-                    current.linkTaps != null ||
-                    current.addressTaps != null);
                 return (
                   <div key={account.id} className="p-3 rounded-lg border border-gray-100 dark:border-gray-800">
                     <div className="flex items-center justify-between">
@@ -201,206 +158,9 @@ export default async function ClientReportPage({
                         )}
                       </div>
                     </div>
-                    {showInstagramInsights && current && (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-                        {current.totalViews != null && (
-                          <div>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Visualizações totais</p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{current.totalViews.toLocaleString("pt-BR")}</p>
-                          </div>
-                        )}
-                        {(current.followerViewsPct != null || current.nonFollowerViewsPct != null) && (
-                          <div>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Seguidores x Não seguidores</p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                              {current.followerViewsPct != null ? `${current.followerViewsPct.toLocaleString("pt-BR")}%` : "—"}
-                              {" / "}
-                              {current.nonFollowerViewsPct != null ? `${current.nonFollowerViewsPct.toLocaleString("pt-BR")}%` : "—"}
-                            </p>
-                          </div>
-                        )}
-                        {current.profileVisits != null && (
-                          <div>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Visitas ao perfil</p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{current.profileVisits.toLocaleString("pt-BR")}</p>
-                          </div>
-                        )}
-                        {current.linkTaps != null && (
-                          <div>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Toques em links</p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{current.linkTaps.toLocaleString("pt-BR")}</p>
-                          </div>
-                        )}
-                        {current.addressTaps != null && (
-                          <div>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Toques em endereço</p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{current.addressTaps.toLocaleString("pt-BR")}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 );
               })}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Website */}
-        {websiteMetric && (
-          <Card className="border-0 shadow-sm print:shadow-none">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                <Globe className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                Site
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-3 gap-4">
-              <div>
-                <p className="text-xs text-gray-400 dark:text-gray-500">Visualizações</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                  {websiteMetric.pageViews != null ? websiteMetric.pageViews.toLocaleString("pt-BR") : "—"}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 dark:text-gray-500">Total de Usuários</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                  {websiteMetric.totalUsers != null ? websiteMetric.totalUsers.toLocaleString("pt-BR") : "—"}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 dark:text-gray-500">Novos Usuários</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                  {websiteMetric.newUsers != null ? websiteMetric.newUsers.toLocaleString("pt-BR") : "—"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Posts */}
-        <Card className="border-0 shadow-sm print:shadow-none">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">
-              Posts do Mês ({posts.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {posts.length === 0 ? (
-              <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum post registrado neste mês.</p>
-            ) : (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-                  {posts.map((post) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={post.id}
-                      src={post.imageUrl}
-                      alt={post.caption || "Post"}
-                      className="aspect-square object-cover rounded-lg border border-gray-100 dark:border-gray-800"
-                    />
-                  ))}
-                </div>
-                <div className="flex items-center gap-6 text-sm text-gray-700 dark:text-gray-300 border-t pt-3">
-                  <span className="flex items-center gap-1.5">
-                    <Eye className="h-4 w-4 text-gray-400 dark:text-gray-500" /> {totalViews.toLocaleString("pt-BR")} visualizações
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Heart className="h-4 w-4 text-gray-400 dark:text-gray-500" /> {totalLikes.toLocaleString("pt-BR")} curtidas
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Share2 className="h-4 w-4 text-gray-400 dark:text-gray-500" /> {totalShares.toLocaleString("pt-BR")} compartilhamentos
-                  </span>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Campaigns */}
-        {campaigns.length > 0 && (
-          <Card className="border-0 shadow-sm print:shadow-none">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100">Campanhas Pagas</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div>
-                <p className="text-xs text-gray-400 dark:text-gray-500">Investimento</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalSpend)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 dark:text-gray-500">Impressões</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{totalImpressions.toLocaleString("pt-BR")}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 dark:text-gray-500">Cliques</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{totalClicks.toLocaleString("pt-BR")}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 dark:text-gray-500">Conversões</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{totalConversions.toLocaleString("pt-BR")}</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Sales */}
-        {sales.length > 0 && (
-          <Card className="border-0 shadow-sm print:shadow-none">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                <ShoppingCart className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                Vendas do Mês
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-3">
-                <div>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Total Bruto de Vendas</p>
-                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalSalesValue)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Nº de Vendas</p>
-                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{totalSalesCount.toLocaleString("pt-BR")}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Ticket Médio</p>
-                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                    {formatCurrency(totalSalesCount > 0 ? totalSalesValue / totalSalesCount : 0)}
-                  </p>
-                </div>
-              </div>
-              {hasNetData && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-                  <div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">Ganho Líquido</p>
-                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalNetValue)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">Perdas com Taxas/Promoções/Entregas</p>
-                    <p className="text-sm font-bold text-red-600 dark:text-red-400">{formatCurrency(totalSalesLoss)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">% Perdido do Bruto</p>
-                    <p className="text-sm font-bold text-red-600 dark:text-red-400">
-                      {totalSalesValue > 0 ? `${((totalSalesLoss / totalSalesValue) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%` : "—"}
-                    </p>
-                  </div>
-                </div>
-              )}
-              {sales.length > 1 && (
-                <div className="space-y-1.5 border-t pt-3">
-                  {sales.map((sale) => (
-                    <div key={sale.id} className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
-                      <span>{sale.platform || "Geral"}</span>
-                      <span>
-                        {formatCurrency(sale.grossValue)}
-                        {sale.netValue != null && ` (líquido ${formatCurrency(sale.netValue)})`} · {sale.salesCount} vendas
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
             </CardContent>
           </Card>
         )}

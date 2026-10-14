@@ -11,24 +11,24 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          Role      @default(USER)
+  id                  String    @id @default(cuid())
+  name                String?
+  email               String    @unique
+  emailVerified       DateTime?
+  image               String?
+  password            String?
+  role                Role      @default(USER)
   failedLoginAttempts Int       @default(0)
   lockedUntil         DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  tasks         Task[]              @relation("AssignedTasks")
-  taskUpdates   TaskUpdate[]
-  projects      Project[]
-  resetTokens   PasswordResetToken[]
+  accounts    Account[]
+  sessions    Session[]
+  tasks       Task[]               @relation("AssignedTasks")
+  taskUpdates TaskUpdate[]
+  projects    Project[]
+  resetTokens PasswordResetToken[]
 
   @@map("users")
 }
@@ -77,85 +77,65 @@ model Session {
 }
 
 model Client {
-  id          String       @id @default(cuid())
-  name        String
-  email       String       @unique
-  phone       String?
-  company     String?
-  website     String?
-  address     String?
-  city        String?
-  state       String?
-  country     String       @default("Brasil")
-  notes       String?      @db.Text
-  status      ClientStatus @default(ACTIVE)
-  contractValue Float?
-  logoUrl     String?
-  billingFrequency BillingFrequency @default(NONE)
-  nextBillingDate  DateTime?
-  billingDayOfWeek  Int?
+  id                 String           @id @default(cuid())
+  name               String
+  email              String           @unique
+  phone              String?
+  company            String?
+  website            String?
+  address            String?
+  city               String?
+  state              String?
+  country            String           @default("Brasil")
+  notes              String?          @db.Text
+  status             ClientStatus     @default(ACTIVE)
+  contractValue      Float?
+  logoUrl            String?
+  billingFrequency   BillingFrequency @default(NONE)
+  nextBillingDate    DateTime?
+  billingDayOfWeek   Int?
   billingDayOfMonth1 Int?
   billingDayOfMonth2 Int?
-  clientSince DateTime?
+  clientSince        DateTime?
 
   // Produtos/serviços contratados (escopo atual, independente do texto do contrato)
-  includesSocialMedia Boolean @default(false)
-  postsPerWeek        Int?
-  storiesPerWeek      Int?
-  reelsPerWeek        Int?
-  socialNetworksCount Int?
-  includesGoogleAds   Boolean @default(false)
-  includesMenuMgmt    Boolean @default(false)
-  menuPlatforms       String?
+  includesSocialMedia     Boolean @default(false)
+  postsPerWeek            Int?
+  storiesPerWeek          Int?
+  reelsPerWeek            Int?
+  socialNetworksCount     Int?
+  includesGoogleAds       Boolean @default(false)
+  includesMenuMgmt        Boolean @default(false)
+  menuPlatforms           String?
   includesWebsiteCreation Boolean @default(false)
 
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  projects        Project[]
-  invoices        Invoice[]
-  contracts       Contract[]
-  socialAccounts  SocialAccount[]
-  activities      ClientActivity[]
-  campaignMetrics CampaignMetric[]
-  posts           ClientPost[]
-  tasks           Task[]
-  sales           ClientSale[]
-  websiteMetrics  WebsiteMetric[]
-  leadOrigin      Lead?
+  projects       Project[]
+  invoices       Invoice[]
+  contracts      Contract[]
+  socialAccounts SocialAccount[]
+  activities     ClientActivity[]
+  tasks          Task[]
+  leadOrigin     Lead?
 
   @@map("clients")
 }
 
-model WebsiteMetric {
-  id         String   @id @default(cuid())
-  clientId   String
-  month      DateTime
-  pageViews  Int?
-  totalUsers Int?
-  newUsers   Int?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  @@unique([clientId, month])
-  @@map("website_metrics")
-}
-
 model Lead {
-  id          String    @id @default(cuid())
-  name        String
-  company     String?
-  email       String?
-  phone       String?
-  source      String?
-  value       Float?
-  stage       LeadStage @default(NEW)
-  notes       String?   @db.Text
-  lostReason  String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         String    @id @default(cuid())
+  name       String
+  company    String?
+  email      String?
+  phone      String?
+  source     String?
+  value      Float?
+  stage      LeadStage @default(NEW)
+  notes      String?   @db.Text
+  lostReason String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   instagramHandle String?
 
@@ -197,22 +177,6 @@ enum LeadStage {
   WON
 }
 
-model ClientSale {
-  id         String   @id @default(cuid())
-  clientId   String
-  month      DateTime
-  platform   String?
-  grossValue Float   @map("totalValue")
-  netValue   Float?
-  salesCount Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  @@map("client_sales")
-}
-
 model SocialAccount {
   id        String         @id @default(cuid())
   clientId  String
@@ -233,18 +197,6 @@ model SocialMetric {
   socialAccountId String
   month           DateTime
   followers       Int      @default(0)
-  reach           Int?
-  engagementRate  Float?
-  notes           String?  @db.Text
-
-  // Instagram-specific insights
-  totalViews          Int?
-  followerViewsPct    Float?
-  nonFollowerViewsPct Float?
-  profileVisits       Int?
-  linkTaps            Int?
-  addressTaps         Int?
-
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -252,30 +204,6 @@ model SocialMetric {
 
   @@unique([socialAccountId, month])
   @@map("social_metrics")
-}
-
-model ClientPost {
-  id        String   @id @default(cuid())
-  clientId  String
-  month     DateTime
-  imageUrl  String
-  caption   String?
-  postDate  DateTime?
-  postUrl   String?
-
-  instagramViews    Int?
-  instagramLikes    Int?
-  instagramComments Int?
-  instagramShares   Int?
-  facebookViews     Int?
-  facebookLikes     Int?
-  facebookShares    Int?
-
-  createdAt DateTime @default(now())
-
-  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  @@map("client_posts")
 }
 
 model ClientActivity {
@@ -291,34 +219,34 @@ model ClientActivity {
 }
 
 model Contract {
-  id          String         @id @default(cuid())
-  title       String
-  clientId    String
-  value       Float
-  startDate   DateTime
-  endDate     DateTime?
-  status      ContractStatus @default(ACTIVE)
-  fileUrl     String?
-  content     String?        @db.Text
-  notes       String?        @db.Text
+  id        String         @id @default(cuid())
+  title     String
+  clientId  String
+  value     Float
+  startDate DateTime
+  endDate   DateTime?
+  status    ContractStatus @default(ACTIVE)
+  fileUrl   String?
+  content   String?        @db.Text
+  notes     String?        @db.Text
 
   billingFrequency   BillingFrequency @default(MONTHLY)
   billingDayOfWeek   Int?
   billingDayOfMonth1 Int?
   billingDayOfMonth2 Int?
 
-  includesSocialMedia   Boolean @default(false)
-  postsPerWeek          Int?
-  storiesPerWeek        Int?
-  reelsPerWeek          Int?
-  socialNetworksCount   Int?
-  includesGoogleAds     Boolean @default(false)
-  includesMenuMgmt      Boolean @default(false)
-  menuPlatforms         String?
+  includesSocialMedia     Boolean @default(false)
+  postsPerWeek            Int?
+  storiesPerWeek          Int?
+  reelsPerWeek            Int?
+  socialNetworksCount     Int?
+  includesGoogleAds       Boolean @default(false)
+  includesMenuMgmt        Boolean @default(false)
+  menuPlatforms           String?
   includesWebsiteCreation Boolean @default(false)
 
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   client      Client               @relation(fields: [clientId], references: [id], onDelete: Cascade)
   adjustments ContractAdjustment[]
@@ -353,9 +281,8 @@ model Project {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  client  Client  @relation(fields: [clientId], references: [id])
-  manager User?   @relation(fields: [managerId], references: [id])
-  metrics CampaignMetric[]
+  client  Client @relation(fields: [clientId], references: [id])
+  manager User?  @relation(fields: [managerId], references: [id])
 
   @@map("projects")
 }
@@ -410,22 +337,22 @@ model TaskUpdate {
 }
 
 model Invoice {
-  id          String        @id @default(cuid())
-  number      String        @unique
-  clientId    String
-  amount      Float
-  tax         Float         @default(0)
-  total       Float
-  status      InvoiceStatus @default(PENDING)
-  issueDate   DateTime      @default(now())
-  dueDate     DateTime
-  paidAt      DateTime?
-  description String?       @db.Text
-  notes       String?       @db.Text
+  id                    String        @id @default(cuid())
+  number                String        @unique
+  clientId              String
+  amount                Float
+  tax                   Float         @default(0)
+  total                 Float
+  status                InvoiceStatus @default(PENDING)
+  issueDate             DateTime      @default(now())
+  dueDate               DateTime
+  paidAt                DateTime?
+  description           String?       @db.Text
+  notes                 String?       @db.Text
   dueSoonReminderSentAt DateTime?
   lastOverdueReminderAt DateTime?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
 
   client   Client    @relation(fields: [clientId], references: [id])
   payments Payment[]
@@ -448,37 +375,6 @@ model Payment {
   invoice Invoice @relation(fields: [invoiceId], references: [id])
 
   @@map("payments")
-}
-
-model CampaignMetric {
-  id          String         @id @default(cuid())
-  clientId    String
-  projectId   String?
-  name        String?
-  status      CampaignStatus @default(ACTIVE)
-  date        DateTime
-  platform    String
-  impressions Int            @default(0)
-  clicks      Int            @default(0)
-  conversions Int            @default(0)
-  spend       Float          @default(0)
-  revenue     Float          @default(0)
-  ctr         Float          @default(0)
-  cpc         Float          @default(0)
-  roas        Float          @default(0)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-
-  client  Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-
-  @@map("campaign_metrics")
-}
-
-enum CampaignStatus {
-  ACTIVE
-  PAUSED
-  COMPLETED
 }
 
 enum Role {

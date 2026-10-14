@@ -107,21 +107,6 @@ export interface Payment {
   createdAt: Date;
 }
 
-export interface CampaignMetric {
-  id: string;
-  projectId: string;
-  date: Date;
-  platform: string;
-  impressions: number;
-  clicks: number;
-  conversions: number;
-  spend: number;
-  revenue: number;
-  ctr: number;
-  cpc: number;
-  roas: number;
-}
-
 export interface KPIData {
   label: string;
   value: string | number;
