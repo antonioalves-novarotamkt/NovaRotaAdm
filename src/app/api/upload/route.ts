@@ -5,16 +5,7 @@ import { authOptions } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
-const ALLOWED_TYPES = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "image/gif",
-  "video/mp4",
-  "video/quicktime",
-  "video/webm",
-]);
-const VIDEO_TYPES = new Set(["video/mp4", "video/quicktime", "video/webm"]);
+const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 
 export async function POST(request: Request): Promise<NextResponse> {
   const session = await getServerSession(authOptions);
@@ -39,7 +30,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const blob = await put(safeName, file, { access: "public" });
 
-    return NextResponse.json({ url: blob.url, kind: VIDEO_TYPES.has(file.type) ? "VIDEO" : "IMAGE" });
+    return NextResponse.json({ url: blob.url });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Erro no upload." },

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Header } from "@/components/layout/Header";
@@ -10,19 +9,13 @@ import type { TaskStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-// Cards "Postado" mais antigos que isso ficam escondidos por padrão, pra
-// não acumular sem fim na coluna — continuam salvos, só saem da visão
-// principal (dá pra ver todos com o link "ver mais antigos").
-const POSTED_VISIBLE_DAYS = 30;
-
 export default async function TarefasPage({
   searchParams,
 }: {
-  searchParams: { cliente?: string; responsavel?: string; todosPostados?: string };
+  searchParams: { cliente?: string; responsavel?: string };
 }) {
   const selectedClientId = searchParams.cliente || "";
   const selectedAssigneeId = searchParams.responsavel || "";
-  const showAllPosted = searchParams.todosPostados === "1";
 
   const session = await getServerSession(authOptions);
   const role = (session?.user as { role?: string } | undefined)?.role;
@@ -43,37 +36,26 @@ export default async function TarefasPage({
         ...(selectedAssigneeId ? { assigneeId: selectedAssigneeId } : {}),
       },
       include: {
-        client: { select: { id: true, name: true, company: true, logoUrl: true, approvalToken: true } },
+        client: { select: { id: true, name: true, company: true, logoUrl: true } },
         assignee: { select: { id: true, name: true, email: true } },
         updates: {
           orderBy: { createdAt: "desc" },
           include: { author: { select: { id: true, name: true, email: true } } },
         },
-        scheduledPosts: { orderBy: { scheduledAt: "asc" } },
-        media: { orderBy: { sort: "asc" } },
-        comments: { orderBy: { createdAt: "asc" } },
       },
       orderBy: { createdAt: "desc" },
     }),
   ]);
 
-  const postedCutoff = new Date();
-  postedCutoff.setDate(postedCutoff.getDate() - POSTED_VISIBLE_DAYS);
-
   const tasksByStatus = new Map<TaskStatus, typeof tasks>();
   for (const status of TASK_STATUS_COLUMNS) tasksByStatus.set(status, []);
-  let hiddenPostedCount = 0;
   for (const task of tasks) {
-    if (task.status === "POSTED" && !showAllPosted && task.postedAt && task.postedAt < postedCutoff) {
-      hiddenPostedCount++;
-      continue;
-    }
     tasksByStatus.get(task.status)?.push(task);
   }
 
   return (
     <div>
-      <Header title="Tarefas" subtitle="Quadro de trabalho da agência — todos os clientes, todas as atividades, com aprovação" />
+      <Header title="Tarefas" subtitle="Quadro de trabalho da agência — tarefas internas, com aprovação" />
       <div className="p-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
           <form className="flex items-center gap-2" method="get">
@@ -127,29 +109,6 @@ export default async function TarefasPage({
                       columnTasks.map((task) => <TaskCard key={task.id} task={task} users={users} canApprove={canApprove} />)
                     )}
                   </div>
-                  {status === "POSTED" && hiddenPostedCount > 0 && (
-                    <Link
-                      href={`?${new URLSearchParams({
-                        ...(selectedClientId ? { cliente: selectedClientId } : {}),
-                        ...(selectedAssigneeId ? { responsavel: selectedAssigneeId } : {}),
-                        todosPostados: "1",
-                      }).toString()}`}
-                      className="block text-center text-xs text-orange-600 dark:text-orange-400 hover:underline mt-2"
-                    >
-                      + {hiddenPostedCount} mais antigo{hiddenPostedCount > 1 ? "s" : ""} (ver todos)
-                    </Link>
-                  )}
-                  {status === "POSTED" && showAllPosted && (
-                    <Link
-                      href={`?${new URLSearchParams({
-                        ...(selectedClientId ? { cliente: selectedClientId } : {}),
-                        ...(selectedAssigneeId ? { responsavel: selectedAssigneeId } : {}),
-                      }).toString()}`}
-                      className="block text-center text-xs text-gray-400 dark:text-gray-500 hover:underline mt-2"
-                    >
-                      Mostrar só os últimos {POSTED_VISIBLE_DAYS} dias
-                    </Link>
-                  )}
                 </div>
               );
             })}

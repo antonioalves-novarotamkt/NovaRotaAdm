@@ -64,7 +64,7 @@ export function NewTaskDialog({
             ))}
           </select>
           <Input name="title" placeholder="Título da tarefa" required />
-          <select name="type" defaultValue="POST" className={inputClass}>
+          <select name="type" defaultValue="OTHER" className={inputClass}>
             {Object.entries(taskTypeLabel).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
