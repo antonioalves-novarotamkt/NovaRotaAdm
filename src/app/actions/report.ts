@@ -21,7 +21,6 @@ const platformLabel: Record<string, string> = {
   OTHER: "Outra",
 };
 
-const brl = (value: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 const pt = (value: number) => value.toLocaleString("pt-BR");
 
 function section(title: string, rows: string[]): string {
@@ -60,13 +59,7 @@ export async function sendClientReportEmail(clientId: string, month: string) {
   if (!client) throw new Error("Cliente não encontrado.");
   if (!client.email) throw new Error("Cliente não tem email cadastrado.");
 
-  const [activities, posts, campaigns, sales, websiteMetric] = await Promise.all([
-    prisma.clientActivity.findMany({ where: { clientId, date: { gte: monthDate, lt: nextMonthDate } } }),
-    prisma.clientPost.findMany({ where: { clientId, month: monthDate } }),
-    prisma.campaignMetric.findMany({ where: { clientId, date: { gte: monthDate, lt: nextMonthDate } } }),
-    prisma.clientSale.findMany({ where: { clientId, month: monthDate } }),
-    prisma.websiteMetric.findFirst({ where: { clientId, month: monthDate } }),
-  ]);
+  const activities = await prisma.clientActivity.findMany({ where: { clientId, date: { gte: monthDate, lt: nextMonthDate } } });
 
   const monthLabel = `${monthNames[monthDate.getMonth()]} de ${monthDate.getFullYear()}`;
 
@@ -84,62 +77,6 @@ export async function sendClientReportEmail(clientId: string, month: string) {
       );
     });
     sections.push(section("Redes Sociais", rows));
-  }
-
-  if (websiteMetric) {
-    sections.push(
-      section("Site", [
-        row("Visualizações", websiteMetric.pageViews != null ? pt(websiteMetric.pageViews) : "—"),
-        row("Total de Usuários", websiteMetric.totalUsers != null ? pt(websiteMetric.totalUsers) : "—"),
-        row("Novos Usuários", websiteMetric.newUsers != null ? pt(websiteMetric.newUsers) : "—"),
-      ])
-    );
-  }
-
-  if (posts.length > 0) {
-    const totalViews = posts.reduce((s, p) => s + (p.instagramViews || 0) + (p.facebookViews || 0), 0);
-    const totalLikes = posts.reduce((s, p) => s + (p.instagramLikes || 0) + (p.facebookLikes || 0), 0);
-    const totalShares = posts.reduce((s, p) => s + (p.instagramShares || 0) + (p.facebookShares || 0), 0);
-    sections.push(
-      section(`Posts do Mês (${posts.length})`, [
-        row("Visualizações", pt(totalViews)),
-        row("Curtidas", pt(totalLikes)),
-        row("Compartilhamentos", pt(totalShares)),
-      ])
-    );
-  }
-
-  if (campaigns.length > 0) {
-    const totalSpend = campaigns.reduce((s, c) => s + c.spend, 0);
-    const totalImpressions = campaigns.reduce((s, c) => s + c.impressions, 0);
-    const totalClicks = campaigns.reduce((s, c) => s + c.clicks, 0);
-    const totalConversions = campaigns.reduce((s, c) => s + c.conversions, 0);
-    sections.push(
-      section("Campanhas Pagas", [
-        row("Investimento", brl(totalSpend)),
-        row("Impressões", pt(totalImpressions)),
-        row("Cliques", pt(totalClicks)),
-        row("Conversões", pt(totalConversions)),
-      ])
-    );
-  }
-
-  if (sales.length > 0) {
-    const totalGross = sales.reduce((s, sale) => s + sale.grossValue, 0);
-    const totalCount = sales.reduce((s, sale) => s + sale.salesCount, 0);
-    const salesWithNet = sales.filter((s) => s.netValue != null);
-    const rows = [
-      row("Total Bruto de Vendas", brl(totalGross)),
-      row("Nº de Vendas", pt(totalCount)),
-      row("Ticket Médio", brl(totalCount > 0 ? totalGross / totalCount : 0)),
-    ];
-    if (salesWithNet.length > 0) {
-      const totalNet = salesWithNet.reduce((s, sale) => s + (sale.netValue as number), 0);
-      const totalLoss = salesWithNet.reduce((s, sale) => s + (sale.grossValue - (sale.netValue as number)), 0);
-      rows.push(row("Ganho Líquido", brl(totalNet)));
-      rows.push(row("Perdas (taxas/promoções/entregas)", brl(totalLoss)));
-    }
-    sections.push(section("Vendas do Mês", rows));
   }
 
   if (activities.length > 0) {
