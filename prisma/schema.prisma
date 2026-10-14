@@ -91,6 +91,9 @@ model Client {
   status      ClientStatus @default(ACTIVE)
   contractValue Float?
   logoUrl     String?
+  // Token do link de aprovação de conteúdo do cliente (sem login) — null até
+  // a agência gerar o primeiro link na página do cliente.
+  approvalToken String? @unique
   billingFrequency BillingFrequency @default(NONE)
   nextBillingDate  DateTime?
   billingDayOfWeek  Int?
@@ -387,13 +390,55 @@ model Task {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
+  // Legenda que o cliente vê e aprova — separada da "description" (briefing
+  // interno da equipe). Post/Reels usam; Story não (não tem legenda).
+  caption       String?         @db.Text
+  artStatus     ApprovalStatus  @default(PENDING)
+  captionStatus ApprovalStatus  @default(PENDING)
+
   client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
   assignee User?  @relation("AssignedTasks", fields: [assigneeId], references: [id])
 
   updates        TaskUpdate[]
   scheduledPosts ScheduledPost[]
+  media          TaskMedia[]
+  comments       TaskComment[]
 
   @@map("tasks")
+}
+
+// Arquivos (imagem/vídeo) da peça que o cliente aprova como "arte". Uma
+// troca de arquivo depois que já foi revisada volta o artStatus pra
+// pendente (ver addTaskMedia em task-approval.ts).
+model TaskMedia {
+  id        String    @id @default(cuid())
+  taskId    String
+  url       String
+  kind      MediaKind
+  sort      Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_media")
+}
+
+// Conversa por peça entre agência e cliente — tanto as decisões de
+// aprovação/ajuste (com o texto do que precisa mudar) quanto comentários
+// soltos de cada lado.
+model TaskComment {
+  id        String      @id @default(cuid())
+  taskId    String
+  author    String
+  role      CommentRole
+  part      CommentPart @default(GENERAL)
+  kind      CommentKind @default(COMMENT)
+  text      String      @default("") @db.Text
+  createdAt DateTime    @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_comments")
 }
 
 // Um card de tarefa às vezes é um lote com vários posts/stories — cada um
@@ -572,10 +617,41 @@ enum TaskStatus {
 
 enum TaskType {
   POST
+  REELS
   STORY
   BLOG
   SITE_UPDATE
   OTHER
+}
+
+// Status de aprovação do cliente pra cada parte da peça (arte/legenda).
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  CHANGES_REQUESTED
+}
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+}
+
+enum CommentRole {
+  CLIENT
+  AGENCY
+}
+
+enum CommentPart {
+  ART
+  CAPTION
+  GENERAL
+}
+
+enum CommentKind {
+  APPROVED
+  CHANGES_REQUESTED
+  COMMENT
+  VERSION
 }
 
 enum Priority {

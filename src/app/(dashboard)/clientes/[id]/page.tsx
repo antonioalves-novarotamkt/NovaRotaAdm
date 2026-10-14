@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { ArrowLeft, Mail, Phone, Globe, MapPin, Building2, Calendar, DollarSign, FileText, Package, Users2 } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Globe, MapPin, Building2, Calendar, DollarSign, FileText, Package, Users2, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { paidAmount, remainingAmount } from "@/lib/payments";
 import { prisma } from "@/lib/prisma";
 import { ClientLogoUpload } from "@/components/clients/ClientLogoUpload";
 import { ClientBillingForm } from "@/components/clients/ClientBillingForm";
+import { ClientApprovalLinkCard } from "@/components/clients/ClientApprovalLinkCard";
 import { EditClientDialog } from "@/components/clients/EditClientDialog";
 import { NewSocialAccountDialog } from "@/components/clients/NewSocialAccountDialog";
 import { RefreshFollowersButton } from "@/components/clients/RefreshFollowersButton";
@@ -245,6 +246,18 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                   billingDayOfMonth1={client.billingDayOfMonth1}
                   billingDayOfMonth2={client.billingDayOfMonth2}
                 />
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  Aprovação de Conteúdo
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ClientApprovalLinkCard clientId={client.id} approvalToken={client.approvalToken} />
               </CardContent>
             </Card>
 
