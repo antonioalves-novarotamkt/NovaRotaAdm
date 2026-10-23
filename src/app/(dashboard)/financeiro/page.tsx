@@ -7,7 +7,7 @@ import { RegisterPaymentButton } from "@/components/financeiro/RegisterPaymentBu
 import { SendRemindersButton } from "@/components/financeiro/SendRemindersButton";
 import { RevenueChart } from "@/components/financeiro/RevenueChart";
 import { NewExtraChargeDialog } from "@/components/financeiro/NewExtraChargeDialog";
-import { DeleteExtraChargeButton } from "@/components/financeiro/DeleteExtraChargeButton";
+import { DeleteInvoiceButton } from "@/components/financeiro/DeleteInvoiceButton";
 import { MarkExtraChargePaidButton } from "@/components/financeiro/MarkExtraChargePaidButton";
 import { EditPaidDateButton } from "@/components/financeiro/EditPaidDateButton";
 import { ClientStatementActions } from "@/components/financeiro/ClientStatementActions";
@@ -431,6 +431,7 @@ export default async function FinanceiroPage({
                                   </Button>
                                 </Link>
                               )}
+                              <DeleteInvoiceButton id={invoice.id} number={invoice.number} paid={paidAmount(invoice) > 0} />
                             </div>
                           </div>
                         ))}
@@ -774,7 +775,7 @@ export default async function FinanceiroPage({
                         </Link>
                       </>
                     )}
-                    <DeleteExtraChargeButton id={invoice.id} />
+                    <DeleteInvoiceButton id={invoice.id} number={invoice.number} paid={paidAmount(invoice) > 0} />
                   </div>
                 </div>
               ))
