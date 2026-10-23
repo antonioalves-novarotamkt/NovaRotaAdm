@@ -2,11 +2,11 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Plus, Trash2, Loader2, FileText, Check } from "lucide-react";
+import { Plus, Trash2, Loader2, FileText, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { saveLeadAnalysis } from "@/app/actions/lead-analysis";
+import { saveLeadAnalysis, generateLeadAnalysisDraft } from "@/app/actions/lead-analysis";
 
 interface Section {
   key: string;
@@ -30,6 +30,8 @@ export function AnalysisEditor({
   );
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+  const [isGenerating, startGenerate] = useTransition();
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
   function addSection(title = "") {
     setSaved(false);
@@ -56,10 +58,39 @@ export function AnalysisEditor({
     });
   }
 
+  function handleGenerate() {
+    if (hasContent && !confirm("Isso substitui as seções atuais pelo rascunho da IA. Continuar?")) return;
+    setGenerateError(null);
+    setSaved(false);
+    startGenerate(async () => {
+      const result = await generateLeadAnalysisDraft(leadId);
+      if (!result.ok) {
+        setGenerateError(result.error);
+        return;
+      }
+      setSections(result.sections.map((s, i) => ({ key: `ai-${Date.now()}-${i}`, ...s })));
+    });
+  }
+
   const hasContent = sections.some((s) => s.title.trim() || s.content.trim());
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-orange-600 border-orange-200 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-900"
+          disabled={isGenerating}
+          onClick={handleGenerate}
+        >
+          {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+          {isGenerating ? "Gerando..." : "Gerar análise com IA"}
+        </Button>
+      </div>
+      {generateError && <p className="text-xs text-red-500 dark:text-red-400">{generateError}</p>}
+
       <div className="flex flex-wrap gap-1.5">
         {SUGGESTIONS.map((s) => (
           <button

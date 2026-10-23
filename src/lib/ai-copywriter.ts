@@ -86,6 +86,68 @@ ${notesBlock}`;
   return callAnthropic(prompt, 2048);
 }
 
+// Gera um rascunho das seções de análise (dores + o que a agência pode
+// fazer) a partir dos dados já levantados na prospecção (lead.notes: site,
+// redes sociais, nota no Google, etc. — ver buildAisaNotes em
+// actions/prospeccao.ts). Não salva nada sozinho: o rascunho volta pro
+// editor pra equipe revisar/ajustar antes de salvar, igual já acontece com
+// uma seção escrita à mão.
+export async function generateAnalysisDraft(
+  lead: LeadInfo,
+  rawNotes: string,
+  agencyName: string
+): Promise<LeadAnalysisSection[]> {
+  const displayName = lead.company || lead.name;
+
+  if (!rawNotes.trim()) {
+    throw new Error("Esse lead não tem dados de prospecção suficientes para gerar uma análise automática.");
+  }
+
+  const prompt = `Você é consultor de marketing digital da agência "${agencyName}", preparando uma análise comercial do negócio "${displayName}" para uma proposta.
+
+Dados levantados na prospecção (busca automática em Google Maps/Instagram/site — pode estar incompleto):
+${rawNotes}
+
+Com base SOMENTE nesses dados (nunca invente números, avaliações ou fatos que não estão aí), identifique as principais dores/oportunidades perdidas desse negócio e o que a agência poderia fazer a respeito. Gere de 2 a 4 seções, cada uma sobre um tema diferente que tenha informação suficiente nos dados acima (ex: "Site", "Redes Sociais", "Google", "Presença Online") — não crie seção para um tema sem nenhum dado correspondente.
+
+Para cada seção, escreva um parágrafo curto (3 a 5 frases) que: (1) diga o que foi observado, usando os dados específicos fornecidos (nome, nota, se tem site, etc.) sempre que possível; (2) explique por que isso custa clientes/vendas pro negócio; (3) aponte o que a agência poderia fazer pra resolver. Tom consultivo e direto, português do Brasil, sem soar genérico ou robótico.
+
+Responda APENAS com um array JSON nesse formato exato, sem nenhum texto antes ou depois, sem markdown:
+[{"title": "Nome da seção", "content": "Parágrafo da análise..."}]`;
+
+  const raw = await callAnthropic(prompt, 2048);
+
+  const start = raw.indexOf("[");
+  const end = raw.lastIndexOf("]");
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error("A IA não retornou a análise no formato esperado. Tente novamente.");
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw.slice(start, end + 1));
+  } catch {
+    throw new Error("A IA não retornou a análise no formato esperado. Tente novamente.");
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error("A IA não retornou a análise no formato esperado. Tente novamente.");
+  }
+
+  const sections = parsed
+    .map((item) => ({
+      title: typeof item?.title === "string" ? item.title.trim() : "",
+      content: typeof item?.content === "string" ? item.content.trim() : "",
+    }))
+    .filter((s) => s.title && s.content);
+
+  if (!sections.length) {
+    throw new Error("A IA não encontrou dados suficientes para montar uma análise. Complete os dados do lead e tente de novo.");
+  }
+
+  return sections;
+}
+
 // Texto curto para a primeira abordagem no WhatsApp — não é a análise em
 // si, é um gancho direto para o cliente querer receber o PDF da análise.
 export async function generateWhatsappTeaser(lead: LeadInfo, agencyName: string): Promise<string> {

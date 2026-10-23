@@ -2,12 +2,35 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { generateReportText, generateWhatsappTeaser } from "@/lib/ai-copywriter";
+import { generateReportText, generateWhatsappTeaser, generateAnalysisDraft } from "@/lib/ai-copywriter";
 import { getAgencySettings } from "@/app/actions/agency";
 
 export interface LeadAnalysisSectionInput {
   title: string;
   content: string;
+}
+
+// Gera um rascunho de análise (dores + oportunidades) a partir dos dados já
+// levantados na prospecção do lead — não salva nada, só devolve as seções
+// pra equipe revisar/editar no formulário antes de clicar em "Salvar
+// Análise", igual uma seção escrita à mão passaria pelo mesmo caminho.
+export async function generateLeadAnalysisDraft(
+  leadId: string
+): Promise<{ ok: true; sections: LeadAnalysisSectionInput[] } | { ok: false; error: string }> {
+  if (!leadId) return { ok: false, error: "Lead inválido." };
+
+  try {
+    const [lead, agency] = await Promise.all([
+      prisma.lead.findUnique({ where: { id: leadId } }),
+      getAgencySettings(),
+    ]);
+    if (!lead) return { ok: false, error: "Lead não encontrado." };
+
+    const sections = await generateAnalysisDraft(lead, lead.notes || "", agency.name);
+    return { ok: true, sections };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Erro ao gerar análise." };
+  }
 }
 
 // Substitui todas as seções do lead pelas enviadas — mais simples do que
