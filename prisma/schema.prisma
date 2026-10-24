@@ -133,6 +133,7 @@ model ClientWorkItem {
   clientId  String
   name      String
   quantity  Float
+  perWeek   Boolean  @default(false) // true: quantity é por semana (vira mês × 52/12)
   minutes   Float
   sort      Int      @default(0)
   createdAt DateTime @default(now())

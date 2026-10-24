@@ -26,7 +26,7 @@ export async function setClientMonthlyHours(clientId: string, hours: number | nu
   return monthlyHours;
 }
 
-export type WorkItemInput = { name: string; quantity: number; minutes: number };
+export type WorkItemInput = { name: string; quantity: number; perWeek: boolean; minutes: number };
 
 function cleanItem(i: WorkItemInput) {
   const name = String(i.name || "").trim().slice(0, 80);
@@ -35,7 +35,7 @@ function cleanItem(i: WorkItemInput) {
     const x = Number(v);
     return Number.isFinite(x) && x >= 0 ? Math.round(x * 100) / 100 : 0;
   };
-  return { name, quantity: n(i.quantity), minutes: n(i.minutes) };
+  return { name, quantity: n(i.quantity), perWeek: Boolean(i.perWeek), minutes: n(i.minutes) };
 }
 
 /** Adiciona uma ou mais atividades ao cliente. As horas dele passam a ser a soma delas. */
@@ -48,7 +48,7 @@ export async function addWorkItems(clientId: string, items: WorkItemInput[]) {
     created.push(
       await prisma.clientWorkItem.create({
         data: { clientId, ...cleanItem(item), sort: sort++ },
-        select: { id: true, name: true, quantity: true, minutes: true },
+        select: { id: true, name: true, quantity: true, perWeek: true, minutes: true },
       })
     );
   }
