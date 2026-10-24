@@ -30,7 +30,7 @@ export type WorkItemInput = { name: string; quantity: number; minutes: number };
 
 function cleanItem(i: WorkItemInput) {
   const name = String(i.name || "").trim().slice(0, 80);
-  if (!name) throw new Error("Dê um nome para a atividade.");
+  if (!name) throw new Error("Dê um nome para o material.");
   const n = (v: unknown) => {
     const x = Number(v);
     return Number.isFinite(x) && x >= 0 ? Math.round(x * 100) / 100 : 0;

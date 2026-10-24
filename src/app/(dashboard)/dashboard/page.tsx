@@ -13,6 +13,8 @@ import {
 import { Header } from "@/components/layout/Header";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
+import { CapacityCard } from "@/components/dashboard/CapacityCard";
+import { getCapacitySummary } from "@/lib/capacity-summary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -219,6 +221,12 @@ export default async function DashboardPage({
     }));
   const monthBillingTotal = dailyBillingRows.reduce((s, r) => s + r.total, 0);
 
+  // A capacidade é um extra: se falhar, o resto do Dashboard continua aparecendo.
+  const capacity = await getCapacitySummary().catch((error) => {
+    console.error("getCapacitySummary falhou no Dashboard:", error);
+    return null;
+  });
+
   return (
     <div>
       <Header title="Dashboard" subtitle="Bem-vindo ao NovaRota — visão geral do seu negócio" />
@@ -333,6 +341,8 @@ export default async function DashboardPage({
             </CardContent>
           </Card>
         )}
+
+        {capacity && <CapacityCard data={capacity} />}
 
         {/* Charts & Recent Activity Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
