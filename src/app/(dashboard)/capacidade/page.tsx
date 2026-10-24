@@ -28,7 +28,7 @@ export default async function CapacidadePage() {
       menuPlatforms: true,
       workItems: {
         orderBy: [{ sort: "asc" }, { createdAt: "asc" }],
-        select: { id: true, name: true, quantity: true, minutes: true },
+        select: { id: true, name: true, quantity: true, perWeek: true, minutes: true },
       },
     },
   });

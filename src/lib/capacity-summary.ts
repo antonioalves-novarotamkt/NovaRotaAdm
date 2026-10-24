@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { capacityBudget, estimateClientHours, monthlyValue, parseCapacityConfig } from "@/lib/capacity";
+import { capacityBudget, estimateClientHours, monthlyQty, monthlyValue, parseCapacityConfig } from "@/lib/capacity";
 
 /** Resumo da capacidade para o Dashboard: mesmas regras da tela /capacidade. */
 export async function getCapacitySummary() {
@@ -17,7 +17,7 @@ export async function getCapacitySummary() {
         reelsPerWeek: true,
         includesMenuMgmt: true,
         menuPlatforms: true,
-        workItems: { select: { name: true, quantity: true, minutes: true } },
+        workItems: { select: { name: true, quantity: true, perWeek: true, minutes: true } },
       },
     }),
   ]);
@@ -30,7 +30,7 @@ export async function getCapacitySummary() {
   let belowRate = 0;
   const materials = new Map<string, { name: string; quantity: number }>();
   for (const c of clients) {
-    const itemsHours = c.workItems.reduce((s, i) => s + i.quantity * i.minutes, 0) / 60;
+    const itemsHours = c.workItems.reduce((s, i) => s + monthlyQty(i) * i.minutes, 0) / 60;
     const hours = c.workItems.length ? itemsHours : c.monthlyHours ?? estimateClientHours(c, config.times);
     if (hours <= 0) continue;
     const value = monthlyValue(c.contractValue, c.billingFrequency);
@@ -41,7 +41,7 @@ export async function getCapacitySummary() {
     for (const i of c.workItems) {
       const key = i.name.trim().toLowerCase();
       const m = materials.get(key) || { name: i.name.trim(), quantity: 0 };
-      m.quantity += i.quantity;
+      m.quantity += monthlyQty(i);
       materials.set(key, m);
     }
   }

@@ -9,8 +9,11 @@ import { addWorkItems, deleteWorkItem, saveCapacityConfig, setClientMonthlyHours
 import {
   capacityBudget,
   estimateClientHours,
+  monthlyQty,
+  priceKey,
   serviceOptions,
   SERVICE_NAMES,
+  unitPrice,
   type CapacityConfig,
   type CapacityService,
   type CapacityTimes,
@@ -28,9 +31,9 @@ type ClientRow = {
   estimate: number;
 };
 
-type WorkItem = { id: string; name: string; quantity: number; minutes: number };
+type WorkItem = { id: string; name: string; quantity: number; perWeek: boolean; minutes: number };
 
-const itemsHours = (items: WorkItem[]) => items.reduce((s, i) => s + i.quantity * i.minutes, 0) / 60;
+const itemsHours = (items: WorkItem[]) => items.reduce((s, i) => s + monthlyQty(i) * i.minutes, 0) / 60;
 
 const inputClass =
   "h-9 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-orange-500/40";
@@ -44,16 +47,18 @@ const toNum = (v: string) => {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 };
 
-const TIME_FIELDS: { key: keyof CapacityTimes; label: string; unit: string }[] = [
-  { key: "storyMin", label: "Story", unit: "min cada" },
-  { key: "postMin", label: "Post", unit: "min cada" },
-  { key: "reelsMin", label: "Reels", unit: "min cada" },
-  { key: "articleMin", label: "Artigo de blog", unit: "min cada" },
-  { key: "planningHours", label: "Planejamento e relatório de redes", unit: "h por cliente/mês" },
-  { key: "appMinPerWeek", label: "Gestão de cada app de delivery", unit: "min por semana" },
-  { key: "deliveryReportHours", label: "Relatório de delivery", unit: "h por cliente/mês" },
-  { key: "supportHours", label: "Atendimento (WhatsApp, aprovação, ajustes)", unit: "h por cliente/mês" },
+const TIME_FIELDS: { key: keyof CapacityTimes; label: string; unit: string; service: string }[] = [
+  { key: "storyMin", label: "Story", unit: "min cada", service: SERVICE_NAMES.story },
+  { key: "postMin", label: "Post", unit: "min cada", service: SERVICE_NAMES.post },
+  { key: "reelsMin", label: "Reels", unit: "min cada", service: SERVICE_NAMES.reels },
+  { key: "articleMin", label: "Artigo de blog", unit: "min cada", service: SERVICE_NAMES.article },
+  { key: "planningHours", label: "Planejamento e relatório de redes", unit: "h por cliente/mês", service: SERVICE_NAMES.planning },
+  { key: "appMinPerWeek", label: "Gestão de cada app de delivery", unit: "min por app/semana", service: SERVICE_NAMES.app },
+  { key: "deliveryReportHours", label: "Relatório de delivery", unit: "h por cliente/mês", service: SERVICE_NAMES.deliveryReport },
+  { key: "supportHours", label: "Atendimento (WhatsApp, aprovação, ajustes)", unit: "h por cliente/mês", service: SERVICE_NAMES.support },
 ];
+
+const serviceGrid = "grid grid-cols-[minmax(0,1fr)_4.5rem_4.5rem_5.5rem_1.75rem] items-center gap-2";
 
 export function CapacityCalculator({ initialConfig, clients }: { initialConfig: CapacityConfig; clients: ClientRow[] }) {
   const [config, setConfig] = useState<CapacityConfig>(initialConfig);
@@ -74,6 +79,22 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
   const updateTime = (key: keyof CapacityTimes, value: number) => update({ times: { ...config.times, [key]: value } });
   const updateService = (index: number, patch: Partial<CapacityService>) =>
     update({ services: config.services.map((s, i) => (i === index ? { ...s, ...patch } : s)) });
+  const setPrice = (name: string, value: string) => {
+    const prices = { ...config.prices };
+    if (value.trim() === "") delete prices[priceKey(name)];
+    else prices[priceKey(name)] = toNum(value);
+    update({ prices });
+  };
+  // Ao renomear um serviço extra, o valor digitado vai junto.
+  const renameService = (index: number, name: string) => {
+    const old = priceKey(config.services[index].name);
+    const prices = { ...config.prices };
+    if (old in prices && !(priceKey(name) in prices)) {
+      prices[priceKey(name)] = prices[old];
+      delete prices[old];
+    }
+    update({ services: config.services.map((s, i) => (i === index ? { ...s, name } : s)), prices });
+  };
   const options = useMemo(() => serviceOptions(config), [config]);
   const [newService, setNewService] = useState<CapacityService>({ name: "", minutes: 30, quantity: 1 });
   const newServiceTaken = options.some((o) => o.name.toLowerCase() === newService.name.trim().toLowerCase());
@@ -95,10 +116,11 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
           manual,
           hours: h,
           rate: h > 0 ? c.monthlyValue / h : 0,
-          fairPrice: h * config.hourRate,
+          // Com materiais: soma do valor de cada um. Sem materiais: horas × valor da hora.
+          fairPrice: list.length ? list.reduce((s, i) => s + monthlyQty(i) * unitPrice(config, i.name, i.minutes), 0) : h * config.hourRate,
         };
       }),
-    [clients, hours, items, config.times, config.hourRate]
+    [clients, hours, items, config]
   );
 
   const used = rows.reduce((s, r) => s + r.hours, 0);
@@ -121,8 +143,8 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
       for (const i of r.items) {
         const key = i.name.trim().toLowerCase();
         const m = map.get(key) || { name: i.name.trim(), quantity: 0, hours: 0 };
-        m.quantity += i.quantity;
-        m.hours += (i.quantity * i.minutes) / 60;
+        m.quantity += monthlyQty(i);
+        m.hours += (monthlyQty(i) * i.minutes) / 60;
         map.set(key, m);
       }
     return Array.from(map.values()).sort((a, b) => b.hours - a.hours);
@@ -171,7 +193,7 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
         <Kpi icon={Gauge} tone="orange" label="Ocupação" value={`${Math.round(occupancy)}%`}>
           <span className={cn("mt-1 inline-block text-[11px] font-medium px-2 py-0.5 rounded-full", status.cls)}>{status.label}</span>
         </Kpi>
-        <Kpi icon={DollarSign} tone="green" label="Faturamento mensal (contratos)" value={formatCurrency(revenue)} hint={`pela sua hora seria ${formatCurrency(fairRevenue)}`} />
+        <Kpi icon={DollarSign} tone="green" label="Faturamento mensal (contratos)" value={formatCurrency(revenue)} hint={`valor sugerido: ${formatCurrency(fairRevenue)}`} />
         <Kpi
           icon={Timer}
           tone="purple"
@@ -205,7 +227,7 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
           <div className="px-5 pt-5 pb-3">
             <h2 className="font-semibold text-gray-900 dark:text-gray-100">Horas por cliente</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Clientes ativos. Em <b>Cadastrar materiais</b>, coloque quantos de cada material o cliente recebe por mês (stories, posts, reels, artigos, ajustes nos apps…) e quanto tempo leva cada um: as horas do cliente viram a soma.
+              Clientes ativos. Em <b>Cadastrar materiais</b>, escolha cada material (stories, posts, reels, artigos, apps…), quantas vezes por semana ou por mês e quanto tempo leva cada um: as horas do cliente viram a soma.
               Sem materiais, vale o número digitado em Horas/mês ou, vazio, a estimativa pelo escopo do cliente. Tudo salva sozinho. Contratos semanais viram mês com 4,33 semanas.
             </p>
           </div>
@@ -217,7 +239,7 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                   <th className={cn(thClass, "text-right")}>Valor/mês</th>
                   <th className={cn(thClass, "text-right w-40")}>Horas/mês</th>
                   <th className={cn(thClass, "text-right")}>R$/hora</th>
-                  <th className={cn(thClass, "text-right")}>Pela sua hora</th>
+                  <th className={cn(thClass, "text-right")}>Valor sugerido</th>
                   <th className={cn(thClass, "text-right")}>Diferença</th>
                 </tr>
               </thead>
@@ -248,7 +270,7 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                         </button>
                         {r.items.length > 0 && (
                           <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 max-w-[22rem]">
-                            {r.items.map((i) => `${fmtQty(i.quantity)} ${i.name}`).join(" · ")}
+                            {r.items.map((i) => `${fmtQty(i.quantity)}${i.perWeek ? "/sem" : "/mês"} ${i.name}`).join(" · ")}
                           </p>
                         )}
                       </td>
@@ -320,6 +342,7 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                             items={r.items}
                             times={config.times}
                             options={options}
+                            hourRate={config.hourRate}
                             scope={r.scope}
                             onChange={(list) => setClientItems(r.id, list)}
                             onError={onItemsError}
@@ -353,7 +376,7 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
             </p>
           )}
           <p className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400 border-t">
-            <b>Pela sua hora</b> = horas do cliente × valor da sua hora. <b>Diferença</b> mostra quanto falta no contrato para chegar nesse valor (vermelho) ou quanto ele paga acima (verde).
+            <b>Valor sugerido</b> = soma dos materiais do cliente pelo valor de cada serviço (em <b>Serviços e tempos</b>); sem materiais, horas × valor da sua hora. <b>Diferença</b> mostra quanto falta no contrato para chegar nesse valor (vermelho) ou quanto ele paga acima (verde).
           </p>
         </CardContent>
       </Card>
@@ -380,11 +403,18 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
             <div>
               <h2 className="font-semibold text-gray-900 dark:text-gray-100">Serviços e tempos</h2>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Lista que aparece ao cadastrar os materiais de cada cliente. Os fixos também são a base da estimativa.
+                Lista que aparece ao cadastrar os materiais de cada cliente. <b>R$ cada</b> é o valor de 1 unidade; em branco, vale o tempo × valor da sua hora.
               </p>
             </div>
+            <div className={cn(serviceGrid, "text-xs text-gray-500 dark:text-gray-400")}>
+              <span>Serviço</span>
+              <span className="text-right">Tempo</span>
+              <span />
+              <span className="text-right">R$ cada</span>
+              <span />
+            </div>
             {TIME_FIELDS.map((f) => (
-              <div key={f.key} className="grid grid-cols-[minmax(0,1fr)_5rem_6.5rem] items-center gap-2">
+              <div key={f.key} className={serviceGrid}>
                 <label htmlFor={`t-${f.key}`} className="text-sm text-gray-700 dark:text-gray-300">{f.label}</label>
                 <input
                   id={`t-${f.key}`}
@@ -396,17 +426,19 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                   value={config.times[f.key]}
                   onChange={(e) => updateTime(f.key, toNum(e.target.value))}
                 />
-                <span className="text-xs text-gray-500 dark:text-gray-400">{f.unit}</span>
+                <span className="text-[11px] leading-tight text-gray-500 dark:text-gray-400">{f.unit}</span>
+                <PriceInput option={options.find((o) => o.name === f.service)} onChange={setPrice} />
+                <span />
               </div>
             ))}
             {config.services.map((sv, i) => (
-              <div key={i} className="grid grid-cols-[minmax(0,1fr)_5rem_6.5rem] items-center gap-2">
+              <div key={i} className={serviceGrid}>
                 <input
                   aria-label="Nome do serviço"
                   className={cn(inputClass, "text-left")}
                   value={sv.name}
                   maxLength={80}
-                  onChange={(e) => updateService(i, { name: e.target.value })}
+                  onChange={(e) => renameService(i, e.target.value)}
                 />
                 <input
                   aria-label={`Minutos de cada ${sv.name}`}
@@ -418,8 +450,9 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                   value={sv.minutes}
                   onChange={(e) => updateService(i, { minutes: toNum(e.target.value) })}
                 />
-                <span className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                  min cada
+                <span className="text-[11px] leading-tight text-gray-500 dark:text-gray-400">min cada</span>
+                <PriceInput option={options.find((o) => o.name === sv.name)} onChange={setPrice} />
+                <span>
                   <button
                     type="button"
                     onClick={() => update({ services: config.services.filter((_, j) => j !== i) })}
@@ -571,25 +604,23 @@ function Kpi({
   );
 }
 
-type Preset = { name: string; quantity: number; minutes: number };
+type Preset = { name: string; quantity: number; perWeek: boolean; minutes: number };
 
 /** Monta a lista inicial a partir do escopo cadastrado no cliente. */
 function presetsFromScope(scope: ClientScope, t: CapacityTimes): Preset[] {
-  const w = Math.round(52 / 12 * 100) / 100;
   const out: Preset[] = [];
   if (scope.includesSocialMedia) {
-    if (scope.storiesPerWeek) out.push({ name: SERVICE_NAMES.story, quantity: Math.round(scope.storiesPerWeek * w), minutes: t.storyMin });
-    if (scope.postsPerWeek) out.push({ name: SERVICE_NAMES.post, quantity: Math.round(scope.postsPerWeek * w), minutes: t.postMin });
-    if (scope.reelsPerWeek) out.push({ name: SERVICE_NAMES.reels, quantity: Math.round(scope.reelsPerWeek * w), minutes: t.reelsMin });
-    out.push({ name: SERVICE_NAMES.planning, quantity: 1, minutes: t.planningHours * 60 });
+    if (scope.storiesPerWeek) out.push({ name: SERVICE_NAMES.story, quantity: scope.storiesPerWeek, perWeek: true, minutes: t.storyMin });
+    if (scope.postsPerWeek) out.push({ name: SERVICE_NAMES.post, quantity: scope.postsPerWeek, perWeek: true, minutes: t.postMin });
+    if (scope.reelsPerWeek) out.push({ name: SERVICE_NAMES.reels, quantity: scope.reelsPerWeek, perWeek: true, minutes: t.reelsMin });
+    out.push({ name: SERVICE_NAMES.planning, quantity: 1, perWeek: false, minutes: t.planningHours * 60 });
   }
   if (scope.includesMenuMgmt) {
-    // Um app por semana = ~4,33 no mês; com 3 apps, ~13.
     const apps = scope.menuPlatforms ? scope.menuPlatforms.split(",").filter(Boolean).length : 0;
-    out.push({ name: SERVICE_NAMES.app, quantity: Math.round((Math.max(apps, 1) * 52 / 12) * 100) / 100, minutes: t.appMinPerWeek });
-    out.push({ name: SERVICE_NAMES.deliveryReport, quantity: 1, minutes: t.deliveryReportHours * 60 });
+    out.push({ name: SERVICE_NAMES.app, quantity: Math.max(apps, 1), perWeek: true, minutes: t.appMinPerWeek });
+    out.push({ name: SERVICE_NAMES.deliveryReport, quantity: 1, perWeek: false, minutes: t.deliveryReportHours * 60 });
   }
-  if (out.length) out.push({ name: SERVICE_NAMES.support, quantity: 1, minutes: t.supportHours * 60 });
+  if (out.length) out.push({ name: SERVICE_NAMES.support, quantity: 1, perWeek: false, minutes: t.supportHours * 60 });
   return out;
 }
 
@@ -601,6 +632,7 @@ function WorkItemsEditor({
   items,
   times,
   options,
+  hourRate,
   scope,
   onChange,
   onError,
@@ -610,13 +642,14 @@ function WorkItemsEditor({
   items: WorkItem[];
   times: CapacityTimes;
   options: ServiceOption[];
+  hourRate: number;
   scope: ClientScope;
   onChange: (list: WorkItem[]) => void;
   onError: (e: unknown) => void;
 }) {
   const pick = (name: string): Preset => {
     const o = options.find((x) => x.name === name) || options[0];
-    return { name: o.name, quantity: o.quantity, minutes: o.minutes };
+    return { name: o.name, quantity: o.quantity, perWeek: o.perWeek, minutes: o.minutes };
   };
   const [draft, setDraft] = useState<Preset>(() => pick(options[0].name));
   const [busy, setBusy] = useState(false);
@@ -637,7 +670,7 @@ function WorkItemsEditor({
 
   async function save(item: WorkItem, patch: Partial<WorkItem>) {
     const next = { ...item, ...patch };
-    if (next.name === item.name && next.quantity === item.quantity && next.minutes === item.minutes) return;
+    if (next.name === item.name && next.quantity === item.quantity && next.perWeek === item.perWeek && next.minutes === item.minutes) return;
     if (!next.name.trim()) return onError(new Error("Dê um nome para o material."));
     onChange(items.map((i) => (i.id === item.id ? next : i)));
     try {
@@ -657,25 +690,34 @@ function WorkItemsEditor({
   }
 
   const total = itemsHours(items);
+  const optionOf = (name: string) => options.find((o) => o.name === name);
+  const priceOf = (i: { name: string; minutes: number }) => {
+    const o = optionOf(i.name);
+    // Valor digitado no serviço vale por unidade; senão, o tempo deste cliente × valor da hora.
+    return o?.customPrice ? o.price : (i.minutes / 60) * hourRate;
+  };
+  const totalValue = items.reduce((s, i) => s + monthlyQty(i) * priceOf(i), 0);
+  const draftOption = optionOf(draft.name);
 
   return (
     <div className="space-y-3 max-w-3xl">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Materiais de {clientName} por mês</p>
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          Total: <b className="tabular-nums text-gray-900 dark:text-gray-100">{fmtH(total)}</b> por mês
+          Total: <b className="tabular-nums text-gray-900 dark:text-gray-100">{fmtH(total)}</b> · <b className="tabular-nums text-gray-900 dark:text-gray-100">{formatCurrency(totalValue)}</b> por mês
         </p>
       </div>
 
       {items.length > 0 ? (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[520px]">
+          <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="text-xs text-gray-500 dark:text-gray-400">
                 <th className="text-left font-medium pb-1">Material</th>
-                <th className="text-right font-medium pb-1 w-24">Quantidade</th>
+                <th className="text-right font-medium pb-1 w-40">Quantas vezes</th>
                 <th className="text-right font-medium pb-1 w-24">Min cada</th>
-                <th className="text-right font-medium pb-1 w-20">Horas</th>
+                <th className="text-right font-medium pb-1 w-16">Horas</th>
+                <th className="text-right font-medium pb-1 w-24">Valor</th>
                 <th className="w-8" />
               </tr>
             </thead>
@@ -694,14 +736,18 @@ function WorkItemsEditor({
                     />
                   </td>
                   <td className="py-1 px-1">
-                    <input aria-label={`Quantidade por mês de ${i.name}`} type="number" min={0} step={1} inputMode="decimal" className={inputClass}
-                      defaultValue={fmtNum(i.quantity)} onBlur={(e) => save(i, { quantity: toNum(e.target.value) })} />
+                    <div className="flex gap-1">
+                      <input aria-label={`Quantas vezes ${i.name}`} type="number" min={0} step={1} inputMode="decimal" className={cn(inputClass, "w-16")}
+                        defaultValue={fmtNum(i.quantity)} onBlur={(e) => save(i, { quantity: toNum(e.target.value) })} />
+                      <PeriodSelect label={`Período de ${i.name}`} value={i.perWeek} onChange={(perWeek) => save(i, { perWeek })} />
+                    </div>
                   </td>
                   <td className="py-1 px-1">
                     <input key={`${i.name}-${i.minutes}`} aria-label={`Minutos de cada ${i.name}`} type="number" min={0} step={5} inputMode="decimal" className={inputClass}
                       defaultValue={fmtNum(i.minutes)} onBlur={(e) => save(i, { minutes: toNum(e.target.value) })} />
                   </td>
-                  <td className="py-1 pl-2 text-right tabular-nums text-gray-700 dark:text-gray-300">{fmtH((i.quantity * i.minutes) / 60)}</td>
+                  <td className="py-1 pl-2 text-right tabular-nums text-gray-700 dark:text-gray-300">{fmtH((monthlyQty(i) * i.minutes) / 60)}</td>
+                  <td className="py-1 pl-2 text-right tabular-nums text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatCurrency(monthlyQty(i) * priceOf(i))}</td>
                   <td className="py-1 pl-1">
                     <button type="button" onClick={() => remove(i)} className="h-9 w-8 flex items-center justify-center text-gray-400 hover:text-red-600"
                       aria-label={`Remover ${i.name}`} title="Remover">
@@ -724,15 +770,18 @@ function WorkItemsEditor({
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_6rem_6rem_auto] gap-2 items-end rounded-md border border-dashed border-gray-300 dark:border-gray-700 p-3">
+      <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_11rem_6rem_auto] gap-2 items-end rounded-md border border-dashed border-gray-300 dark:border-gray-700 p-3">
         <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
           <span>Novo material</span>
           <ServiceSelect ariaLabel="Novo material" options={options} value={draft.name} onChange={(name) => setDraft(pick(name))} />
         </label>
         <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-          <span>Quantidade/mês</span>
-          <input type="number" min={0} step={1} inputMode="decimal" className={inputClass} value={fmtNum(draft.quantity)}
-            onChange={(e) => setDraft({ ...draft, quantity: toNum(e.target.value) })} />
+          <span>Quantas vezes</span>
+          <div className="flex gap-1">
+            <input aria-label="Quantas vezes" type="number" min={0} step={1} inputMode="decimal" className={cn(inputClass, "w-16")} value={fmtNum(draft.quantity)}
+              onChange={(e) => setDraft({ ...draft, quantity: toNum(e.target.value) })} />
+            <PeriodSelect label="Período do novo material" value={draft.perWeek} onChange={(perWeek) => setDraft({ ...draft, perWeek })} />
+          </div>
         </label>
         <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
           <span>Min cada</span>
@@ -744,7 +793,12 @@ function WorkItemsEditor({
         </Button>
       </div>
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        Quantidade por mês: algo semanal dá cerca de 4,33 no mês. Os materiais vêm da lista de <b>Serviços e tempos</b> (mais abaixo); para um serviço novo, inclua ele lá. O tempo de cada um pode ser ajustado só para este cliente. Mudanças nas linhas salvam ao sair do campo.
+        {draftOption && (
+          <>
+            <b>{draftOption.name}:</b> {draftOption.hint}.{" "}
+          </>
+        )}
+        Por semana, o sistema faz a conta do mês (× 4,33). Os materiais vêm da lista de <b>Serviços e tempos</b> (mais abaixo); para um serviço novo, inclua ele lá. O tempo de cada um pode ser ajustado só para este cliente. Mudanças nas linhas salvam ao sair do campo.
       </p>
     </div>
   );
@@ -761,6 +815,35 @@ function ServiceSelect({ ariaLabel, options, value, onChange }: { ariaLabel: str
           {o.name} · {fmtNum(o.minutes)} min
         </option>
       ))}
+    </select>
+  );
+}
+
+/** Valor em R$ de 1 unidade do serviço. Em branco = tempo × valor da hora (aparece como sugestão). */
+function PriceInput({ option, onChange }: { option?: ServiceOption; onChange: (name: string, value: string) => void }) {
+  if (!option) return <span />;
+  return (
+    <input
+      aria-label={`Valor de cada ${option.name}`}
+      type="number"
+      min={0}
+      step={1}
+      inputMode="decimal"
+      className={cn(inputClass, option.customPrice ? "" : "placeholder:text-gray-400")}
+      value={option.customPrice ? option.price : ""}
+      placeholder={fmtNum(option.price)}
+      title={option.customPrice ? "Valor digitado por você" : "Em branco: tempo × valor da sua hora"}
+      onChange={(e) => onChange(option.name, e.target.value)}
+    />
+  );
+}
+
+/** Por semana (o sistema multiplica por 4,33 para o mês) ou por mês. */
+function PeriodSelect({ label, value, onChange }: { label: string; value: boolean; onChange: (perWeek: boolean) => void }) {
+  return (
+    <select aria-label={label} className={cn(inputClass, "w-24 text-left px-1")} value={value ? "w" : "m"} onChange={(e) => onChange(e.target.value === "w")}>
+      <option value="w">/semana</option>
+      <option value="m">/mês</option>
     </select>
   );
 }

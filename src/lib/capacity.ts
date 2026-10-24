@@ -26,6 +26,8 @@ export type CapacityConfig = {
   hourRate: number; // valor da hora que a agência quer ganhar
   times: CapacityTimes;
   services: CapacityService[];
+  /** Valor em R$ de cada unidade do serviço (chave: nome em minúsculas). Sem valor, vale tempo × valor da hora. */
+  prices: Record<string, number>;
   packages: CapacityPackage[];
 };
 
@@ -46,6 +48,7 @@ export const DEFAULT_CAPACITY: CapacityConfig = {
     supportHours: 1,
   },
   services: [{ name: "Responder avaliações e comentários", minutes: 20, quantity: 4.33 }],
+  prices: {},
   packages: [
     { name: "Rota Delivery", hours: 13, price: 1190 },
     { name: "Rota Essencial", hours: 6, price: 1450 },
@@ -88,6 +91,12 @@ export function parseCapacityConfig(raw: string | null | undefined): CapacityCon
           return true;
         })
     : d.services;
+  const prices: Record<string, number> = {};
+  if (data.prices && typeof data.prices === "object")
+    for (const [k, v] of Object.entries(data.prices)) {
+      const n = num(v, -1);
+      if (k.trim() && n >= 0) prices[k.trim().toLowerCase().slice(0, 80)] = Math.round(n * 100) / 100;
+    }
   return {
     weekHours: num(data.weekHours, d.weekHours),
     adminPct: Math.min(90, num(data.adminPct, d.adminPct)),
@@ -104,13 +113,29 @@ export function parseCapacityConfig(raw: string | null | undefined): CapacityCon
       supportHours: num(t.supportHours, d.times.supportHours),
     },
     services,
+    prices,
     packages,
   };
 }
 
-export type ServiceOption = { name: string; minutes: number; quantity: number; fixed: boolean };
+export type ServiceOption = {
+  name: string;
+  minutes: number;
+  quantity: number; // sugestão de vezes
+  perWeek: boolean; // a sugestão é por semana
+  fixed: boolean;
+  price: number; // R$ de cada unidade
+  customPrice: boolean; // true quando o valor foi digitado (não vem da hora)
+  hint: string; // o que conta como 1 na quantidade
+};
 
-const per = (n: number) => Math.round(n * WEEKS_PER_MONTH * 100) / 100;
+export const priceKey = (name: string) => name.trim().toLowerCase();
+
+/** Valor de 1 unidade do material: o digitado no serviço ou o tempo × valor da hora. */
+export function unitPrice(c: Pick<CapacityConfig, "prices" | "hourRate">, name: string, minutes: number): number {
+  const p = c.prices[priceKey(name)];
+  return p != null ? p : (minutes / 60) * c.hourRate;
+}
 
 // Nomes dos serviços fixos: os mesmos usados na estimativa pelo escopo.
 export const SERVICE_NAMES = {
@@ -125,21 +150,30 @@ export const SERVICE_NAMES = {
 };
 
 /** Lista de serviços para escolher nos materiais: os fixos (tempos) + os cadastrados. */
-export function serviceOptions(c: Pick<CapacityConfig, "times" | "services">): ServiceOption[] {
+export function serviceOptions(c: Pick<CapacityConfig, "times" | "services" | "prices" | "hourRate">): ServiceOption[] {
   const t = c.times;
-  const fixed: ServiceOption[] = [
-    { name: SERVICE_NAMES.story, minutes: t.storyMin, quantity: Math.round(per(5)), fixed: true },
-    { name: SERVICE_NAMES.post, minutes: t.postMin, quantity: Math.round(per(1)), fixed: true },
-    { name: SERVICE_NAMES.reels, minutes: t.reelsMin, quantity: Math.round(per(1)), fixed: true },
-    { name: SERVICE_NAMES.article, minutes: t.articleMin, quantity: Math.round(per(1)), fixed: true },
-    { name: SERVICE_NAMES.planning, minutes: t.planningHours * 60, quantity: 1, fixed: true },
-    { name: SERVICE_NAMES.app, minutes: t.appMinPerWeek, quantity: per(1), fixed: true },
-    { name: SERVICE_NAMES.deliveryReport, minutes: t.deliveryReportHours * 60, quantity: 1, fixed: true },
-    { name: SERVICE_NAMES.support, minutes: t.supportHours * 60, quantity: 1, fixed: true },
+  const base = [
+    { name: SERVICE_NAMES.story, minutes: t.storyMin, quantity: 5, perWeek: true, hint: "quantos stories por semana" },
+    { name: SERVICE_NAMES.post, minutes: t.postMin, quantity: 1, perWeek: true, hint: "quantos posts por semana" },
+    { name: SERVICE_NAMES.reels, minutes: t.reelsMin, quantity: 1, perWeek: true, hint: "quantos reels por semana" },
+    { name: SERVICE_NAMES.article, minutes: t.articleMin, quantity: 1, perWeek: true, hint: "quantos artigos por semana" },
+    { name: SERVICE_NAMES.planning, minutes: t.planningHours * 60, quantity: 1, perWeek: false, hint: "1 por mês" },
+    { name: SERVICE_NAMES.app, minutes: t.appMinPerWeek, quantity: 1, perWeek: true, hint: "quantos apps você cuida toda semana (iFood + 99Food + Keeta = 3)" },
+    { name: SERVICE_NAMES.deliveryReport, minutes: t.deliveryReportHours * 60, quantity: 1, perWeek: false, hint: "1 por mês" },
+    { name: SERVICE_NAMES.support, minutes: t.supportHours * 60, quantity: 1, perWeek: false, hint: "1 por mês" },
   ];
-  const names = new Set(fixed.map((f) => f.name.toLowerCase()));
-  return [...fixed, ...c.services.filter((s) => !names.has(s.name.toLowerCase())).map((s) => ({ ...s, fixed: false }))];
+  const names = new Set(base.map((f) => f.name.toLowerCase()));
+  const all = [
+    ...base.map((b) => ({ ...b, fixed: true })),
+    ...c.services
+      .filter((s) => !names.has(s.name.toLowerCase()))
+      .map((s) => ({ ...s, perWeek: true, fixed: false, hint: "quantas vezes por semana" })),
+  ];
+  return all.map((o) => ({ ...o, price: unitPrice(c, o.name, o.minutes), customPrice: c.prices[priceKey(o.name)] != null }));
 }
+
+/** Vezes no mês de um material (quantidade semanal × 52/12, ou a mensal como está). */
+export const monthlyQty = (i: { quantity: number; perWeek?: boolean }) => i.quantity * (i.perWeek ? WEEKS_PER_MONTH : 1);
 
 export type CapacityBudget = { month: number; forClients: number; limit: number };
 
