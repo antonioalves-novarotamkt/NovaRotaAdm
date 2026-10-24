@@ -34,6 +34,7 @@ const thClass = "px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-40
 const LIMIT_OK = 70;
 
 const fmtH = (h: number) => `${(Math.round(h * 10) / 10).toLocaleString("pt-BR")} h`;
+const fmtQty = (n: number) => (Math.round(n * 10) / 10).toLocaleString("pt-BR");
 const toNum = (v: string) => {
   const n = Number(v.replace(",", "."));
   return Number.isFinite(n) && n >= 0 ? n : 0;
@@ -103,6 +104,20 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
   const occupancy = budget.limit > 0 ? (used / budget.limit) * 100 : 0;
   const avgRate = used > 0 ? revenueWithHours / used : 0;
   const free = Math.max(0, budget.limit - used);
+  const avgClientHours = withHours.length ? used / withHours.length : 0;
+  // Materiais somados de todos os clientes (pelo nome), para ver o volume do mês.
+  const materials = useMemo(() => {
+    const map = new Map<string, { name: string; quantity: number; hours: number }>();
+    for (const r of rows)
+      for (const i of r.items) {
+        const key = i.name.trim().toLowerCase();
+        const m = map.get(key) || { name: i.name.trim(), quantity: 0, hours: 0 };
+        m.quantity += i.quantity;
+        m.hours += (i.quantity * i.minutes) / 60;
+        map.set(key, m);
+      }
+    return Array.from(map.values()).sort((a, b) => b.hours - a.hours);
+  }, [rows]);
   const status =
     occupancy <= LIMIT_OK
       ? { label: "Com folga: cabe mais cliente", cls: "text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-500/10" }
@@ -137,7 +152,7 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
   }
 
   const setClientItems = (id: string, list: WorkItem[]) => setItems((m) => ({ ...m, [id]: list }));
-  const onItemsError = (e: unknown) => setMessage(e instanceof Error ? e.message : "Não foi possível salvar a atividade. Tente de novo.");
+  const onItemsError = (e: unknown) => setMessage(e instanceof Error ? e.message : "Não foi possível salvar o material. Tente de novo.");
 
   return (
     <div className="space-y-6">
@@ -175,76 +190,14 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Horas e valor da hora */}
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-5 space-y-4">
-            <div>
-              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Suas horas e valor da hora</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Mude e veja tudo recalcular. Clique em Salvar para guardar.</p>
-            </div>
-            <Field label="Horas de trabalho por semana" suffix="h" value={config.weekHours} onChange={(v) => update({ weekHours: v })} />
-            <Field label="Prospecção, vendas e administrativo" suffix="%" value={config.adminPct} onChange={(v) => update({ adminPct: Math.min(90, v) })} />
-            <Field label="Folga para qualidade e imprevistos" suffix="%" value={config.qualityPct} onChange={(v) => update({ qualityPct: Math.min(90, v) })} />
-            <Field label="Valor da sua hora (meta)" prefix="R$" value={config.hourRate} onChange={(v) => update({ hourRate: v })} />
-            <SaveBar dirty={dirty} pending={pending} message={message} onSave={save} />
-          </CardContent>
-        </Card>
-
-        {/* Quanto ainda cabe */}
-        <Card className="border-0 shadow-sm xl:col-span-2">
-          <CardContent className="p-0">
-            <div className="px-5 pt-5 pb-3">
-              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Ainda cabem no mês</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Com {fmtH(free)} livres, quantos clientes novos de cada pacote cabem sem passar do limite. Edite os pacotes embaixo.
-              </p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[560px]">
-                <thead>
-                  <tr className="border-y bg-gray-50 dark:bg-gray-900">
-                    <th className={cn(thClass, "text-left")}>Pacote</th>
-                    <th className={cn(thClass, "text-right")}>Cabem</th>
-                    <th className={cn(thClass, "text-right")}>Horas</th>
-                    <th className={cn(thClass, "text-right")}>Preço</th>
-                    <th className={cn(thClass, "text-right")}>R$/hora</th>
-                    <th className={cn(thClass, "text-right")}>Pela sua hora</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {config.packages.map((p, i) => {
-                    const rate = p.hours > 0 ? p.price / p.hours : 0;
-                    return (
-                      <tr key={i} className="border-b last:border-0">
-                        <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-gray-100">{p.name}</td>
-                        <td className="px-4 py-2.5 text-right text-lg font-bold text-orange-600 dark:text-orange-400 tabular-nums">
-                          {p.hours > 0 ? Math.floor(free / p.hours) : "—"}
-                        </td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300">{fmtH(p.hours)}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300">{formatCurrency(p.price)}</td>
-                        <td className={cn("px-4 py-2.5 text-right tabular-nums", rate && rate < config.hourRate ? "text-red-600 dark:text-red-400 font-semibold" : "text-gray-600 dark:text-gray-300")}>
-                          {rate ? formatCurrency(rate) : "—"}
-                        </td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300">{formatCurrency(p.hours * config.hourRate)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Horas por cliente */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
           <div className="px-5 pt-5 pb-3">
             <h2 className="font-semibold text-gray-900 dark:text-gray-100">Horas por cliente</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Clientes ativos. Clique em <b>Atividades</b> para cadastrar o que você faz para o cliente, quantas vezes por mês e quanto tempo leva cada uma: as horas do cliente viram a soma da lista.
-              Sem atividades, vale o número digitado em Horas/mês ou, vazio, a estimativa pelo escopo do cliente. Tudo salva sozinho. Contratos semanais viram mês com 4,33 semanas.
+              Clientes ativos. Em <b>Cadastrar materiais</b>, coloque quantos de cada material o cliente recebe por mês (stories, posts, reels, artigos, ajustes nos apps…) e quanto tempo leva cada um: as horas do cliente viram a soma.
+              Sem materiais, vale o número digitado em Horas/mês ou, vazio, a estimativa pelo escopo do cliente. Tudo salva sozinho. Contratos semanais viram mês com 4,33 semanas.
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -282,8 +235,13 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                           className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400"
                         >
                           {openClient === r.id ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                          Atividades{r.items.length ? ` (${r.items.length})` : ""}
+                          {r.items.length ? "Editar materiais" : "Cadastrar materiais"}
                         </button>
+                        {r.items.length > 0 && (
+                          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 max-w-[22rem]">
+                            {r.items.map((i) => `${fmtQty(i.quantity)} ${i.name}`).join(" · ")}
+                          </p>
+                        )}
                       </td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-gray-700 dark:text-gray-300">
                         {r.monthlyValue ? formatCurrency(r.monthlyValue) : "—"}
@@ -292,8 +250,8 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                         {r.items.length ? (
                           <div className="flex items-center justify-end gap-1.5 tabular-nums font-medium text-gray-900 dark:text-gray-100">
                             {fmtH(r.hours)}
-                            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400" title="Soma das atividades">
-                              ativ.
+                            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400" title="Soma dos materiais">
+                              mat.
                             </span>
                           </div>
                         ) : (
@@ -337,7 +295,7 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                       </td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-gray-700 dark:text-gray-300">{formatCurrency(r.fairPrice)}</td>
                       {r.hours > 0 ? (
-                        <td className={cn("px-4 py-2.5 text-right tabular-nums", diff > 0.5 ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400")}>
+                        <td className={cn("px-4 py-2.5 text-right tabular-nums whitespace-nowrap", diff > 0.5 ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400")}>
                           {Math.abs(diff) < 0.5 ? "—" : diff > 0 ? `faltam ${formatCurrency(diff)}` : `+${formatCurrency(-diff)}`}
                         </td>
                       ) : (
@@ -371,7 +329,7 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                     <td className="px-4 py-3 text-right tabular-nums">{fmtH(used)}</td>
                     <td className="px-4 py-3 text-right tabular-nums">{used > 0 ? formatCurrency(avgRate) : "—"}</td>
                     <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(fairRevenue)}</td>
-                    <td className={cn("px-4 py-3 text-right tabular-nums", totalDiff > 0.5 ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400")}>
+                    <td className={cn("px-4 py-3 text-right tabular-nums whitespace-nowrap", totalDiff > 0.5 ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400")}>
                       {Math.abs(totalDiff) < 0.5 ? "—" : totalDiff > 0 ? `faltam ${formatCurrency(totalDiff)}` : `+${formatCurrency(-totalDiff)}`}
                     </td>
                   </tr>
@@ -390,7 +348,22 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
+        {/* Horas e valor da hora */}
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-5 space-y-4">
+            <div>
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Suas horas e valor da hora</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Mude e veja tudo recalcular. Clique em Salvar para guardar.</p>
+            </div>
+            <Field label="Horas de trabalho por semana" suffix="h" value={config.weekHours} onChange={(v) => update({ weekHours: v })} />
+            <Field label="Prospecção, vendas e administrativo" suffix="%" value={config.adminPct} onChange={(v) => update({ adminPct: Math.min(90, v) })} />
+            <Field label="Folga para qualidade e imprevistos" suffix="%" value={config.qualityPct} onChange={(v) => update({ qualityPct: Math.min(90, v) })} />
+            <Field label="Valor da sua hora (meta)" prefix="R$" value={config.hourRate} onChange={(v) => update({ hourRate: v })} />
+            <SaveBar dirty={dirty} pending={pending} message={message} onSave={save} />
+          </CardContent>
+        </Card>
+
         {/* Tempos */}
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 space-y-3">
@@ -399,7 +372,7 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Base da estimativa de horas dos clientes.</p>
             </div>
             {TIME_FIELDS.map((f) => (
-              <div key={f.key} className="grid grid-cols-[minmax(0,1fr)_5.5rem_7rem] items-center gap-2">
+              <div key={f.key} className="grid grid-cols-[minmax(0,1fr)_5rem_6.5rem] items-center gap-2">
                 <label htmlFor={`t-${f.key}`} className="text-sm text-gray-700 dark:text-gray-300">{f.label}</label>
                 <input
                   id={`t-${f.key}`}
@@ -418,54 +391,35 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
           </CardContent>
         </Card>
 
-        {/* Pacotes */}
+        {/* Materiais do mês */}
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 space-y-3">
             <div>
-              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Pacotes para o cálculo</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Horas por mês e preço de cada pacote que você vende.</p>
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Materiais do mês</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Soma dos materiais cadastrados em todos os clientes.</p>
             </div>
-            <div className="grid grid-cols-[minmax(0,1fr)_4.5rem_6rem_2rem] gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              <span>Pacote</span>
-              <span className="text-right">Horas</span>
-              <span className="text-right">Preço R$</span>
-              <span />
+            {materials.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum material cadastrado ainda. Abra <b>Materiais</b> em um cliente para começar.</p>
+            ) : (
+              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                {materials.map((m) => (
+                  <li key={m.name} className="flex items-baseline justify-between gap-3 py-1.5 text-sm">
+                    <span className="min-w-0 truncate text-gray-700 dark:text-gray-300">{m.name}</span>
+                    <span className="shrink-0 tabular-nums text-gray-900 dark:text-gray-100">
+                      <b>{fmtQty(m.quantity)}</b> <span className="text-xs text-gray-500 dark:text-gray-400">· {fmtH(m.hours)}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="rounded-md bg-orange-50 dark:bg-orange-500/10 p-3 text-sm text-gray-700 dark:text-gray-300">
+              Livres no mês: <b className="tabular-nums">{fmtH(free)}</b>
+              {avgClientHours > 0 && (
+                <>
+                  {" "}· cabem cerca de <b className="tabular-nums text-orange-700 dark:text-orange-400">{Math.floor(free / avgClientHours)}</b> clientes do tamanho médio dos atuais ({fmtH(avgClientHours)} cada)
+                </>
+              )}
             </div>
-            {config.packages.map((p, i) => {
-              const setPkg = (patch: Partial<typeof p>) =>
-                update({ packages: config.packages.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
-              return (
-                <div key={i} className="grid grid-cols-[minmax(0,1fr)_4.5rem_6rem_2rem] items-center gap-2">
-                  <input
-                    aria-label="Nome do pacote"
-                    className={cn(inputClass, "text-left")}
-                    value={p.name}
-                    maxLength={80}
-                    onChange={(e) => setPkg({ name: e.target.value })}
-                  />
-                  <input aria-label={`Horas de ${p.name}`} type="number" min={0} step={0.5} className={inputClass} value={p.hours} onChange={(e) => setPkg({ hours: toNum(e.target.value) })} />
-                  <input aria-label={`Preço de ${p.name}`} type="number" min={0} step={10} className={inputClass} value={p.price} onChange={(e) => setPkg({ price: toNum(e.target.value) })} />
-                  <button
-                    type="button"
-                    className="h-9 w-8 flex items-center justify-center text-gray-400 hover:text-red-600"
-                    onClick={() => update({ packages: config.packages.filter((_, j) => j !== i) })}
-                    aria-label={`Remover ${p.name}`}
-                    title="Remover"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              );
-            })}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => update({ packages: [...config.packages, { name: "Novo pacote", hours: 5, price: 500 }] })}
-            >
-              <Plus className="h-4 w-4 mr-1" /> Adicionar pacote
-            </Button>
-            <SaveBar dirty={dirty} pending={pending} message={message} onSave={save} />
           </CardContent>
         </Card>
       </div>
@@ -616,7 +570,7 @@ function WorkItemsEditor({
   async function save(item: WorkItem, patch: Partial<WorkItem>) {
     const next = { ...item, ...patch };
     if (next.name === item.name && next.quantity === item.quantity && next.minutes === item.minutes) return;
-    if (!next.name.trim()) return onError(new Error("Dê um nome para a atividade."));
+    if (!next.name.trim()) return onError(new Error("Dê um nome para o material."));
     onChange(items.map((i) => (i.id === item.id ? next : i)));
     try {
       await updateWorkItem(item.id, next);
@@ -639,7 +593,7 @@ function WorkItemsEditor({
   return (
     <div className="space-y-3 max-w-3xl">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Atividades de {clientName}</p>
+        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Materiais de {clientName} por mês</p>
         <p className="text-sm text-gray-600 dark:text-gray-300">
           Total: <b className="tabular-nums text-gray-900 dark:text-gray-100">{fmtH(total)}</b> por mês
         </p>
@@ -650,8 +604,8 @@ function WorkItemsEditor({
           <table className="w-full text-sm min-w-[520px]">
             <thead>
               <tr className="text-xs text-gray-500 dark:text-gray-400">
-                <th className="text-left font-medium pb-1">Atividade</th>
-                <th className="text-right font-medium pb-1 w-24">Vezes/mês</th>
+                <th className="text-left font-medium pb-1">Material</th>
+                <th className="text-right font-medium pb-1 w-24">Quantidade</th>
                 <th className="text-right font-medium pb-1 w-24">Min cada</th>
                 <th className="text-right font-medium pb-1 w-20">Horas</th>
                 <th className="w-8" />
@@ -662,7 +616,7 @@ function WorkItemsEditor({
                 <tr key={i.id}>
                   <td className="py-1 pr-2">
                     <input
-                      aria-label="Nome da atividade"
+                      aria-label="Nome do material"
                       className={cn(inputClass, "text-left")}
                       defaultValue={i.name}
                       maxLength={80}
@@ -670,7 +624,7 @@ function WorkItemsEditor({
                     />
                   </td>
                   <td className="py-1 px-1">
-                    <input aria-label={`Vezes por mês de ${i.name}`} type="number" min={0} step={1} inputMode="decimal" className={inputClass}
+                    <input aria-label={`Quantidade por mês de ${i.name}`} type="number" min={0} step={1} inputMode="decimal" className={inputClass}
                       defaultValue={fmtNum(i.quantity)} onBlur={(e) => save(i, { quantity: toNum(e.target.value) })} />
                   </td>
                   <td className="py-1 px-1">
@@ -691,7 +645,7 @@ function WorkItemsEditor({
         </div>
       ) : (
         <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
-          <span>Nenhuma atividade ainda.</span>
+          <span>Nenhum material ainda.</span>
           {fromScope.length > 0 && (
             <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => add(fromScope)}>
               Preencher pelo escopo do cliente
@@ -702,7 +656,7 @@ function WorkItemsEditor({
 
       <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_6rem_6rem_auto] gap-2 items-end rounded-md border border-dashed border-gray-300 dark:border-gray-700 p-3">
         <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-          <span>Nova atividade</span>
+          <span>Novo material</span>
           <input
             list={`presets-${clientId}`}
             className={cn(inputClass, "text-left")}
@@ -721,7 +675,7 @@ function WorkItemsEditor({
           </datalist>
         </label>
         <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-          <span>Vezes/mês</span>
+          <span>Quantidade/mês</span>
           <input type="number" min={0} step={1} inputMode="decimal" className={inputClass} value={fmtNum(draft.quantity)}
             onChange={(e) => setDraft({ ...draft, quantity: toNum(e.target.value) })} />
         </label>
@@ -735,7 +689,7 @@ function WorkItemsEditor({
         </Button>
       </div>
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        Vezes/mês: uma atividade semanal dá cerca de 4,33 vezes no mês. Escolha uma sugestão na lista ou escreva a sua. Mudanças nas linhas salvam ao sair do campo.
+        Quantidade por mês: algo semanal dá cerca de 4,33 no mês. Escolha uma sugestão na lista ou escreva o seu. Mudanças nas linhas salvam ao sair do campo.
       </p>
     </div>
   );
