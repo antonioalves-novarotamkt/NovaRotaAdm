@@ -47,15 +47,15 @@ const toNum = (v: string) => {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 };
 
-const TIME_FIELDS: { key: keyof CapacityTimes; label: string; unit: string; service: string }[] = [
+const TIME_FIELDS: { key: keyof CapacityTimes; label: string; unit: string; service: string; hours?: boolean }[] = [
   { key: "storyMin", label: "Story", unit: "min cada", service: SERVICE_NAMES.story },
   { key: "postMin", label: "Post", unit: "min cada", service: SERVICE_NAMES.post },
   { key: "reelsMin", label: "Reels", unit: "min cada", service: SERVICE_NAMES.reels },
   { key: "articleMin", label: "Artigo de blog", unit: "min cada", service: SERVICE_NAMES.article },
-  { key: "planningHours", label: "Planejamento e relatório de redes", unit: "h por cliente/mês", service: SERVICE_NAMES.planning },
+  { key: "planningHours", label: "Planejamento e relatório de redes", unit: "min por cliente/mês", service: SERVICE_NAMES.planning, hours: true },
   { key: "appMinPerWeek", label: "Gestão de cada app de delivery", unit: "min por app/semana", service: SERVICE_NAMES.app },
-  { key: "deliveryReportHours", label: "Relatório de delivery", unit: "h por cliente/mês", service: SERVICE_NAMES.deliveryReport },
-  { key: "supportHours", label: "Atendimento (WhatsApp, aprovação, ajustes)", unit: "h por cliente/mês", service: SERVICE_NAMES.support },
+  { key: "deliveryReportHours", label: "Relatório de delivery", unit: "min por cliente/mês", service: SERVICE_NAMES.deliveryReport, hours: true },
+  { key: "supportHours", label: "Atendimento (WhatsApp, aprovação, ajustes)", unit: "min por cliente/mês", service: SERVICE_NAMES.support, hours: true },
 ];
 
 const serviceGrid = "grid grid-cols-[minmax(0,1fr)_4.5rem_4.5rem_5.5rem_1.75rem] items-center gap-2";
@@ -82,7 +82,7 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
   const setPrice = (name: string, value: string) => {
     const prices = { ...config.prices };
     if (value.trim() === "") delete prices[priceKey(name)];
-    else prices[priceKey(name)] = toNum(value);
+    else prices[priceKey(name)] = Math.round(toNum(value));
     update({ prices });
   };
   // Ao renomear um serviço extra, o valor digitado vai junto.
@@ -420,11 +420,12 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                   id={`t-${f.key}`}
                   type="number"
                   min={0}
-                  step={f.unit.startsWith("h") ? 0.5 : 5}
-                  inputMode="decimal"
+                  step={5}
+                  inputMode="numeric"
                   className={inputClass}
-                  value={config.times[f.key]}
-                  onChange={(e) => updateTime(f.key, toNum(e.target.value))}
+                  // Os campos em horas (planejamento, relatório, atendimento) aparecem em minutos.
+                  value={f.hours ? Math.round(config.times[f.key] * 60) : config.times[f.key]}
+                  onChange={(e) => updateTime(f.key, f.hours ? Math.round(toNum(e.target.value)) / 60 : Math.round(toNum(e.target.value)))}
                 />
                 <span className="text-[11px] leading-tight text-gray-500 dark:text-gray-400">{f.unit}</span>
                 <PriceInput option={options.find((o) => o.name === f.service)} onChange={setPrice} />
@@ -694,7 +695,7 @@ function WorkItemsEditor({
   const priceOf = (i: { name: string; minutes: number }) => {
     const o = optionOf(i.name);
     // Valor digitado no serviço vale por unidade; senão, o tempo deste cliente × valor da hora.
-    return o?.customPrice ? o.price : (i.minutes / 60) * hourRate;
+    return o?.customPrice ? o.price : Math.round((i.minutes / 60) * hourRate);
   };
   const totalValue = items.reduce((s, i) => s + monthlyQty(i) * priceOf(i), 0);
   const draftOption = optionOf(draft.name);
@@ -831,7 +832,7 @@ function PriceInput({ option, onChange }: { option?: ServiceOption; onChange: (n
       inputMode="decimal"
       className={cn(inputClass, option.customPrice ? "" : "placeholder:text-gray-400")}
       value={option.customPrice ? option.price : ""}
-      placeholder={fmtNum(option.price)}
+      placeholder={String(Math.round(option.price))}
       title={option.customPrice ? "Valor digitado por você" : "Em branco: tempo × valor da sua hora"}
       onChange={(e) => onChange(option.name, e.target.value)}
     />

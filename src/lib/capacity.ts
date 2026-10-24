@@ -134,7 +134,7 @@ export const priceKey = (name: string) => name.trim().toLowerCase();
 /** Valor de 1 unidade do material: o digitado no serviço ou o tempo × valor da hora. */
 export function unitPrice(c: Pick<CapacityConfig, "prices" | "hourRate">, name: string, minutes: number): number {
   const p = c.prices[priceKey(name)];
-  return p != null ? p : (minutes / 60) * c.hourRate;
+  return p != null ? p : Math.round((minutes / 60) * c.hourRate);
 }
 
 // Nomes dos serviços fixos: os mesmos usados na estimativa pelo escopo.
