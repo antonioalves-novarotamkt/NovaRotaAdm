@@ -16,12 +16,16 @@ export type CapacityTimes = {
 
 export type CapacityPackage = { name: string; hours: number; price: number };
 
+/** Serviço extra cadastrado pelo Antonio (além dos fixos que vêm dos tempos). */
+export type CapacityService = { name: string; minutes: number; quantity: number };
+
 export type CapacityConfig = {
   weekHours: number;
   adminPct: number; // prospecção, vendas e administrativo
   qualityPct: number; // folga para qualidade e imprevistos
   hourRate: number; // valor da hora que a agência quer ganhar
   times: CapacityTimes;
+  services: CapacityService[];
   packages: CapacityPackage[];
 };
 
@@ -41,6 +45,7 @@ export const DEFAULT_CAPACITY: CapacityConfig = {
     deliveryReportHours: 2,
     supportHours: 1,
   },
+  services: [{ name: "Responder avaliações e comentários", minutes: 20, quantity: 4.33 }],
   packages: [
     { name: "Rota Delivery", hours: 13, price: 1190 },
     { name: "Rota Essencial", hours: 6, price: 1450 },
@@ -71,6 +76,18 @@ export function parseCapacityConfig(raw: string | null | undefined): CapacityCon
         .filter((p) => p && typeof p.name === "string" && p.name.trim())
         .map((p) => ({ name: String(p.name).trim().slice(0, 80), hours: num(p.hours, 0), price: num(p.price, 0) }))
     : d.packages;
+  const seen = new Set<string>();
+  const services = Array.isArray(data.services)
+    ? data.services
+        .filter((x) => x && typeof x.name === "string" && x.name.trim())
+        .map((x) => ({ name: String(x.name).trim().slice(0, 80), minutes: num(x.minutes, 0), quantity: num(x.quantity, 1) }))
+        .filter((x) => {
+          const k = x.name.toLowerCase();
+          if (seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        })
+    : d.services;
   return {
     weekHours: num(data.weekHours, d.weekHours),
     adminPct: Math.min(90, num(data.adminPct, d.adminPct)),
@@ -86,8 +103,42 @@ export function parseCapacityConfig(raw: string | null | undefined): CapacityCon
       deliveryReportHours: num(t.deliveryReportHours, d.times.deliveryReportHours),
       supportHours: num(t.supportHours, d.times.supportHours),
     },
+    services,
     packages,
   };
+}
+
+export type ServiceOption = { name: string; minutes: number; quantity: number; fixed: boolean };
+
+const per = (n: number) => Math.round(n * WEEKS_PER_MONTH * 100) / 100;
+
+// Nomes dos serviços fixos: os mesmos usados na estimativa pelo escopo.
+export const SERVICE_NAMES = {
+  story: "Story",
+  post: "Post",
+  reels: "Reels",
+  article: "Artigo de blog",
+  planning: "Planejamento e relatório de redes",
+  app: "Gestão de app de delivery (semana)",
+  deliveryReport: "Relatório de delivery",
+  support: "Atendimento (WhatsApp, aprovação, ajustes)",
+};
+
+/** Lista de serviços para escolher nos materiais: os fixos (tempos) + os cadastrados. */
+export function serviceOptions(c: Pick<CapacityConfig, "times" | "services">): ServiceOption[] {
+  const t = c.times;
+  const fixed: ServiceOption[] = [
+    { name: SERVICE_NAMES.story, minutes: t.storyMin, quantity: Math.round(per(5)), fixed: true },
+    { name: SERVICE_NAMES.post, minutes: t.postMin, quantity: Math.round(per(1)), fixed: true },
+    { name: SERVICE_NAMES.reels, minutes: t.reelsMin, quantity: Math.round(per(1)), fixed: true },
+    { name: SERVICE_NAMES.article, minutes: t.articleMin, quantity: Math.round(per(1)), fixed: true },
+    { name: SERVICE_NAMES.planning, minutes: t.planningHours * 60, quantity: 1, fixed: true },
+    { name: SERVICE_NAMES.app, minutes: t.appMinPerWeek, quantity: per(1), fixed: true },
+    { name: SERVICE_NAMES.deliveryReport, minutes: t.deliveryReportHours * 60, quantity: 1, fixed: true },
+    { name: SERVICE_NAMES.support, minutes: t.supportHours * 60, quantity: 1, fixed: true },
+  ];
+  const names = new Set(fixed.map((f) => f.name.toLowerCase()));
+  return [...fixed, ...c.services.filter((s) => !names.has(s.name.toLowerCase())).map((s) => ({ ...s, fixed: false }))];
 }
 
 export type CapacityBudget = { month: number; forClients: number; limit: number };

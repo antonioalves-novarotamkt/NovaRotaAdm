@@ -9,9 +9,13 @@ import { addWorkItems, deleteWorkItem, saveCapacityConfig, setClientMonthlyHours
 import {
   capacityBudget,
   estimateClientHours,
+  serviceOptions,
+  SERVICE_NAMES,
   type CapacityConfig,
+  type CapacityService,
   type CapacityTimes,
   type ClientScope,
+  type ServiceOption,
 } from "@/lib/capacity";
 
 type ClientRow = {
@@ -68,6 +72,11 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
     setMessage("");
   };
   const updateTime = (key: keyof CapacityTimes, value: number) => update({ times: { ...config.times, [key]: value } });
+  const updateService = (index: number, patch: Partial<CapacityService>) =>
+    update({ services: config.services.map((s, i) => (i === index ? { ...s, ...patch } : s)) });
+  const options = useMemo(() => serviceOptions(config), [config]);
+  const [newService, setNewService] = useState<CapacityService>({ name: "", minutes: 30, quantity: 1 });
+  const newServiceTaken = options.some((o) => o.name.toLowerCase() === newService.name.trim().toLowerCase());
 
   const budget = capacityBudget(config);
 
@@ -310,6 +319,7 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                             clientName={r.name}
                             items={r.items}
                             times={config.times}
+                            options={options}
                             scope={r.scope}
                             onChange={(list) => setClientItems(r.id, list)}
                             onError={onItemsError}
@@ -364,12 +374,14 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
           </CardContent>
         </Card>
 
-        {/* Tempos */}
+        {/* Serviços e tempos */}
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 space-y-3">
             <div>
-              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Tempo de cada peça</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Base da estimativa de horas dos clientes.</p>
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Serviços e tempos</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Lista que aparece ao cadastrar os materiais de cada cliente. Os fixos também são a base da estimativa.
+              </p>
             </div>
             {TIME_FIELDS.map((f) => (
               <div key={f.key} className="grid grid-cols-[minmax(0,1fr)_5rem_6.5rem] items-center gap-2">
@@ -387,6 +399,72 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                 <span className="text-xs text-gray-500 dark:text-gray-400">{f.unit}</span>
               </div>
             ))}
+            {config.services.map((sv, i) => (
+              <div key={i} className="grid grid-cols-[minmax(0,1fr)_5rem_6.5rem] items-center gap-2">
+                <input
+                  aria-label="Nome do serviço"
+                  className={cn(inputClass, "text-left")}
+                  value={sv.name}
+                  maxLength={80}
+                  onChange={(e) => updateService(i, { name: e.target.value })}
+                />
+                <input
+                  aria-label={`Minutos de cada ${sv.name}`}
+                  type="number"
+                  min={0}
+                  step={5}
+                  inputMode="decimal"
+                  className={inputClass}
+                  value={sv.minutes}
+                  onChange={(e) => updateService(i, { minutes: toNum(e.target.value) })}
+                />
+                <span className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                  min cada
+                  <button
+                    type="button"
+                    onClick={() => update({ services: config.services.filter((_, j) => j !== i) })}
+                    className="h-8 w-7 flex items-center justify-center text-gray-400 hover:text-red-600"
+                    aria-label={`Remover o serviço ${sv.name}`}
+                    title="Remover da lista"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </span>
+              </div>
+            ))}
+            <div className="grid grid-cols-[minmax(0,1fr)_5rem_6.5rem] items-center gap-2 rounded-md border border-dashed border-gray-300 dark:border-gray-700 p-2">
+              <input
+                aria-label="Novo serviço"
+                className={cn(inputClass, "text-left")}
+                value={newService.name}
+                maxLength={80}
+                placeholder="Novo serviço, ex.: Carrossel"
+                onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+              />
+              <input
+                aria-label="Minutos do novo serviço"
+                type="number"
+                min={0}
+                step={5}
+                inputMode="decimal"
+                className={inputClass}
+                value={newService.minutes}
+                onChange={(e) => setNewService({ ...newService, minutes: toNum(e.target.value) })}
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={!newService.name.trim() || newServiceTaken}
+                title={newServiceTaken ? "Esse serviço já está na lista" : undefined}
+                onClick={() => {
+                  update({ services: [...config.services, { ...newService, name: newService.name.trim() }] });
+                  setNewService({ name: "", minutes: 30, quantity: 1 });
+                }}
+              >
+                <Plus className="h-4 w-4 mr-1" /> Incluir
+              </Button>
+            </div>
             <SaveBar dirty={dirty} pending={pending} message={message} onSave={save} />
           </CardContent>
         </Card>
@@ -495,38 +573,23 @@ function Kpi({
 
 type Preset = { name: string; quantity: number; minutes: number };
 
-/** Atividades comuns, com os tempos configurados. Quantidade = vezes por mês. */
-function presets(t: CapacityTimes): Preset[] {
-  const w = Math.round(52 / 12 * 100) / 100;
-  return [
-    { name: "Story", quantity: Math.round(5 * w), minutes: t.storyMin },
-    { name: "Post", quantity: Math.round(1 * w), minutes: t.postMin },
-    { name: "Reels", quantity: Math.round(1 * w), minutes: t.reelsMin },
-    { name: "Artigo de blog", quantity: Math.round(1 * w), minutes: t.articleMin },
-    { name: "Planejamento e relatório de redes", quantity: 1, minutes: t.planningHours * 60 },
-    { name: "Ajustes no app de delivery (semana)", quantity: w, minutes: t.appMinPerWeek },
-    { name: "Responder avaliações e comentários", quantity: w, minutes: 20 },
-    { name: "Relatório de delivery", quantity: 1, minutes: t.deliveryReportHours * 60 },
-    { name: "Atendimento (WhatsApp, aprovação, ajustes)", quantity: 1, minutes: t.supportHours * 60 },
-  ];
-}
-
 /** Monta a lista inicial a partir do escopo cadastrado no cliente. */
 function presetsFromScope(scope: ClientScope, t: CapacityTimes): Preset[] {
   const w = Math.round(52 / 12 * 100) / 100;
   const out: Preset[] = [];
   if (scope.includesSocialMedia) {
-    if (scope.storiesPerWeek) out.push({ name: "Story", quantity: Math.round(scope.storiesPerWeek * w), minutes: t.storyMin });
-    if (scope.postsPerWeek) out.push({ name: "Post", quantity: Math.round(scope.postsPerWeek * w), minutes: t.postMin });
-    if (scope.reelsPerWeek) out.push({ name: "Reels", quantity: Math.round(scope.reelsPerWeek * w), minutes: t.reelsMin });
-    out.push({ name: "Planejamento e relatório de redes", quantity: 1, minutes: t.planningHours * 60 });
+    if (scope.storiesPerWeek) out.push({ name: SERVICE_NAMES.story, quantity: Math.round(scope.storiesPerWeek * w), minutes: t.storyMin });
+    if (scope.postsPerWeek) out.push({ name: SERVICE_NAMES.post, quantity: Math.round(scope.postsPerWeek * w), minutes: t.postMin });
+    if (scope.reelsPerWeek) out.push({ name: SERVICE_NAMES.reels, quantity: Math.round(scope.reelsPerWeek * w), minutes: t.reelsMin });
+    out.push({ name: SERVICE_NAMES.planning, quantity: 1, minutes: t.planningHours * 60 });
   }
   if (scope.includesMenuMgmt) {
-    const apps = scope.menuPlatforms ? scope.menuPlatforms.split(",").filter(Boolean) : [];
-    for (const app of apps.length ? apps : ["app de delivery"]) out.push({ name: `Ajustes no ${app} (semana)`, quantity: w, minutes: t.appMinPerWeek });
-    out.push({ name: "Relatório de delivery", quantity: 1, minutes: t.deliveryReportHours * 60 });
+    // Um app por semana = ~4,33 no mês; com 3 apps, ~13.
+    const apps = scope.menuPlatforms ? scope.menuPlatforms.split(",").filter(Boolean).length : 0;
+    out.push({ name: SERVICE_NAMES.app, quantity: Math.round((Math.max(apps, 1) * 52 / 12) * 100) / 100, minutes: t.appMinPerWeek });
+    out.push({ name: SERVICE_NAMES.deliveryReport, quantity: 1, minutes: t.deliveryReportHours * 60 });
   }
-  if (out.length) out.push({ name: "Atendimento (WhatsApp, aprovação, ajustes)", quantity: 1, minutes: t.supportHours * 60 });
+  if (out.length) out.push({ name: SERVICE_NAMES.support, quantity: 1, minutes: t.supportHours * 60 });
   return out;
 }
 
@@ -537,6 +600,7 @@ function WorkItemsEditor({
   clientName,
   items,
   times,
+  options,
   scope,
   onChange,
   onError,
@@ -545,12 +609,16 @@ function WorkItemsEditor({
   clientName: string;
   items: WorkItem[];
   times: CapacityTimes;
+  options: ServiceOption[];
   scope: ClientScope;
   onChange: (list: WorkItem[]) => void;
   onError: (e: unknown) => void;
 }) {
-  const list = presets(times);
-  const [draft, setDraft] = useState<Preset>(list[0]);
+  const pick = (name: string): Preset => {
+    const o = options.find((x) => x.name === name) || options[0];
+    return { name: o.name, quantity: o.quantity, minutes: o.minutes };
+  };
+  const [draft, setDraft] = useState<Preset>(() => pick(options[0].name));
   const [busy, setBusy] = useState(false);
   const fromScope = presetsFromScope(scope, times);
 
@@ -615,12 +683,14 @@ function WorkItemsEditor({
               {items.map((i) => (
                 <tr key={i.id}>
                   <td className="py-1 pr-2">
-                    <input
-                      aria-label="Nome do material"
-                      className={cn(inputClass, "text-left")}
-                      defaultValue={i.name}
-                      maxLength={80}
-                      onBlur={(e) => save(i, { name: e.target.value.trim() })}
+                    <ServiceSelect
+                      ariaLabel="Material"
+                      options={options}
+                      value={i.name}
+                      onChange={(name) => {
+                        const o = options.find((x) => x.name === name);
+                        save(i, o ? { name, minutes: o.minutes } : { name });
+                      }}
                     />
                   </td>
                   <td className="py-1 px-1">
@@ -628,7 +698,7 @@ function WorkItemsEditor({
                       defaultValue={fmtNum(i.quantity)} onBlur={(e) => save(i, { quantity: toNum(e.target.value) })} />
                   </td>
                   <td className="py-1 px-1">
-                    <input aria-label={`Minutos de cada ${i.name}`} type="number" min={0} step={5} inputMode="decimal" className={inputClass}
+                    <input key={`${i.name}-${i.minutes}`} aria-label={`Minutos de cada ${i.name}`} type="number" min={0} step={5} inputMode="decimal" className={inputClass}
                       defaultValue={fmtNum(i.minutes)} onBlur={(e) => save(i, { minutes: toNum(e.target.value) })} />
                   </td>
                   <td className="py-1 pl-2 text-right tabular-nums text-gray-700 dark:text-gray-300">{fmtH((i.quantity * i.minutes) / 60)}</td>
@@ -657,22 +727,7 @@ function WorkItemsEditor({
       <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_6rem_6rem_auto] gap-2 items-end rounded-md border border-dashed border-gray-300 dark:border-gray-700 p-3">
         <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
           <span>Novo material</span>
-          <input
-            list={`presets-${clientId}`}
-            className={cn(inputClass, "text-left")}
-            value={draft.name}
-            maxLength={80}
-            onChange={(e) => {
-              const p = list.find((x) => x.name === e.target.value);
-              setDraft(p ? { ...p } : { ...draft, name: e.target.value });
-            }}
-            placeholder="Ex.: Story, Post, Ajustes no iFood"
-          />
-          <datalist id={`presets-${clientId}`}>
-            {list.map((p) => (
-              <option key={p.name} value={p.name} />
-            ))}
-          </datalist>
+          <ServiceSelect ariaLabel="Novo material" options={options} value={draft.name} onChange={(name) => setDraft(pick(name))} />
         </label>
         <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
           <span>Quantidade/mês</span>
@@ -684,13 +739,28 @@ function WorkItemsEditor({
           <input type="number" min={0} step={5} inputMode="decimal" className={inputClass} value={fmtNum(draft.minutes)}
             onChange={(e) => setDraft({ ...draft, minutes: toNum(e.target.value) })} />
         </label>
-        <Button type="button" size="sm" disabled={busy || !draft.name.trim()} onClick={() => add([draft]).then(() => setDraft(list[0]))} className="bg-orange-600 hover:bg-orange-700 text-white">
+        <Button type="button" size="sm" disabled={busy || !draft.name.trim()} onClick={() => add([draft]).then(() => setDraft(pick(options[0].name)))} className="bg-orange-600 hover:bg-orange-700 text-white">
           <Plus className="h-4 w-4 mr-1" /> Adicionar
         </Button>
       </div>
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        Quantidade por mês: algo semanal dá cerca de 4,33 no mês. Escolha uma sugestão na lista ou escreva o seu. Mudanças nas linhas salvam ao sair do campo.
+        Quantidade por mês: algo semanal dá cerca de 4,33 no mês. Os materiais vêm da lista de <b>Serviços e tempos</b> (mais abaixo); para um serviço novo, inclua ele lá. O tempo de cada um pode ser ajustado só para este cliente. Mudanças nas linhas salvam ao sair do campo.
       </p>
     </div>
+  );
+}
+
+/** Escolha do material só pela lista de serviços. Um nome antigo, fora da lista, continua aparecendo. */
+function ServiceSelect({ ariaLabel, options, value, onChange }: { ariaLabel: string; options: ServiceOption[]; value: string; onChange: (name: string) => void }) {
+  const known = options.some((o) => o.name === value);
+  return (
+    <select aria-label={ariaLabel} className={cn(inputClass, "text-left pr-6")} value={value} onChange={(e) => onChange(e.target.value)}>
+      {!known && <option value={value}>{value} (fora da lista)</option>}
+      {options.map((o) => (
+        <option key={o.name} value={o.name}>
+          {o.name} · {fmtNum(o.minutes)} min
+        </option>
+      ))}
+    </select>
   );
 }
