@@ -109,6 +109,9 @@ model Client {
   menuPlatforms           String?
   includesWebsiteCreation Boolean @default(false)
 
+  // Horas por mês que o cliente toma (Capacidade). Vazio = estimativa pelo escopo.
+  monthlyHours Float?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -427,6 +430,9 @@ model AgencySettings {
   cnpj       String?
   website    String?
   phone      String?
+
+  // Calculadora de capacidade: horas de trabalho, valor da hora, tempos por peça e pacotes (JSON)
+  capacityConfig String? @db.Text
 
   @@map("agency_settings")
 }

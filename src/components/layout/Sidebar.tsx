@@ -16,6 +16,7 @@ import {
   Search,
   X,
   Kanban,
+  Gauge,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { BrandLogo } from "@/components/layout/BrandLogo";
@@ -32,6 +33,7 @@ const navItems = [
   { href: "/atividades", label: "Atividades", icon: ClipboardList },
   { href: "/financeiro", label: "Financeiro", icon: DollarSign },
   { href: "/custos", label: "Custos", icon: Wallet },
+  { href: "/capacidade", label: "Capacidade", icon: Gauge },
   { href: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
