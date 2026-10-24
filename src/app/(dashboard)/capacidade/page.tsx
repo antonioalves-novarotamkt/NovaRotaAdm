@@ -26,6 +26,10 @@ export default async function CapacidadePage() {
       reelsPerWeek: true,
       includesMenuMgmt: true,
       menuPlatforms: true,
+      workItems: {
+        orderBy: [{ sort: "asc" }, { createdAt: "asc" }],
+        select: { id: true, name: true, quantity: true, minutes: true },
+      },
     },
   });
 
@@ -34,6 +38,7 @@ export default async function CapacidadePage() {
     name: c.company || c.name,
     monthlyValue: Math.round(monthlyValue(c.contractValue, c.billingFrequency) * 100) / 100,
     monthlyHours: c.monthlyHours,
+    items: c.workItems,
     scope: {
       includesSocialMedia: c.includesSocialMedia,
       postsPerWeek: c.postsPerWeek,

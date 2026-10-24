@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { Clock, Gauge, DollarSign, Timer, Plus, Trash2, RotateCcw, Save } from "lucide-react";
+import { Fragment, useMemo, useState, useTransition } from "react";
+import { Clock, Gauge, DollarSign, Timer, Plus, Trash2, RotateCcw, Save, ChevronDown, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
-import { saveCapacityConfig, setClientMonthlyHours } from "@/app/actions/capacity";
+import { addWorkItems, deleteWorkItem, saveCapacityConfig, setClientMonthlyHours, updateWorkItem } from "@/app/actions/capacity";
 import {
   capacityBudget,
   estimateClientHours,
@@ -19,9 +19,14 @@ type ClientRow = {
   name: string;
   monthlyValue: number;
   monthlyHours: number | null;
+  items: WorkItem[];
   scope: ClientScope;
   estimate: number;
 };
+
+type WorkItem = { id: string; name: string; quantity: number; minutes: number };
+
+const itemsHours = (items: WorkItem[]) => items.reduce((s, i) => s + i.quantity * i.minutes, 0) / 60;
 
 const inputClass =
   "h-9 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-orange-500/40";
@@ -51,6 +56,8 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
   const [hours, setHours] = useState<Record<string, number | null>>(
     Object.fromEntries(clients.map((c) => [c.id, c.monthlyHours]))
   );
+  const [items, setItems] = useState<Record<string, WorkItem[]>>(Object.fromEntries(clients.map((c) => [c.id, c.items])));
+  const [openClient, setOpenClient] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -68,9 +75,12 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
       clients.map((c) => {
         const estimate = estimateClientHours(c.scope, config.times);
         const manual = hours[c.id];
-        const h = manual ?? estimate;
+        const list = items[c.id] || [];
+        // Com atividades cadastradas, as horas são a soma delas; senão vale o digitado ou a estimativa.
+        const h = list.length ? itemsHours(list) : manual ?? estimate;
         return {
           ...c,
+          items: list,
           estimate,
           manual,
           hours: h,
@@ -78,7 +88,7 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
           fairPrice: h * config.hourRate,
         };
       }),
-    [clients, hours, config.times, config.hourRate]
+    [clients, hours, items, config.times, config.hourRate]
   );
 
   const used = rows.reduce((s, r) => s + r.hours, 0);
@@ -125,6 +135,9 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
       }
     });
   }
+
+  const setClientItems = (id: string, list: WorkItem[]) => setItems((m) => ({ ...m, [id]: list }));
+  const onItemsError = (e: unknown) => setMessage(e instanceof Error ? e.message : "Não foi possível salvar a atividade. Tente de novo.");
 
   return (
     <div className="space-y-6">
@@ -230,8 +243,8 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
           <div className="px-5 pt-5 pb-3">
             <h2 className="font-semibold text-gray-900 dark:text-gray-100">Horas por cliente</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Clientes ativos. Sem horas digitadas, o sistema estima pelo escopo do cliente (posts, stories, reels e apps de delivery) com os tempos abaixo. Digite as horas reais quando souber: salva sozinho ao sair do campo.
-              Contratos semanais viram mês com 4,33 semanas.
+              Clientes ativos. Clique em <b>Atividades</b> para cadastrar o que você faz para o cliente, quantas vezes por mês e quanto tempo leva cada uma: as horas do cliente viram a soma da lista.
+              Sem atividades, vale o número digitado em Horas/mês ou, vazio, a estimativa pelo escopo do cliente. Tudo salva sozinho. Contratos semanais viram mês com 4,33 semanas.
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -258,12 +271,32 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                   const diff = r.fairPrice - r.monthlyValue;
                   const below = r.hours > 0 && r.rate < config.hourRate;
                   return (
-                    <tr key={r.id} className="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-gray-100">{r.name}</td>
+                    <Fragment key={r.id}>
+                    <tr className="border-b hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <td className="px-4 py-2.5">
+                        <div className="font-medium text-gray-900 dark:text-gray-100">{r.name}</div>
+                        <button
+                          type="button"
+                          onClick={() => setOpenClient(openClient === r.id ? null : r.id)}
+                          aria-expanded={openClient === r.id}
+                          className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700 dark:text-orange-400"
+                        >
+                          {openClient === r.id ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                          Atividades{r.items.length ? ` (${r.items.length})` : ""}
+                        </button>
+                      </td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-gray-700 dark:text-gray-300">
                         {r.monthlyValue ? formatCurrency(r.monthlyValue) : "—"}
                       </td>
                       <td className="px-4 py-2">
+                        {r.items.length ? (
+                          <div className="flex items-center justify-end gap-1.5 tabular-nums font-medium text-gray-900 dark:text-gray-100">
+                            {fmtH(r.hours)}
+                            <span className="text-[10px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400" title="Soma das atividades">
+                              ativ.
+                            </span>
+                          </div>
+                        ) : (
                         <div className="flex items-center justify-end gap-1.5">
                           <input
                             key={`${r.id}-${r.manual ?? "est"}`}
@@ -297,6 +330,7 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                             </button>
                           )}
                         </div>
+                        )}
                       </td>
                       <td className={cn("px-4 py-2.5 text-right tabular-nums", below ? "text-red-600 dark:text-red-400 font-semibold" : "text-gray-700 dark:text-gray-300")}>
                         {r.hours > 0 && r.monthlyValue ? formatCurrency(r.rate) : "—"}
@@ -310,6 +344,22 @@ export function CapacityCalculator({ initialConfig, clients }: { initialConfig: 
                         <td className="px-4 py-2.5 text-right text-xs text-amber-700 dark:text-amber-400">digite as horas</td>
                       )}
                     </tr>
+                    {openClient === r.id && (
+                      <tr className="border-b bg-gray-50/60 dark:bg-gray-900/40">
+                        <td colSpan={6} className="px-4 py-4">
+                          <WorkItemsEditor
+                            clientId={r.id}
+                            clientName={r.name}
+                            items={r.items}
+                            times={config.times}
+                            scope={r.scope}
+                            onChange={(list) => setClientItems(r.id, list)}
+                            onError={onItemsError}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   );
                 })}
               </tbody>
@@ -486,5 +536,207 @@ function Kpi({
         {children}
       </CardContent>
     </Card>
+  );
+}
+
+type Preset = { name: string; quantity: number; minutes: number };
+
+/** Atividades comuns, com os tempos configurados. Quantidade = vezes por mês. */
+function presets(t: CapacityTimes): Preset[] {
+  const w = Math.round(52 / 12 * 100) / 100;
+  return [
+    { name: "Story", quantity: Math.round(5 * w), minutes: t.storyMin },
+    { name: "Post", quantity: Math.round(1 * w), minutes: t.postMin },
+    { name: "Reels", quantity: Math.round(1 * w), minutes: t.reelsMin },
+    { name: "Artigo de blog", quantity: Math.round(1 * w), minutes: t.articleMin },
+    { name: "Planejamento e relatório de redes", quantity: 1, minutes: t.planningHours * 60 },
+    { name: "Ajustes no app de delivery (semana)", quantity: w, minutes: t.appMinPerWeek },
+    { name: "Responder avaliações e comentários", quantity: w, minutes: 20 },
+    { name: "Relatório de delivery", quantity: 1, minutes: t.deliveryReportHours * 60 },
+    { name: "Atendimento (WhatsApp, aprovação, ajustes)", quantity: 1, minutes: t.supportHours * 60 },
+  ];
+}
+
+/** Monta a lista inicial a partir do escopo cadastrado no cliente. */
+function presetsFromScope(scope: ClientScope, t: CapacityTimes): Preset[] {
+  const w = Math.round(52 / 12 * 100) / 100;
+  const out: Preset[] = [];
+  if (scope.includesSocialMedia) {
+    if (scope.storiesPerWeek) out.push({ name: "Story", quantity: Math.round(scope.storiesPerWeek * w), minutes: t.storyMin });
+    if (scope.postsPerWeek) out.push({ name: "Post", quantity: Math.round(scope.postsPerWeek * w), minutes: t.postMin });
+    if (scope.reelsPerWeek) out.push({ name: "Reels", quantity: Math.round(scope.reelsPerWeek * w), minutes: t.reelsMin });
+    out.push({ name: "Planejamento e relatório de redes", quantity: 1, minutes: t.planningHours * 60 });
+  }
+  if (scope.includesMenuMgmt) {
+    const apps = scope.menuPlatforms ? scope.menuPlatforms.split(",").filter(Boolean) : [];
+    for (const app of apps.length ? apps : ["app de delivery"]) out.push({ name: `Ajustes no ${app} (semana)`, quantity: w, minutes: t.appMinPerWeek });
+    out.push({ name: "Relatório de delivery", quantity: 1, minutes: t.deliveryReportHours * 60 });
+  }
+  if (out.length) out.push({ name: "Atendimento (WhatsApp, aprovação, ajustes)", quantity: 1, minutes: t.supportHours * 60 });
+  return out;
+}
+
+const fmtNum = (n: number) => String(Math.round(n * 100) / 100);
+
+function WorkItemsEditor({
+  clientId,
+  clientName,
+  items,
+  times,
+  scope,
+  onChange,
+  onError,
+}: {
+  clientId: string;
+  clientName: string;
+  items: WorkItem[];
+  times: CapacityTimes;
+  scope: ClientScope;
+  onChange: (list: WorkItem[]) => void;
+  onError: (e: unknown) => void;
+}) {
+  const list = presets(times);
+  const [draft, setDraft] = useState<Preset>(list[0]);
+  const [busy, setBusy] = useState(false);
+  const fromScope = presetsFromScope(scope, times);
+
+  async function add(newItems: Preset[]) {
+    if (!newItems.length || !newItems[0].name.trim()) return;
+    setBusy(true);
+    try {
+      const created = await addWorkItems(clientId, newItems);
+      onChange([...items, ...created]);
+    } catch (e) {
+      onError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function save(item: WorkItem, patch: Partial<WorkItem>) {
+    const next = { ...item, ...patch };
+    if (next.name === item.name && next.quantity === item.quantity && next.minutes === item.minutes) return;
+    if (!next.name.trim()) return onError(new Error("Dê um nome para a atividade."));
+    onChange(items.map((i) => (i.id === item.id ? next : i)));
+    try {
+      await updateWorkItem(item.id, next);
+    } catch (e) {
+      onError(e);
+    }
+  }
+
+  async function remove(item: WorkItem) {
+    onChange(items.filter((i) => i.id !== item.id));
+    try {
+      await deleteWorkItem(item.id);
+    } catch (e) {
+      onError(e);
+    }
+  }
+
+  const total = itemsHours(items);
+
+  return (
+    <div className="space-y-3 max-w-3xl">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Atividades de {clientName}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Total: <b className="tabular-nums text-gray-900 dark:text-gray-100">{fmtH(total)}</b> por mês
+        </p>
+      </div>
+
+      {items.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[520px]">
+            <thead>
+              <tr className="text-xs text-gray-500 dark:text-gray-400">
+                <th className="text-left font-medium pb-1">Atividade</th>
+                <th className="text-right font-medium pb-1 w-24">Vezes/mês</th>
+                <th className="text-right font-medium pb-1 w-24">Min cada</th>
+                <th className="text-right font-medium pb-1 w-20">Horas</th>
+                <th className="w-8" />
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((i) => (
+                <tr key={i.id}>
+                  <td className="py-1 pr-2">
+                    <input
+                      aria-label="Nome da atividade"
+                      className={cn(inputClass, "text-left")}
+                      defaultValue={i.name}
+                      maxLength={80}
+                      onBlur={(e) => save(i, { name: e.target.value.trim() })}
+                    />
+                  </td>
+                  <td className="py-1 px-1">
+                    <input aria-label={`Vezes por mês de ${i.name}`} type="number" min={0} step={1} inputMode="decimal" className={inputClass}
+                      defaultValue={fmtNum(i.quantity)} onBlur={(e) => save(i, { quantity: toNum(e.target.value) })} />
+                  </td>
+                  <td className="py-1 px-1">
+                    <input aria-label={`Minutos de cada ${i.name}`} type="number" min={0} step={5} inputMode="decimal" className={inputClass}
+                      defaultValue={fmtNum(i.minutes)} onBlur={(e) => save(i, { minutes: toNum(e.target.value) })} />
+                  </td>
+                  <td className="py-1 pl-2 text-right tabular-nums text-gray-700 dark:text-gray-300">{fmtH((i.quantity * i.minutes) / 60)}</td>
+                  <td className="py-1 pl-1">
+                    <button type="button" onClick={() => remove(i)} className="h-9 w-8 flex items-center justify-center text-gray-400 hover:text-red-600"
+                      aria-label={`Remover ${i.name}`} title="Remover">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+          <span>Nenhuma atividade ainda.</span>
+          {fromScope.length > 0 && (
+            <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => add(fromScope)}>
+              Preencher pelo escopo do cliente
+            </Button>
+          )}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_6rem_6rem_auto] gap-2 items-end rounded-md border border-dashed border-gray-300 dark:border-gray-700 p-3">
+        <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+          <span>Nova atividade</span>
+          <input
+            list={`presets-${clientId}`}
+            className={cn(inputClass, "text-left")}
+            value={draft.name}
+            maxLength={80}
+            onChange={(e) => {
+              const p = list.find((x) => x.name === e.target.value);
+              setDraft(p ? { ...p } : { ...draft, name: e.target.value });
+            }}
+            placeholder="Ex.: Story, Post, Ajustes no iFood"
+          />
+          <datalist id={`presets-${clientId}`}>
+            {list.map((p) => (
+              <option key={p.name} value={p.name} />
+            ))}
+          </datalist>
+        </label>
+        <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+          <span>Vezes/mês</span>
+          <input type="number" min={0} step={1} inputMode="decimal" className={inputClass} value={fmtNum(draft.quantity)}
+            onChange={(e) => setDraft({ ...draft, quantity: toNum(e.target.value) })} />
+        </label>
+        <label className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+          <span>Min cada</span>
+          <input type="number" min={0} step={5} inputMode="decimal" className={inputClass} value={fmtNum(draft.minutes)}
+            onChange={(e) => setDraft({ ...draft, minutes: toNum(e.target.value) })} />
+        </label>
+        <Button type="button" size="sm" disabled={busy || !draft.name.trim()} onClick={() => add([draft]).then(() => setDraft(list[0]))} className="bg-orange-600 hover:bg-orange-700 text-white">
+          <Plus className="h-4 w-4 mr-1" /> Adicionar
+        </Button>
+      </div>
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Vezes/mês: uma atividade semanal dá cerca de 4,33 vezes no mês. Escolha uma sugestão na lista ou escreva a sua. Mudanças nas linhas salvam ao sair do campo.
+      </p>
+    </div>
   );
 }

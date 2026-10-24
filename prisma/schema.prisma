@@ -122,8 +122,25 @@ model Client {
   activities     ClientActivity[]
   tasks          Task[]
   leadOrigin     Lead?
+  workItems      ClientWorkItem[]
 
   @@map("clients")
+}
+
+// Atividades do cliente na tela Capacidade: quantas por mês e quantos minutos cada.
+model ClientWorkItem {
+  id        String   @id @default(cuid())
+  clientId  String
+  name      String
+  quantity  Float
+  minutes   Float
+  sort      Int      @default(0)
+  createdAt DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@map("client_work_items")
 }
 
 model Lead {
