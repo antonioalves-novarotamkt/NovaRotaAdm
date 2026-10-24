@@ -109,6 +109,9 @@ model Client {
   menuPlatforms           String?
   includesWebsiteCreation Boolean @default(false)
 
+  // Horas por mês que o cliente toma (Capacidade). Vazio = estimativa pelo escopo.
+  monthlyHours Float?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -119,8 +122,25 @@ model Client {
   activities     ClientActivity[]
   tasks          Task[]
   leadOrigin     Lead?
+  workItems      ClientWorkItem[]
 
   @@map("clients")
+}
+
+// Atividades do cliente na tela Capacidade: quantas por mês e quantos minutos cada.
+model ClientWorkItem {
+  id        String   @id @default(cuid())
+  clientId  String
+  name      String
+  quantity  Float
+  minutes   Float
+  sort      Int      @default(0)
+  createdAt DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@map("client_work_items")
 }
 
 model Lead {
@@ -427,6 +447,9 @@ model AgencySettings {
   cnpj       String?
   website    String?
   phone      String?
+
+  // Calculadora de capacidade: horas de trabalho, valor da hora, tempos por peça e pacotes (JSON)
+  capacityConfig String? @db.Text
 
   @@map("agency_settings")
 }
