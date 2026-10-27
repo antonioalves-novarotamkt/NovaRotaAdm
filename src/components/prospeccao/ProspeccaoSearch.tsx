@@ -37,10 +37,19 @@ export function ProspeccaoSearch() {
     setResults(null);
     try {
       const res = await searchAndImportLeadsAisa(category, city, bairro, filtroSite, fontes);
-      setResults(res.results);
-      setImported(res.imported);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao buscar.");
+      // Se a Vercel cortar a funcao por tempo, a action volta sem resposta.
+      if (!res) {
+        setError(
+          "O servidor não respondeu a tempo. Tente de novo marcando menos fontes (por exemplo só Google Maps e Telefone)."
+        );
+      } else if (!res.ok) {
+        setError(res.error);
+      } else {
+        setResults(res.results);
+        setImported(res.imported);
+      }
+    } catch {
+      setError("Não foi possível falar com o servidor. Confira a internet e tente de novo.");
     } finally {
       setLoading(false);
     }
