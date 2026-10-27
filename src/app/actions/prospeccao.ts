@@ -4,7 +4,8 @@ import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { searchAisaLeads, type AisaLead, type FiltroSite, type AisaFonte, AISA_FONTES_PADRAO } from "@/lib/aisa-prospect";
+import type { Prisma } from "@prisma/client";
+import { searchAisaLeads, AisaTimeoutError, type AisaLead, type FiltroSite, type AisaFonte, AISA_FONTES_PADRAO } from "@/lib/aisa-prospect";
 
 export interface AisaProspectResult extends AisaLead {
   alreadyLead: boolean;
@@ -29,13 +30,48 @@ function buildAisaNotes(lead: AisaLead): string {
   return parts.join("\n");
 }
 
+export type AisaSearchResponse =
+  | { ok: true; results: AisaProspectResult[]; imported: number; total: number }
+  | { ok: false; error: string };
+
+// A pagina /prospeccao tem maxDuration = 60s na Vercel. A busca para alguns
+// segundos antes disso para sempre conseguir responder com uma mensagem clara.
+const LIMITE_BUSCA_MS = 55000;
+
+// Erros lancados por uma server action chegam ao navegador mascarados em producao,
+// entao a busca devolve { ok: false, error } com a mensagem pronta para a tela.
 export async function searchAndImportLeadsAisa(
   nicho: string,
   cidade: string,
   bairro: string,
   filtroSite: FiltroSite,
   fontes: AisaFonte[] = AISA_FONTES_PADRAO
-) {
+): Promise<AisaSearchResponse> {
+  const deadline = Date.now() + LIMITE_BUSCA_MS;
+  try {
+    return await buscarEImportar(nicho, cidade, bairro, filtroSite, fontes, deadline);
+  } catch (err) {
+    if (err instanceof AisaTimeoutError) {
+      return {
+        ok: false,
+        error:
+          "A busca demorou mais que o limite do servidor e foi interrompida. " +
+          "Tente de novo marcando menos fontes (por exemplo só Google Maps e Telefone) ou sem o bairro.",
+      };
+    }
+    console.error("[prospeccao] erro na busca AIsa:", err);
+    return { ok: false, error: err instanceof Error ? err.message : "Erro inesperado ao buscar." };
+  }
+}
+
+async function buscarEImportar(
+  nicho: string,
+  cidade: string,
+  bairro: string,
+  filtroSite: FiltroSite,
+  fontes: AisaFonte[],
+  deadline: number
+): Promise<AisaSearchResponse> {
   const session = await getServerSession(authOptions);
   if (!session) throw new Error("Não autenticado.");
 
@@ -60,6 +96,7 @@ export async function searchAndImportLeadsAisa(
     filtroSite,
     fontes,
     apiKey,
+    deadline,
   });
 
   // Todo lead ja cadastrado entra no dedup, independente do estagio no funil —
@@ -74,7 +111,7 @@ export async function searchAndImportLeadsAisa(
     existingLeads.map((l) => normalizeName(l.company || l.name)).filter(Boolean)
   );
 
-  let imported = 0;
+  const novos: Prisma.LeadCreateManyInput[] = [];
   const results: AisaProspectResult[] = [];
 
   for (const lead of leads) {
@@ -84,23 +121,23 @@ export async function searchAndImportLeadsAisa(
       (Boolean(phoneDigits) && existingPhones.has(phoneDigits)) || existingNames.has(nomeNormalizado);
 
     if (!alreadyLead) {
-      await prisma.lead.create({
-        data: {
-          name: lead.nome,
-          company: lead.nome,
-          phone: lead.telefone && lead.telefone !== "WhatsApp Direto" ? lead.telefone : null,
-          source: "Google Maps + Instagram (AIsa)",
-          notes: buildAisaNotes(lead),
-          instagramHandle: lead.instagramUrl || null,
-        },
+      novos.push({
+        name: lead.nome,
+        company: lead.nome,
+        phone: lead.telefone && lead.telefone !== "WhatsApp Direto" ? lead.telefone : null,
+        source: "Google Maps + Instagram (AIsa)",
+        notes: buildAisaNotes(lead),
+        instagramHandle: lead.instagramUrl || null,
       });
-      imported++;
       if (phoneDigits) existingPhones.add(phoneDigits);
       existingNames.add(nomeNormalizado);
     }
 
     results.push({ ...lead, alreadyLead });
   }
+
+  // Um unico insert em vez de um por lead, para nao gastar o tempo da funcao.
+  const imported = novos.length ? (await prisma.lead.createMany({ data: novos })).count : 0;
 
   results.sort((a, b) => {
     const aNoSite = a.temSiteProprio ? 1 : 0;
@@ -110,5 +147,5 @@ export async function searchAndImportLeadsAisa(
 
   revalidatePath("/funil");
 
-  return { results, imported, total: leads.length };
+  return { ok: true, results, imported, total: leads.length };
 }

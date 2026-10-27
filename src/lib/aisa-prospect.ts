@@ -73,7 +73,16 @@ interface BuscarLeadsParams {
   filtroSite?: FiltroSite;
   fontes?: AisaFonte[];
   apiKey: string;
+  /** Momento (Date.now()) em que a busca precisa terminar, para nao estourar o tempo da Vercel. */
+  deadline?: number;
 }
+
+// Folga para gravar os leads no banco e responder antes de a Vercel cortar a funcao.
+const MARGEM_FINAL_MS = 8000;
+// Tempo maximo de cada consulta de perfil do Instagram.
+const TIMEOUT_INSTAGRAM_MS = 5000;
+
+export class AisaTimeoutError extends Error {}
 
 function buildPrompt(
   nicho: string,
@@ -140,14 +149,25 @@ function buildPrompt(
   return { system, user };
 }
 
-async function callAisa(model: string, system: string, user: string, apiKey: string): Promise<string> {
+async function callAisa(
+  model: string,
+  system: string,
+  user: string,
+  apiKey: string,
+  deadline: number
+): Promise<string> {
   const url = `${API_BASE}/perplexity/${model}`;
   const maxRetries = 2;
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const restante = deadline - Date.now() - MARGEM_FINAL_MS;
+    if (restante <= 3000) {
+      throw lastError ?? new AisaTimeoutError("Sem tempo para consultar a AIsa.");
+    }
     try {
       const response = await fetch(url, {
+        signal: AbortSignal.timeout(restante),
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -165,8 +185,17 @@ async function callAisa(model: string, system: string, user: string, apiKey: str
       if (!response.ok) {
         const detail = await response.text();
         if ([429, 500, 502, 503, 504].includes(response.status) && attempt < maxRetries) {
+          lastError = new Error(`A API da AIsa respondeu com erro ${response.status} (instabilidade ou limite de uso).`);
           await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
           continue;
+        }
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(
+            `A AIsa recusou a chave (erro ${response.status}). Confira a AISA_API_KEY nas variáveis de ambiente da Vercel.`
+          );
+        }
+        if (response.status === 402) {
+          throw new Error("A conta da AIsa está sem créditos (erro 402). Recarregue o saldo no painel da AIsa.");
         }
         throw new Error(
           `Erro HTTP ${response.status} ao chamar a API da AIsa. Detalhe: ${detail.slice(0, 300)}. ` +
@@ -181,6 +210,9 @@ async function callAisa(model: string, system: string, user: string, apiKey: str
       }
       return content as string;
     } catch (error) {
+      if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
+        throw new AisaTimeoutError("A AIsa demorou demais para responder.");
+      }
       lastError = error instanceof Error ? error : new Error(String(error));
       if (attempt >= maxRetries) break;
     }
@@ -307,7 +339,8 @@ function normalizeWhatsapp(raw: unknown): { telefoneRaw: string; whatsappLink: s
 
 async function fetchInstagramProfile(
   handleOrUrl: string,
-  apiKey: string
+  apiKey: string,
+  deadline: number
 ): Promise<{ biografia?: string; linkBio?: string; telefoneInstagram?: string; seguidores?: number } | null> {
   if (!handleOrUrl || !apiKey) return null;
   let handle = handleOrUrl.trim().replace(/\/$/, "");
@@ -317,8 +350,13 @@ async function fetchInstagramProfile(
   handle = handle.replace(/^@/, "").trim();
   if (!handle || handle.includes("/") || handle.length > 35) return null;
 
+  // O enriquecimento pelo Instagram e opcional: se o tempo estiver acabando, segue sem ele.
+  const restante = Math.min(TIMEOUT_INSTAGRAM_MS, deadline - Date.now() - MARGEM_FINAL_MS);
+  if (restante < 1000) return null;
+
   try {
     const response = await fetch(`${API_BASE}/instagram/profile?handle=${encodeURIComponent(handle)}`, {
+      signal: AbortSignal.timeout(restante),
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     });
     if (!response.ok) return null;
@@ -374,7 +412,7 @@ function dedupKey(lead: AisaLead): string {
   return `ne:${lead.nome.toLowerCase()}:${lead.endereco.toLowerCase()}`;
 }
 
-async function normalizeLead(item: Record<string, unknown>, apiKey: string): Promise<AisaLead> {
+async function normalizeLead(item: Record<string, unknown>, apiKey: string, deadline: number): Promise<AisaLead> {
   const nome = String(item.nome || "").trim();
   const rawTel = item.telefone_whatsapp || item.telefone || item.whatsapp || item.contato || item.phone;
   let { telefoneRaw, whatsappLink } = normalizeWhatsapp(rawTel);
@@ -411,7 +449,7 @@ async function normalizeLead(item: Record<string, unknown>, apiKey: string): Pro
   const temSiteFlag = item.tem_site_proprio ?? item.tem_site;
 
   if (rawIg && apiKey && (!rawSiteUrl || !telefoneRaw)) {
-    const igData = await fetchInstagramProfile(rawIg, apiKey);
+    const igData = await fetchInstagramProfile(rawIg, apiKey, deadline);
     if (igData) {
       if (!rawSiteUrl && igData.linkBio) rawSiteUrl = igData.linkBio;
       if (!telefoneRaw && igData.telefoneInstagram) {
@@ -457,6 +495,7 @@ export async function searchAisaLeads({
   filtroSite = "todos",
   fontes = AISA_FONTES_PADRAO,
   apiKey,
+  deadline = Date.now() + 55000,
 }: BuscarLeadsParams): Promise<AisaLead[]> {
   if (!apiKey) {
     throw new Error("AISA_API_KEY não configurada. Adicione a chave da AIsa nas variáveis de ambiente.");
@@ -467,7 +506,7 @@ export async function searchAisaLeads({
 
   const quantidadeFinal = Math.min(Math.max(quantidade, 1), 40);
   const { system, user } = buildPrompt(nicho, cidade, bairro, quantidadeFinal, fontes);
-  const content = await callAisa("sonar-pro", system, user, apiKey);
+  const content = await callAisa("sonar-pro", system, user, apiKey, deadline);
   const rawItems = extractJsonArray(content);
 
   if (!rawItems.length) {
@@ -489,7 +528,7 @@ export async function searchAisaLeads({
     }
   }
 
-  const normalizados = await Promise.all(comNomeReal.map((item) => normalizeLead(item, apiKey)));
+  const normalizados = await Promise.all(comNomeReal.map((item) => normalizeLead(item, apiKey, deadline)));
 
   const dedup = new Map<string, AisaLead>();
   for (const lead of normalizados) dedup.set(dedupKey(lead), lead);
