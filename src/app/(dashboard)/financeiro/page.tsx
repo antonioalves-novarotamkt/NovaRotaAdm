@@ -3,7 +3,6 @@ import { TrendingUp, TrendingDown, DollarSign, AlertCircle, Receipt, X } from "l
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RegisterPaymentButton } from "@/components/financeiro/RegisterPaymentButton";
 import { SendRemindersButton } from "@/components/financeiro/SendRemindersButton";
 import { RevenueChart } from "@/components/financeiro/RevenueChart";
 import { NewExtraChargeDialog } from "@/components/financeiro/NewExtraChargeDialog";
@@ -694,15 +693,20 @@ export default async function FinanceiroPage({
             </CardHeader>
             <CardContent className="space-y-2">
               {scheduledClients.map((client) => {
-                const overdue = client.nextBillingDate && client.nextBillingDate < startOfToday;
-                const scheduledInvoice = invoices.find(
-                  (i) =>
-                    i.clientId === client.id &&
-                    i.dueDate.getTime() === client.nextBillingDate?.getTime() &&
-                    (i.status === "PENDING" || i.status === "OVERDUE" || i.status === "PARTIALLY_PAID")
-                );
-                const remaining = scheduledInvoice ? remainingAmount(scheduledInvoice) : client.contractValue || 0;
-                const alreadyPaidAmount = scheduledInvoice ? paidAmount(scheduledInvoice) : 0;
+                // nextBillingDate aponta pro próximo período ainda NÃO gerado
+                // (o vencimento avança sozinho com o tempo) — a baixa tem que
+                // ir na fatura em aberto mais antiga do cliente, não nessa data.
+                const openInvoices = invoices
+                  .filter(
+                    (i) =>
+                      i.clientId === client.id &&
+                      i.description === "Recebimento programado" &&
+                      (i.status === "PENDING" || i.status === "OVERDUE" || i.status === "PARTIALLY_PAID")
+                  )
+                  .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+                const current = openInvoices[0];
+                const overdue = current ? current.dueDate < startOfToday : false;
+                const alreadyPaidAmount = current ? paidAmount(current) : 0;
                 return (
                   <div key={client.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg border border-gray-100 dark:border-gray-800">
                     <div className="min-w-0">
@@ -710,17 +714,23 @@ export default async function FinanceiroPage({
                         {client.company || client.name}
                       </Link>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {frequencyLabel[client.billingFrequency]} · vence {client.nextBillingDate && formatDate(client.nextBillingDate)}
+                        {frequencyLabel[client.billingFrequency]} ·{" "}
+                        {current
+                          ? `vence ${formatDate(current.dueDate)}`
+                          : `em dia · próximo vencimento ${client.nextBillingDate ? formatDate(client.nextBillingDate) : "—"}`}
                         {overdue && <span className="text-red-500 dark:text-red-400 font-medium"> · atrasado</span>}
-                        {scheduledInvoice?.status === "PARTIALLY_PAID" && (
+                        {current?.status === "PARTIALLY_PAID" && (
                           <span className="text-blue-500 dark:text-blue-400 font-medium"> · parcial, recebido {formatCurrency(alreadyPaidAmount)}</span>
                         )}
+                        {openInvoices.length > 1 && <span> · +{openInvoices.length - 1} em aberto</span>}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(remaining)}</span>
-                      <RegisterPaymentButton clientId={client.id} remaining={remaining} alreadyPaid={alreadyPaidAmount} />
-                    </div>
+                    {current && (
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(remainingAmount(current))}</span>
+                        <MarkExtraChargePaidButton id={current.id} remaining={remainingAmount(current)} alreadyPaid={alreadyPaidAmount} />
+                      </div>
+                    )}
                   </div>
                 );
               })}

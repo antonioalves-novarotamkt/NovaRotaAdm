@@ -4,8 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { BillingFrequency } from "@prisma/client";
 import { computeNextBillingDate } from "@/lib/billing";
-import { syncScheduledInvoices, createInvoiceWithUniqueNumber } from "@/lib/scheduled-invoices";
-import { registerInvoicePayment } from "@/lib/payments";
+import { syncScheduledInvoices } from "@/lib/scheduled-invoices";
 
 export async function updateClientBilling(formData: FormData) {
   const clientId = String(formData.get("clientId") || "").trim();
@@ -45,45 +44,5 @@ export async function updateClientBilling(formData: FormData) {
   await syncScheduledInvoices();
 
   revalidatePath(`/clientes/${clientId}`);
-  revalidatePath("/financeiro");
-}
-
-export async function registerScheduledPayment(formData: FormData) {
-  const clientId = String(formData.get("clientId") || "").trim();
-  const paidAtRaw = String(formData.get("paidAt") || "");
-  const paidAt = paidAtRaw ? new Date(`${paidAtRaw}T00:00:00.000Z`) : new Date();
-  const amountRaw = String(formData.get("amount") || "");
-
-  const client = await prisma.client.findUnique({ where: { id: clientId } });
-  if (!client || !client.nextBillingDate || !client.contractValue) {
-    throw new Error("Cliente sem recebimento programado.");
-  }
-
-  let pendingInvoice = await prisma.invoice.findFirst({
-    where: {
-      clientId,
-      dueDate: client.nextBillingDate,
-      status: { in: ["PENDING", "OVERDUE", "PARTIALLY_PAID"] },
-    },
-  });
-
-  if (!pendingInvoice) {
-    pendingInvoice = await createInvoiceWithUniqueNumber({
-      clientId,
-      amount: client.contractValue,
-      tax: 0,
-      total: client.contractValue,
-      status: "PENDING",
-      dueDate: client.nextBillingDate,
-      description: "Recebimento programado",
-    });
-  }
-
-  const amount = amountRaw ? Number(amountRaw) : pendingInvoice.total;
-  // registerInvoicePayment já cuida de avançar o próximo vencimento quando
-  // essa fatura for a cobrança programada vigente e fechar 100% — mesma
-  // regra aplicada não importa por qual tela a baixa é dada.
-  await registerInvoicePayment(pendingInvoice.id, amount, paidAt);
-
   revalidatePath("/financeiro");
 }
