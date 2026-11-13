@@ -154,11 +154,16 @@ export async function syncScheduledInvoices() {
         });
         if (claim.count === 0) break;
 
+        // Qualquer fatura programada já existente pra essa data conta como a
+        // fatura do período — inclusive paga (ex: recebida adiantada), pra
+        // não cobrar o mesmo período duas vezes. Recebimentos extras na
+        // mesma data não contam.
         const existing = await prisma.invoice.findFirst({
           where: {
             clientId: client.id,
             dueDate,
-            status: { in: ["PENDING", "OVERDUE", "PARTIALLY_PAID"] },
+            description: "Recebimento programado",
+            status: { not: "CANCELLED" },
           },
         });
         if (!existing) {
