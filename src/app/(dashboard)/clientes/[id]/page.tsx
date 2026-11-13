@@ -10,6 +10,7 @@ import { paidAmount, remainingAmount } from "@/lib/payments";
 import { prisma } from "@/lib/prisma";
 import { ClientLogoUpload } from "@/components/clients/ClientLogoUpload";
 import { ClientBillingForm } from "@/components/clients/ClientBillingForm";
+import { MarkExtraChargePaidButton } from "@/components/financeiro/MarkExtraChargePaidButton";
 import { EditClientDialog } from "@/components/clients/EditClientDialog";
 import { NewSocialAccountDialog } from "@/components/clients/NewSocialAccountDialog";
 import { RefreshFollowersButton } from "@/components/clients/RefreshFollowersButton";
@@ -309,8 +310,8 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                 {client.invoices.map((invoice) => {
                   const iStatus = invoiceStatusMap[invoice.status];
                   return (
-                    <div key={invoice.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-gray-200 transition-colors">
-                      <div>
+                    <div key={invoice.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-gray-200 transition-colors">
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{invoice.number}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           Vence: {formatDate(invoice.dueDate)}
@@ -319,9 +320,12 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                             ` · recebido ${formatCurrency(paidAmount(invoice))} · falta ${formatCurrency(remainingAmount(invoice))}`}
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(invoice.total)}</span>
                         <Badge variant={iStatus.variant}>{iStatus.label}</Badge>
+                        {(invoice.status === "PENDING" || invoice.status === "OVERDUE" || invoice.status === "PARTIALLY_PAID") && (
+                          <MarkExtraChargePaidButton id={invoice.id} remaining={remainingAmount(invoice)} alreadyPaid={paidAmount(invoice)} />
+                        )}
                         {invoice.status === "PAID" && (
                           <Link href={`/recibo/${invoice.id}`}>
                             <Button variant="ghost" size="sm" className="text-xs text-orange-600 dark:text-orange-400 hover:text-orange-700 h-7">
